@@ -1,318 +1,634 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo, type ElementType } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTasks } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { useConfigData } from '../hooks/useConfigData'
-import { useAuditLogs } from '../hooks/useAuditLogs'
 import { useAuth } from '../hooks/useAuth'
-import { StatCard } from '../components/ui/StatCard'
-import ProgressBar from '../components/ui/ProgressBar'
-import { Avatar } from '../components/ui/Avatar'
-import { Semaforo } from '../components/ui/Semaforo'
-import { PriorityBadge } from '../components/ui/StatusBadge'
-import { DaysLeftChip } from '../components/ui/Chips'
-import { PulseDot, LiveBadge, CountUpNumber } from '../components/ui/Motion'
-import { Button } from '../components/ui/Button'
+import { Button, IconButton } from '../components/ui/Button'
+import { LiveBadge, PulseDot, CountUpNumber, useCountUp } from '../components/ui/Motion'
 import {
-  FolderOpen, CheckCircle2, AlertTriangle, Play, DollarSign, TrendingUp,
-  Plus, Check, ArrowRight, Pencil, Trash2,
+  CheckCircle2, Play, Flame, Clock, FolderOpen, List,
+  Gauge, Calendar, DollarSign, ChevronLeft, ChevronRight, Plus,
 } from 'lucide-react'
-import { fmtDate, fmtMoneyCompact, TODAY, MONTHS_FULL, DAYS_ES, getProjectColor } from '../lib/helpers'
-import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import {
+  fmtDate, fmtMoneyCompact, TODAY, MONTHS_FULL, DAYS_ES, MONTHS_ES,
+  daysBetween, daysFromToday, isoDay, addDays,
+} from '../lib/helpers'
+import type { Project, Task } from '../lib/types'
+import type { StatusObj } from '../hooks/useConfigData'
 
-const ACTION_META: Record<string, { icon: React.ElementType; accent: string }> = {
-  crear:      { icon: Plus,           accent: 'neutral' },
-  actualizar: { icon: Pencil,         accent: 'brand'   },
-  mover:      { icon: ArrowRight,     accent: 'brand'   },
-  eliminar:   { icon: Trash2,         accent: 'red'     },
-}
-
-function accentColor(accent: string) {
-  if (accent === 'red')   return { color: 'var(--red-600)',   bg: 'var(--red-50)'   }
-  if (accent === 'green') return { color: 'var(--green-600)', bg: 'var(--green-50)' }
-  if (accent === 'brand') return { color: 'var(--brand-600)', bg: 'var(--brand-50)' }
-  return { color: 'var(--n-600)', bg: 'var(--n-100)' }
-}
+// ── Main Page ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { projects } = useProjects()
   const { tasks }    = useTasks()
-  const { team, semaphoreFor, projectMetrics, getPriority } = useConfigData()
-  const { logs: auditLogs } = useAuditLogs(6)
+  const { statuses, projectMetrics } = useConfigData()
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const tasksDone   = tasks.filter(t => t.status === 'Completado').length
-  const tasksLate   = tasks.filter(t => t.status === 'Retrasado').length
-  const tasksInProg = tasks.filter(t => t.status === 'En Progreso').length
-  const avgProgress = tasks.length === 0 ? 0 : tasks.reduce((s, t) => s + (t.progress || 0), 0) / tasks.length
+  const [selectedPid, setSelectedPid] = useState('')
+  const selectedProject = selectedPid ? (projects.find(p => p.id === selectedPid) ?? null) : null
 
-  const rows = useMemo(() => projects.map(p => ({
-    p, m: projectMetrics(p, tasks), sem: semaphoreFor(p, tasks),
-  })), [projects, tasks, projectMetrics, semaphoreFor])
+  const scopedTasks    = selectedPid ? tasks.filter(t => t.project_id === selectedPid) : tasks
+  const scopedProjects = selectedPid ? (selectedProject ? [selectedProject] : []) : projects
 
-  const counts = useMemo(() => ({
-    green: rows.filter(r => r.sem.kind === 'green').length,
-    amber: rows.filter(r => r.sem.kind === 'amber').length,
-    red:   rows.filter(r => r.sem.kind === 'red').length,
-    gray:  rows.filter(r => r.sem.kind === 'gray').length,
-  }), [rows])
+  const projectsActive = useMemo(() =>
+    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.total > 0 && m.completed < m.total }).length
+  , [scopedProjects, tasks, projectMetrics])
 
-  const activeProjects = useMemo(() =>
-    [...rows].sort((a, b) => b.m.late - a.m.late).slice(0, 6)
-  , [rows])
+  const projectsDone = useMemo(() =>
+    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.total > 0 && m.completed === m.total }).length
+  , [scopedProjects, tasks, projectMetrics])
 
-  const priorityTasks = useMemo(() =>
-    tasks
-      .filter(t => t.status !== 'Completado')
-      .map(t => ({
-        ...t,
-        _priority: getPriority(t.priority),
-        _project: projects.find(p => p.id === t.project_id),
-      }))
-      .sort((a, b) => {
-        const aLate = a.status === 'Retrasado' ? 0 : 1
-        const bLate = b.status === 'Retrasado' ? 0 : 1
-        if (aLate !== bLate) return aLate - bLate
-        return (a._priority?.sort_order ?? 99) - (b._priority?.sort_order ?? 99)
-      })
-      .slice(0, 7)
-  , [tasks, projects, getPriority])
+  const projectsLate = useMemo(() =>
+    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.late > 0 }).length
+  , [scopedProjects, tasks, projectMetrics])
+
+  const tasksByStatus = useMemo(() =>
+    statuses.reduce((acc, s) => {
+      acc[s.id] = scopedTasks.filter(t => t.status === s.name).length
+      return acc
+    }, {} as Record<string, number>)
+  , [statuses, scopedTasks])
+
+  const totalTasks  = scopedTasks.length
+  const tasksInProg = scopedTasks.filter(t => t.status === 'En Progreso').length
+  const tasksCrit   = scopedTasks.filter(t => t.priority === 'Crítica' && t.status !== 'Completado').length
+  const doneCount   = tasksByStatus[statuses.find(s => s.name === 'Completado')?.id ?? ''] ?? 0
+
+  const avgProgress = scopedTasks.length === 0 ? 0
+    : scopedTasks.reduce((s, t) => s + (t.progress || 0), 0) / scopedTasks.length
+
+  const totalBudget = scopedTasks.reduce((s, t) => s + (t.budget || 0), 0)
+  const totalCost   = scopedTasks.reduce((s, t) => s + (t.actual_cost || 0), 0)
+
+  // Timeline progress
+  let timelineProgress = 0
+  let timelineLabel    = ''
+  if (selectedProject) {
+    if (selectedProject.start_date && selectedProject.end_date) {
+      const tot     = daysBetween(selectedProject.start_date, selectedProject.end_date)
+      const elapsed = daysBetween(selectedProject.start_date, isoDay(TODAY))
+      timelineProgress = Math.max(0, Math.min(1, elapsed / (tot || 1)))
+      timelineLabel = `${fmtDate(selectedProject.start_date)} → ${fmtDate(selectedProject.end_date)}`
+    }
+  } else {
+    const allStarts = scopedProjects.map(p => p.start_date).filter(Boolean).sort() as string[]
+    const allEnds   = scopedProjects.map(p => p.end_date).filter(Boolean).sort() as string[]
+    const portStart = allStarts[0]
+    const portEnd   = allEnds[allEnds.length - 1]
+    if (portStart && portEnd) {
+      const tot     = daysBetween(portStart, portEnd)
+      const elapsed = daysBetween(portStart, isoDay(TODAY))
+      timelineProgress = Math.max(0, Math.min(1, elapsed / (tot || 1)))
+      timelineLabel = `${fmtDate(portStart)} → ${fmtDate(portEnd)}`
+    }
+  }
+
+  const daysLeft = selectedProject
+    ? (daysFromToday(selectedProject.end_date) ?? 0)
+    : scopedProjects.length === 0 ? 0
+    : Math.min(...scopedProjects.filter(p => p.end_date).map(p => daysFromToday(p.end_date) ?? 0))
 
   const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'equipo'
   const firstName   = displayName.split(' ')[0]
-  const dayLabel    = `${DAYS_ES[(TODAY.getDay() + 6) % 7]}, ${TODAY.getDate()} de ${MONTHS_FULL[TODAY.getMonth()]}`
-
-  const gauges = [
-    { label: 'En curso',       count: counts.green, color: '#10B981' },
-    { label: 'En riesgo',      count: counts.amber, color: '#F59E0B' },
-    { label: 'Crítico',        count: counts.red,   color: '#EF4444', pulse: counts.red > 0 },
-    { label: 'Sin planificar', count: counts.gray,  color: '#A8AEBA' },
-  ]
 
   return (
-    <div className="fade-in page-content" style={{ maxWidth: 1480, margin: '0 auto' }}>
-      {/* Hero */}
-      <div className="resp-hero">
-        <div className="card" style={{
-          position: 'relative', overflow: 'hidden', padding: '20px 22px',
-          background: 'linear-gradient(135deg, #ffffff 0%, #fbfbff 60%, #f4f3ff 100%)',
-          border: '1px solid var(--n-200)',
-        }}>
-          <div aria-hidden style={{ position: 'absolute', top: -60, right: -40, width: 200, height: 200, borderRadius: 999, background: 'radial-gradient(circle at 30% 30%, rgba(79,70,229,0.18), transparent 70%)', filter: 'blur(8px)', pointerEvents: 'none' }} />
-          <div aria-hidden style={{ position: 'absolute', bottom: -50, left: 60, width: 160, height: 160, borderRadius: 999, background: 'radial-gradient(circle, rgba(236,72,153,0.10), transparent 70%)', pointerEvents: 'none' }} />
-
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <LiveBadge label="Sincronizado" color="var(--green-500)" />
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginBottom: 4, textTransform: 'capitalize' }}>{dayLabel}</div>
-              <h1 style={{ fontSize: 24, letterSpacing: '-0.02em', marginBottom: 6 }}>Hola, {firstName}.</h1>
-              <div style={{ fontSize: 13, color: 'var(--n-700)', lineHeight: 1.55, maxWidth: 480 }}>
-                {tasksLate > 0
-                  ? <><strong style={{ color: 'var(--red-700)' }}>{tasksLate} tareas retrasadas</strong> — empezá por lo crítico. <strong style={{ color: 'var(--n-900)' }}>{tasksInProg} en progreso</strong>.</>
-                  : <>Todo en orden. <strong style={{ color: 'var(--n-900)' }}>{tasksInProg} tareas</strong> avanzando esta semana.</>}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-              <Button icon={Plus} variant="primary" onClick={() => navigate('/projects')}>Nuevo proyecto</Button>
-              <Button icon={Plus} onClick={() => navigate('/kanban')}>Nueva tarea</Button>
-            </div>
+    <div className="fade-in" style={{ padding: '18px 24px 28px', maxWidth: '100%' }}>
+      {/* Toolbar */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        gap: 14, marginBottom: 16,
+      }}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <LiveBadge label="Sincronizado" color="var(--green-500)" />
           </div>
-
-          <div className="resp-4col" style={{
-            position: 'relative', marginTop: 18,
-            paddingTop: 16, borderTop: '1px solid var(--n-150)',
+          <h1 style={{ fontSize: 22, letterSpacing: '-0.02em' }}>
+            {selectedProject ? selectedProject.name : `Hola, ${firstName}.`}
+          </h1>
+          <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginTop: 3, textTransform: 'capitalize' }}>
+            {selectedProject
+              ? <>{selectedProject.focus_area} · {selectedProject.initiative} · <span className="mono">{timelineLabel}</span></>
+              : <>{DAYS_ES[(TODAY.getDay() + 6) % 7]}, {TODAY.getDate()} de {MONTHS_FULL[TODAY.getMonth()]} · revisión de portafolio</>}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            height: 32, padding: '0 2px 0 10px',
+            border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)',
           }}>
-            {gauges.map(g => (
-              <button key={g.label} onClick={() => navigate('/overview')}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--n-100)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ position: 'relative', display: 'inline-block' }}>
-                  {g.pulse
-                    ? <PulseDot color={g.color} size={9} />
-                    : <span style={{ width: 9, height: 9, borderRadius: 999, background: g.color, display: 'inline-block', boxShadow: `0 0 0 2px ${g.color}26` }} />}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                  <span style={{ fontSize: 11, color: 'var(--n-500)', fontWeight: 500 }}>{g.label}</span>
-                  <span className="mono tnum" style={{ fontSize: 17, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.02em' }}>
-                    <CountUpNumber value={g.count} />
-                  </span>
-                </div>
-              </button>
-            ))}
+            <span style={{ fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginRight: 4 }}>
+              Vista
+            </span>
+            <select
+              value={selectedPid}
+              onChange={e => setSelectedPid(e.target.value)}
+              style={{
+                appearance: 'none', border: 'none', outline: 'none',
+                background: 'transparent', fontSize: 12.5, fontWeight: 550,
+                color: 'var(--n-900)', paddingRight: 22, cursor: 'pointer',
+                fontFamily: 'inherit', minWidth: 180,
+                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A818F' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center',
+              }}
+            >
+              <option value="">Todo el portafolio</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <Button icon={Plus} onClick={() => navigate('/kanban')}>Tarea</Button>
+          <Button icon={Plus} variant="primary" onClick={() => navigate('/projects')}>Proyecto</Button>
+        </div>
+      </div>
+
+      {/* Row 1: calendar | Total proyectos | Status breakdown */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 1.4fr', gap: 12, marginBottom: 12 }}>
+        <MiniCalendar tasks={scopedTasks} />
+        <TotalProjectsCard
+          total={scopedProjects.length}
+          active={projectsActive}
+          done={projectsDone}
+          late={projectsLate}
+          isPortfolio={!selectedProject}
+        />
+        <StatusBreakdownCard statuses={statuses} counts={tasksByStatus} total={totalTasks} />
+      </div>
+
+      {/* Row 2: 4 quick stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+        <QuickStat icon={CheckCircle2} label="Total tareas"     value={totalTasks}  accent="green"
+          sub={`${doneCount} completadas`} />
+        <QuickStat icon={Play}         label="En progreso"       value={tasksInProg} accent="brand"
+          sub={`${totalTasks > 0 ? Math.round(tasksInProg / totalTasks * 100) : 0}% del backlog`} />
+        <QuickStat icon={Flame}        label="Prioridad crítica" value={tasksCrit}   accent="red"
+          sub="Activas no completadas" pulse={tasksCrit > 0} />
+        <QuickStat icon={Clock}        label="Días restantes"    value={daysLeft}    mono
+          accent={daysLeft < 0 ? 'red' : daysLeft <= 7 ? 'amber' : 'neutral'}
+          sub={selectedProject ? 'Hasta fin de proyecto' : 'Proyecto más próximo'} />
+      </div>
+
+      {/* Row 3: Gauge | Timeline | Donut */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr', gap: 12 }}>
+        <ProgressGaugeCard progress={avgProgress} totalTasks={totalTasks} />
+        <TimelineProgressCard progress={timelineProgress} label={timelineLabel} />
+        <BudgetDonutCard budget={totalBudget} spent={totalCost} />
+      </div>
+    </div>
+  )
+}
+
+// ── Mini Calendar ────────────────────────────────────────────────────────────
+
+function MiniCalendar({ tasks }: { tasks: Task[] }) {
+  const [view, setView] = useState({ year: TODAY.getFullYear(), month: TODAY.getMonth() })
+  const first    = new Date(view.year, view.month, 1)
+  const dow      = (first.getDay() + 6) % 7
+  const gridStart = addDays(first, -dow)
+  const days     = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i))
+
+  const lastRowStart = days[35]
+  const shouldShow42 = lastRowStart && lastRowStart.getMonth() === view.month
+  const visibleDays  = shouldShow42 ? days : days.slice(0, 35)
+
+  const hasTask = (d: Date) => {
+    const ds = isoDay(d)
+    return tasks.some(t => t.start_date && t.end_date && t.start_date <= ds && t.end_date >= ds)
+  }
+
+  const goMonth = (delta: number) => {
+    setView(v => {
+      const d = new Date(v.year, v.month + delta, 1)
+      return { year: d.getFullYear(), month: d.getMonth() }
+    })
+  }
+
+  return (
+    <div className="card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {MONTHS_ES[view.month]}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.01em' }}>
+            {view.year}
           </div>
         </div>
-
-        {/* Activity feed — real audit logs */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--n-150)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ fontSize: 13 }}>Actividad reciente</h2>
-              <LiveBadge label="Live" color="var(--green-500)" />
+        <div style={{ display: 'flex', gap: 2 }}>
+          <IconButton icon={ChevronLeft}  size={22} onClick={() => goMonth(-1)} title="Mes anterior" />
+          <IconButton icon={ChevronRight} size={22} onClick={() => goMonth(1)}  title="Mes siguiente" />
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {['L','M','X','J','V','S','D'].map(d => (
+          <div key={d} style={{
+            fontSize: 9.5, color: 'var(--n-400)', fontWeight: 600,
+            textAlign: 'center', letterSpacing: '0.04em', padding: '2px 0',
+          }}>{d}</div>
+        ))}
+        {visibleDays.map((d, i) => {
+          const isOther = d.getMonth() !== view.month
+          const isToday = isoDay(d) === isoDay(TODAY)
+          const has     = hasTask(d)
+          return (
+            <div key={i}
+              className="mono tnum"
+              style={{
+                position: 'relative', aspectRatio: '1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10.5,
+                color: isOther ? 'var(--n-300)' : isToday ? '#fff' : 'var(--n-700)',
+                background: isToday ? 'var(--brand-600)' : 'transparent',
+                borderRadius: 5, cursor: 'pointer',
+                fontWeight: isToday ? 600 : 500,
+                transition: 'background .15s',
+              }}
+              onMouseEnter={e => { if (!isToday) e.currentTarget.style.background = 'var(--n-100)' }}
+              onMouseLeave={e => { if (!isToday) e.currentTarget.style.background = 'transparent' }}
+            >
+              {d.getDate()}
+              {has && !isOther && !isToday && (
+                <span style={{
+                  position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)',
+                  width: 3, height: 3, borderRadius: 999, background: 'var(--brand-500)',
+                }} />
+              )}
             </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Total Projects Card ──────────────────────────────────────────────────────
+
+function TotalProjectsCard({ total, active, done, late, isPortfolio }: {
+  total: number; active: number; done: number; late: number; isPortfolio: boolean
+}) {
+  return (
+    <div className="card" style={{
+      padding: '14px 16px', position: 'relative', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', gap: 12,
+      background: 'linear-gradient(135deg, var(--n-0) 0%, var(--brand-50) 100%)',
+    }}>
+      <div aria-hidden style={{
+        position: 'absolute', top: -40, right: -30,
+        width: 130, height: 130, borderRadius: 999,
+        background: 'radial-gradient(circle, rgba(79,70,229,0.10), transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+        <span style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: 'linear-gradient(135deg, var(--brand-500), var(--brand-700))',
+          color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(79,70,229,0.3)',
+        }}>
+          <FolderOpen size={16} />
+        </span>
+        <div>
+          <div style={{ fontSize: 11.5, color: 'var(--n-600)', fontWeight: 500, letterSpacing: '-0.005em' }}>
+            {isPortfolio ? 'Total proyectos' : 'Proyecto seleccionado'}
           </div>
-          <div className="stagger" style={{ display: 'flex', flexDirection: 'column' }}>
-            {auditLogs.length === 0 && (
-              <div style={{ padding: '32px', textAlign: 'center', fontSize: 12.5, color: 'var(--n-400)' }}>
-                Sin actividad reciente
-              </div>
-            )}
-            {auditLogs.map((log, i) => {
-              const meta = ACTION_META[log.action] ?? { icon: Check, accent: 'neutral' }
-              const { color, bg } = accentColor(
-                log.action === 'eliminar' ? 'red'
-                  : log.action === 'crear' ? 'neutral'
-                  : 'brand'
-              )
-              const IcIcon = meta.icon
-              const who    = log.user_name || log.user_email || 'Sistema'
-              const whoShort = who.includes('@') ? who.split('@')[0] : who.split(' ')[0]
-              const when   = formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: es })
+          <div className="mono tnum" style={{ fontSize: 28, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
+            <CountUpNumber value={total} />
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, position: 'relative' }}>
+        <MiniPill label="Activos"   value={active} color="var(--brand-600)" />
+        <MiniPill label="Completos" value={done}   color="var(--green-600)" />
+        <MiniPill label="Retrasado" value={late}   color="var(--red-600)"   pulse={late > 0} />
+      </div>
+    </div>
+  )
+}
 
-              // Detect "completed" task moves
-              const isCompleted = log.action === 'mover' && (log.details as Record<string, unknown>)?.to === 'Completado'
-              const displayAccent = isCompleted ? accentColor('green') : { color, bg }
-              const DisplayIcon   = isCompleted ? Check : IcIcon
+function MiniPill({ label, value, color, pulse }: { label: string; value: number; color: string; pulse?: boolean }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+      padding: '7px 10px', borderRadius: 7,
+      background: 'var(--n-0)', border: '1px solid var(--n-200)',
+    }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: 'var(--n-500)', fontWeight: 500, letterSpacing: '-0.005em' }}>
+        {pulse
+          ? <PulseDot color={color} size={6} />
+          : <span style={{ width: 6, height: 6, borderRadius: 999, background: color }} />}
+        {label}
+      </span>
+      <span className="mono tnum" style={{ fontSize: 15, fontWeight: 600, color: 'var(--n-900)', marginTop: 2, letterSpacing: '-0.012em' }}>
+        <CountUpNumber value={value} />
+      </span>
+    </div>
+  )
+}
 
-              return (
-                <div key={log.id} style={{ padding: '10px 16px', display: 'flex', alignItems: 'flex-start', gap: 10, borderTop: i === 0 ? 'none' : '1px solid var(--n-150)' }}>
-                  <span style={{ width: 22, height: 22, borderRadius: 999, background: displayAccent.bg, color: displayAccent.color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', marginTop: 1 }}>
-                    <DisplayIcon size={11} />
-                  </span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'var(--n-700)', lineHeight: 1.45 }}>
-                      <strong style={{ color: 'var(--n-900)', fontWeight: 600 }}>{whoShort}</strong>{' '}
-                      <span style={{ color: 'var(--n-500)' }}>{log.action}</span>{' '}
-                      <span style={{ color: 'var(--n-800)' }}>{log.entity_type}</span>
-                      {log.entity_name && (
-                        <span style={{ color: 'var(--n-600)' }}> · <em>{log.entity_name}</em></span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 2 }}>{when}</div>
-                  </div>
-                </div>
-              )
-            })}
+// ── Status Breakdown Card ────────────────────────────────────────────────────
+
+function StatusBreakdownCard({ statuses, counts, total }: {
+  statuses: StatusObj[]; counts: Record<string, number>; total: number
+}) {
+  return (
+    <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: 'var(--amber-50)', color: 'var(--amber-600)',
+            border: '1px solid var(--amber-100)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <List size={16} />
+          </span>
+          <div>
+            <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500 }}>Tareas por estado</div>
+            <div className="mono tnum" style={{ fontSize: 13, color: 'var(--n-900)', fontWeight: 600 }}>
+              {total} tareas en total
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="stagger resp-stats">
-        <StatCard icon={FolderOpen}    label="Proyectos"          numericValue={projects.length} sub={`${projects.length} activos`} accent="brand"   sparkSeed={1.3} sparkBase={projects.length} />
-        <StatCard icon={CheckCircle2}  label="Tareas completadas" numericValue={tasksDone}       sub={`de ${tasks.length}`}        accent="green"   sparkSeed={2.7} sparkBase={tasksDone} />
-        <StatCard icon={AlertTriangle} label="Tareas retrasadas"  numericValue={tasksLate}       sub={tasksLate > 0 ? 'Requieren atención' : 'Todo en orden'} accent="red" sparkSeed={4.1} sparkBase={tasksLate + 3} urgent={tasksLate > 0} />
-        <StatCard icon={Play}          label="En progreso"        numericValue={tasksInProg}     sub={tasks.length > 0 ? `${Math.round((tasksInProg / tasks.length) * 100)}% del backlog` : '—'} accent="brand" sparkSeed={5.5} sparkBase={tasksInProg} />
-        <StatCard icon={DollarSign}    label="Presupuesto"        value={fmtMoneyCompact(tasks.reduce((s, t) => s + (t.budget || 0), 0))} sub="Portafolio" accent="neutral" sparkSeed={6.2} sparkBase={50} />
-        <StatCard icon={TrendingUp}    label="Avance promedio"    numericValue={Math.round(avgProgress * 100)} displaySuffix="%" sub="Progreso global" accent="amber" trend={4} sparkSeed={3.4} sparkBase={Math.round(avgProgress * 100)} />
+      {/* Stacked bar */}
+      <div style={{ display: 'flex', height: 6, borderRadius: 999, overflow: 'hidden', background: 'var(--n-100)' }}>
+        {statuses.map(s => (
+          counts[s.id] > 0 ? (
+            <div key={s.id} style={{ flex: counts[s.id], background: s.dot, transition: 'flex .3s' }}
+              title={`${s.name}: ${counts[s.id]}`} />
+          ) : null
+        ))}
       </div>
 
-      {/* Two columns */}
-      <div className="resp-2col">
-        {/* Active projects */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--n-150)' }}>
-            <div>
-              <h2 style={{ fontSize: 13 }}>Proyectos activos</h2>
-              <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 1 }}>Ordenados por riesgo</div>
-            </div>
-            <button onClick={() => navigate('/projects')} style={{ fontSize: 11.5, color: 'var(--brand-700)', fontWeight: 550, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              Ver todos <ArrowRight size={12} />
-            </button>
+      {/* Status chips */}
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: `repeat(${statuses.length}, 1fr)`, gap: 6 }}>
+        {statuses.map(s => (
+          <div key={s.id}
+            style={{
+              border: `1px solid ${s.dot}33`,
+              background: s.bg,
+              borderRadius: 8, padding: '8px 9px',
+              display: 'flex', flexDirection: 'column',
+              position: 'relative', overflow: 'hidden',
+              transition: 'transform .15s, box-shadow .15s',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 10px -2px ${s.dot}33` }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: s.dot, fontWeight: 600, letterSpacing: '-0.005em' }}>
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: s.dot }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+            </span>
+            <span className="mono tnum" style={{ fontSize: 18, fontWeight: 600, color: 'var(--n-900)', marginTop: 2, letterSpacing: '-0.02em', lineHeight: 1 }}>
+              <CountUpNumber value={counts[s.id] || 0} />
+            </span>
           </div>
-          <div className="stagger">
-            {activeProjects.map(({ p, m, sem }, i) => {
-              const color = getProjectColor(p.color)
-              const lead  = team.find(t => t.name === p.leader)
-              return (
-                <div key={p.id} onClick={() => navigate(`/projects/${p.id}`)}
-                  style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '4px 1fr 100px 90px 80px', gap: 12, alignItems: 'center', borderTop: i === 0 ? 'none' : '1px solid var(--n-150)', cursor: 'pointer', transition: 'background .15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <span style={{ width: 4, height: 28, borderRadius: 2, background: color, boxShadow: `0 0 0 3px ${color}11` }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-                      <Semaforo kind={sem.kind} />
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>{p.focus_area} · {p.initiative}</div>
-                  </div>
-                  <ProgressBar value={m.progress} showLabel projectColor={color} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {m.late > 0 ? (
-                      <span className="mono tnum" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--red-700)', fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'var(--red-50)' }}>
-                        <PulseDot color="var(--red-500)" size={6} />{m.late} retr.
-                      </span>
-                    ) : (
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--n-500)' }}>{m.completed}/{m.total}</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Avatar member={lead} size={22} />
-                  </div>
-                </div>
-              )
-            })}
-            {activeProjects.length === 0 && (
-              <div style={{ padding: '32px', textAlign: 'center', fontSize: 12.5, color: 'var(--n-400)' }}>
-                No hay proyectos activos
-              </div>
-            )}
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Quick Stat ───────────────────────────────────────────────────────────────
+
+type Accent = 'brand' | 'red' | 'amber' | 'green' | 'neutral'
+
+function QuickStat({ icon: Icon, label, value, sub, accent = 'brand', pulse = false, mono = false }: {
+  icon: ElementType; label: string; value: number; sub?: string
+  accent?: Accent; pulse?: boolean; mono?: boolean
+}) {
+  const palettes: Record<Accent, { bg: string; fg: string }> = {
+    brand:   { bg: 'var(--brand-50)',  fg: 'var(--brand-600)' },
+    red:     { bg: 'var(--red-50)',    fg: 'var(--red-600)'   },
+    amber:   { bg: 'var(--amber-50)',  fg: 'var(--amber-600)' },
+    green:   { bg: 'var(--green-50)',  fg: 'var(--green-600)' },
+    neutral: { bg: 'var(--n-100)',     fg: 'var(--n-600)'     },
+  }
+  const p = palettes[accent]
+  return (
+    <div className="card card-hover" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{
+        width: 38, height: 38, borderRadius: 10,
+        background: p.bg, color: p.fg,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        flex: '0 0 auto', position: 'relative',
+      }}>
+        <Icon size={18} />
+        {pulse && (
+          <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8 }}>
+            <PulseDot color="var(--red-500)" size={8} />
+          </span>
+        )}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500, marginBottom: 1 }}>{label}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span className={mono ? 'mono tnum' : 'tnum'} style={{ fontSize: 22, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.022em', lineHeight: 1 }}>
+            <CountUpNumber value={value} />
+          </span>
+          {sub && <span style={{ fontSize: 11, color: 'var(--n-500)' }}>{sub}</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Progress Gauge (semi-circle) ─────────────────────────────────────────────
+
+function ProgressGaugeCard({ progress, totalTasks }: { progress: number; totalTasks: number }) {
+  const pct = Math.max(0, Math.min(1, progress))
+  const [animPct, setAnimPct] = useState(0)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimPct(pct))
+    return () => cancelAnimationFrame(id)
+  }, [pct])
+
+  const r  = 64
+  const W  = 200
+  const H  = 120
+  const cx = W / 2
+  const cy = H - 10
+  const C  = Math.PI * r
+
+  return (
+    <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: 'var(--brand-50)', color: 'var(--brand-600)',
+          border: '1px solid var(--brand-100)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Gauge size={16} />
+        </span>
+        <div>
+          <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500 }}>Progreso global</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>Promedio por tarea</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', marginTop: 4 }}>
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+          <defs>
+            <linearGradient id="gauge-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stopColor="var(--brand-500)" />
+              <stop offset="100%" stopColor="var(--brand-700)" />
+            </linearGradient>
+          </defs>
+          <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+            fill="none" stroke="var(--n-100)" strokeWidth="14" strokeLinecap="round" />
+          <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+            fill="none" stroke="url(#gauge-grad)" strokeWidth="14" strokeLinecap="round"
+            style={{
+              strokeDasharray: C,
+              strokeDashoffset: C * (1 - animPct),
+              transition: 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)',
+            }} />
+        </svg>
+        <div style={{ position: 'absolute', top: H - 50, left: 0, right: 0, textAlign: 'center' }}>
+          <div className="mono tnum" style={{ fontSize: 28, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.025em', lineHeight: 1 }}>
+            <CountUpNumber value={Math.round(pct * 100)} suffix="%" />
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--n-500)', marginTop: 2 }}>de {totalTasks} tareas</div>
+        </div>
+      </div>
+      <div className="mono tnum" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: 'var(--n-400)', padding: '0 4px' }}>
+        <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Timeline Progress Bar ────────────────────────────────────────────────────
+
+function TimelineProgressCard({ progress, label }: { progress: number; label: string }) {
+  const pct = Math.max(0, Math.min(1, progress))
+  return (
+    <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: '#F5F3FF', color: '#7C3AED',
+            border: '1px solid #DDD6FE',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Calendar size={16} />
+          </span>
+          <div>
+            <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500 }}>Timeline</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>Tiempo transcurrido</div>
           </div>
         </div>
+        <div className="mono tnum" style={{ fontSize: 22, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.022em' }}>
+          <CountUpNumber value={Math.round(pct * 100)} suffix="%" />
+        </div>
+      </div>
 
-        {/* Priority tasks */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--n-150)' }}>
-            <div>
-              <h2 style={{ fontSize: 13 }}>Tareas prioritarias</h2>
-              <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 1 }}>Lo más urgente esta semana</div>
-            </div>
-            <button onClick={() => navigate('/consolidated')} style={{ fontSize: 11.5, color: 'var(--brand-700)', fontWeight: 550, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              Ver todas <ArrowRight size={12} />
-            </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ position: 'relative', height: 14, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, bottom: 0,
+            width: `${pct * 100}%`,
+            background: 'linear-gradient(90deg, var(--brand-500) 0%, #7C3AED 100%)',
+            borderRadius: 999,
+            transition: 'width 1.2s cubic-bezier(.4,0,.2,1)',
+            boxShadow: '0 1px 2px rgba(79,70,229,0.3)',
+          }}>
+            <div className="shimmer" style={{ position: 'absolute', inset: 0, borderRadius: 999, opacity: 0.45 }} />
           </div>
-          <div className="stagger">
-            {priorityTasks.map((t, i) => {
-              const isLate = t.status === 'Retrasado'
-              const projColor = getProjectColor(t._project?.color)
-              return (
-                <div key={t.id}
-                  style={{
-                    padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                    borderTop: i === 0 ? 'none' : '1px solid var(--n-150)',
-                    background: isLate ? 'linear-gradient(90deg, var(--red-50) 0%, transparent 60%)' : 'transparent',
-                    transition: 'background .15s', cursor: 'pointer',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = isLate ? 'linear-gradient(90deg, rgba(254,226,226,0.7) 0%, var(--n-25) 70%)' : 'var(--n-25)'}
-                  onMouseLeave={e => e.currentTarget.style.background = isLate ? 'linear-gradient(90deg, var(--red-50) 0%, transparent 60%)' : 'transparent'}
-                >
-                  <span style={{ width: 3, alignSelf: 'stretch', borderRadius: 999, background: projColor }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--n-500)', marginTop: 2 }}>
-                      <span>{t._project?.name}</span>
-                      <span>·</span>
-                      <span className="mono tnum">{fmtDate(t.end_date)}</span>
-                    </div>
-                  </div>
-                  <PriorityBadge priority={t.priority} size="sm" />
-                  <DaysLeftChip endIso={t.end_date} condensed />
-                </div>
-              )
-            })}
-            {priorityTasks.length === 0 && (
-              <div style={{ padding: '32px', textAlign: 'center', fontSize: 12.5, color: 'var(--n-400)' }}>Sin tareas pendientes</div>
-            )}
+          <div style={{
+            position: 'absolute', top: -3, bottom: -3,
+            left: `calc(${pct * 100}% - 1px)`,
+            width: 2, background: '#fff', borderRadius: 1,
+            boxShadow: '0 0 0 1px var(--n-200), 0 2px 4px rgba(0,0,0,0.1)',
+            transition: 'left 1.2s cubic-bezier(.4,0,.2,1)',
+          }} />
+        </div>
+        <div className="mono tnum" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--n-400)' }}>
+          <span>0%</span><span>20%</span><span>40%</span><span>60%</span><span>80%</span><span>100%</span>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 11.5, color: 'var(--n-600)' }}>
+        <span className="mono">{label || '—'}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Budget Donut ─────────────────────────────────────────────────────────────
+
+function BudgetDonutCard({ budget, spent }: { budget: number; spent: number }) {
+  const pct        = budget > 0 ? spent / budget : 0
+  const animPct    = useCountUp(Math.min(1, pct), 1100)
+  const safePct    = Math.max(0, Math.min(1, animPct))
+  const overBudget = spent > budget
+  const r          = 42
+  const C          = 2 * Math.PI * r
+  const size       = 120
+
+  return (
+    <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: 'var(--green-50)', color: 'var(--green-600)',
+          border: '1px solid var(--green-100)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <DollarSign size={16} />
+        </span>
+        <div>
+          <div style={{ fontSize: 11.5, color: 'var(--n-500)', fontWeight: 500 }}>Presupuesto</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>
+            {overBudget ? 'Sobre el presupuesto' : 'Gastado de presupuesto'}
           </div>
         </div>
       </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flex: '0 0 auto' }}>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--n-100)" strokeWidth="12" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none"
+            stroke={overBudget ? 'var(--red-500)' : 'var(--green-500)'} strokeWidth="12"
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            style={{
+              strokeDasharray: C,
+              strokeDashoffset: C * (1 - safePct),
+              transition: 'stroke-dashoffset .15s linear',
+            }} />
+          <text x={size / 2} y={size / 2 - 2} textAnchor="middle"
+            style={{ fontSize: 22, fontWeight: 600, fill: 'var(--n-900)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em' }}>
+            {Math.round(safePct * 100)}%
+          </text>
+          <text x={size / 2} y={size / 2 + 14} textAnchor="middle"
+            style={{ fontSize: 9, fill: 'var(--n-500)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            usado
+          </text>
+        </svg>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <BudgetLine label="Total presupuesto"             value={fmtMoneyCompact(budget)}              color="var(--n-700)"                                                 dot="var(--n-300)" />
+          <BudgetLine label="Total gastado"                 value={fmtMoneyCompact(spent)}               color={overBudget ? 'var(--red-700)' : 'var(--green-700)'}           dot={overBudget ? 'var(--red-500)' : 'var(--green-500)'} />
+          <BudgetLine label={overBudget ? 'Excedido' : 'Restante'} value={fmtMoneyCompact(Math.abs(budget - spent))} color="var(--n-700)"                                   dot="var(--brand-500)" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BudgetLine({ label, value, color, dot }: { label: string; value: string; color: string; dot: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--n-600)' }}>
+        <span style={{ width: 6, height: 6, borderRadius: 999, background: dot }} />
+        {label}
+      </span>
+      <span className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600, color }}>{value}</span>
     </div>
   )
 }
