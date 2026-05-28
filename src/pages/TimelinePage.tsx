@@ -5,13 +5,14 @@ import { useConfigData } from '../hooks/useConfigData'
 import { IconButton } from '../components/ui/Button'
 import { TODAY, addDays, isoDay, parseISO, fmtDate, MONTHS_FULL, getProjectColor } from '../lib/helpers'
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { PageLoader } from '../components/ui/Loader'
 
 const WEEKS = 14
 const DAY_W = 12
 
 export default function TimelinePage() {
-  const { projects } = useProjects()
-  const { tasks }    = useTasks()
+  const { projects, loading: projLoading } = useProjects()
+  const { tasks, loading: tasksLoading }   = useTasks()
   const { team }     = useConfigData()
 
   const [projectFilter, setProjectFilter] = useState('')
@@ -76,6 +77,12 @@ export default function TimelinePage() {
     border: '1px solid var(--n-200)', borderRadius: 6,
     background: 'var(--n-0)', color: 'var(--n-800)', cursor: 'pointer',
   }
+
+  if (tasksLoading || projLoading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <PageLoader />
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

@@ -5,6 +5,7 @@ import { useProjects } from '../hooks/useProjects'
 import { useConfigData } from '../hooks/useConfigData'
 import { useAuth } from '../hooks/useAuth'
 import { Button, IconButton } from '../components/ui/Button'
+import { PageLoader } from '../components/ui/Loader'
 import { LiveBadge, PulseDot, CountUpNumber, useCountUp } from '../components/ui/Motion'
 import {
   CheckCircle2, Play, Flame, Clock, FolderOpen, List,
@@ -20,9 +21,9 @@ import type { StatusObj } from '../hooks/useConfigData'
 // ── Main Page ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const { projects } = useProjects()
-  const { tasks }    = useTasks()
-  const { statuses, projectMetrics } = useConfigData()
+  const { projects, loading: projLoading } = useProjects()
+  const { tasks, loading: taskLoading }    = useTasks()
+  const { statuses, projectMetrics, loading: configLoading } = useConfigData()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -93,13 +94,14 @@ export default function DashboardPage() {
   const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'equipo'
   const firstName   = displayName.split(' ')[0]
 
+  if (projLoading || taskLoading || configLoading) return (
+    <div className="dash-page fade-in"><PageLoader /></div>
+  )
+
   return (
-    <div className="fade-in" style={{ padding: '18px 24px 28px', maxWidth: '100%' }}>
+    <div className="dash-page fade-in">
       {/* Toolbar */}
-      <div style={{
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        gap: 14, marginBottom: 16,
-      }}>
+      <div className="dash-toolbar">
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <LiveBadge label="Sincronizado" color="var(--green-500)" />
@@ -113,7 +115,7 @@ export default function DashboardPage() {
               : <>{DAYS_ES[(TODAY.getDay() + 6) % 7]}, {TODAY.getDate()} de {MONTHS_FULL[TODAY.getMonth()]} · revisión de portafolio</>}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="dash-actions">
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
             height: 32, padding: '0 2px 0 10px',
@@ -144,7 +146,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 1: calendar | Total proyectos | Status breakdown */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 1.4fr', gap: 12, marginBottom: 12 }}>
+      <div className="dash-row1">
         <MiniCalendar tasks={scopedTasks} />
         <TotalProjectsCard
           total={scopedProjects.length}
@@ -157,7 +159,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 2: 4 quick stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+      <div className="dash-row2">
         <QuickStat icon={CheckCircle2} label="Total tareas"     value={totalTasks}  accent="green"
           sub={`${doneCount} completadas`} />
         <QuickStat icon={Play}         label="En progreso"       value={tasksInProg} accent="brand"
@@ -170,7 +172,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 3: Gauge | Timeline | Donut */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr', gap: 12 }}>
+      <div className="dash-row3">
         <ProgressGaugeCard progress={avgProgress} totalTasks={totalTasks} />
         <TimelineProgressCard progress={timelineProgress} label={timelineLabel} />
         <BudgetDonutCard budget={totalBudget} spent={totalCost} />

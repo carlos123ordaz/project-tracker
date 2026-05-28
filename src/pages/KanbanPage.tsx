@@ -11,6 +11,7 @@ import Modal from '../components/ui/Modal'
 import TaskForm from '../components/tasks/TaskForm'
 import TaskDrawer from '../components/ui/TaskDrawer'
 import { Plus, AlertTriangle } from 'lucide-react'
+import { PageLoader } from '../components/ui/Loader'
 import { fmtDate, getProjectColor } from '../lib/helpers'
 import type { Task } from '../lib/types'
 
@@ -20,9 +21,9 @@ interface DropTarget {
 }
 
 export default function KanbanPage() {
-  const { tasks, createTask, updateTask, deleteTask, reorderTask } = useTasks()
+  const { tasks, createTask, updateTask, deleteTask, reorderTask, loading: tasksLoading } = useTasks()
   const { projects }                                               = useProjects()
-  const { statuses, types, getMember }                             = useConfigData()
+  const { statuses, types, getMember, loading: configLoading }     = useConfigData()
 
   const [projectFilter, setProjectFilter] = useState('')
   const [dragId,      setDragId]      = useState<string | null>(null)
@@ -45,6 +46,12 @@ export default function KanbanPage() {
     visibleTasks.forEach(t => { if (map[t.status]) map[t.status].push(t) })
     return map
   }, [statuses, visibleTasks])
+
+  if (configLoading || tasksLoading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <PageLoader />
+    </div>
+  )
 
   const colTint = (hex: string, alpha: number) =>
     hex + Math.round(alpha * 255).toString(16).padStart(2, '0')

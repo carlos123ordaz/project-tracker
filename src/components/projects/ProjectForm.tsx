@@ -74,7 +74,7 @@ export default function ProjectForm({ initial, onSubmit, onCancel }: ProjectForm
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="form-grid">
         <Field label="Nombre del proyecto *" span2>
           <input
             autoFocus value={form.name}

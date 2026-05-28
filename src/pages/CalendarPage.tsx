@@ -9,10 +9,11 @@ import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
 import { TODAY, addDays, isoDay, parseISO, DAYS_ES, MONTHS_FULL, getProjectColor } from '../lib/helpers'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { PageLoader } from '../components/ui/Loader'
 
 export default function CalendarPage() {
-  const { projects }  = useProjects()
-  const { tasks }     = useTasks()
+  const { projects }              = useProjects()
+  const { tasks, loading: tasksLoading } = useTasks()
   const { team, getMember } = useConfigData()
 
   const [projectFilter, setProjectFilter] = useState('')
@@ -69,6 +70,12 @@ export default function CalendarPage() {
   }
 
   const selDate = parseISO(selectedDay)
+
+  if (tasksLoading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <PageLoader />
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

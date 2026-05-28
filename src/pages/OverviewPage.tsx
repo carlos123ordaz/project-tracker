@@ -8,6 +8,7 @@ import { Avatar } from '../components/ui/Avatar'
 import { Semaforo } from '../components/ui/Semaforo'
 import { DaysLeftChip } from '../components/ui/Chips'
 import { AlertTriangle } from 'lucide-react'
+import { PageLoader } from '../components/ui/Loader'
 import { getProjectColor } from '../lib/helpers'
 import type { SemKind } from '../hooks/useConfigData'
 
@@ -26,7 +27,7 @@ const TH: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWe
 const TD: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
 
 export default function OverviewPage() {
-  const { projects } = useProjects()
+  const { projects, loading: projLoading } = useProjects()
   const { tasks }    = useTasks()
   const { semaphoreFor, projectMetrics, getMember } = useConfigData()
   const navigate     = useNavigate()
@@ -46,6 +47,12 @@ export default function OverviewPage() {
   }), [rows])
 
   const sorted = useMemo(() => [...rows].sort((a, b) => SEM_ORDER[a.sem.kind] - SEM_ORDER[b.sem.kind]), [rows])
+
+  if (projLoading) return (
+    <div className="page-content" style={{ maxWidth: 1500, margin: '0 auto' }}>
+      <PageLoader />
+    </div>
+  )
 
   return (
     <div className="page-content" style={{ maxWidth: 1500, margin: '0 auto' }}>

@@ -116,6 +116,7 @@ p  { margin: 0; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes spin      { to { transform: rotate(360deg); } }
 @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeUp    { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes scaleIn   { from { opacity: 0; transform: translateY(4px) scale(.985); } to { opacity: 1; transform: none; } }
@@ -162,6 +163,17 @@ tr:hover .row-actions,
 /* Page content wrapper — replaces inline padding so media queries can override */
 .page-content { padding: 20px 24px; }
 
+/* ─── Dashboard grids ────────────────────────────────────────────────────── */
+.dash-page    { padding: 18px 24px 28px; }
+.dash-toolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.dash-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dash-row1    { display: grid; grid-template-columns: 260px 1fr 1.4fr; gap: 12px; margin-bottom: 12px; }
+.dash-row2    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+.dash-row3    { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; }
+
+/* ─── Form 2-col grid (ProjectForm / TaskForm) ───────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
 /* Sidebar base (desktop) */
 .sidebar-nav { overflow: hidden; z-index: 5; }
 
@@ -182,6 +194,7 @@ tr:hover .row-actions,
 /* ─── Breakpoint: large tablet (≤1080px) ─────────────────────────────────── */
 @media (max-width: 1080px) {
   .resp-stats { grid-template-columns: repeat(3, 1fr); }
+  .dash-row3  { grid-template-columns: 1fr 1fr; }
 }
 
 /* ─── Breakpoint: tablet / small (≤768px) ───────────────────────────────── */
@@ -192,6 +205,12 @@ tr:hover .row-actions,
   .resp-stats   { grid-template-columns: repeat(3, 1fr); }
   .resp-4col    { grid-template-columns: repeat(2, 1fr); }
   .resp-hide    { display: none !important; }
+
+  .dash-page    { padding: 12px 14px 20px; }
+  .dash-toolbar { margin-bottom: 12px; }
+  .dash-row1    { grid-template-columns: 1fr; }
+  .dash-row2    { grid-template-columns: repeat(2, 1fr); }
+  .dash-row3    { grid-template-columns: 1fr; }
 
   /* Sidebar becomes a fixed overlay drawer */
   .sidebar-nav {
@@ -216,6 +235,9 @@ tr:hover .row-actions,
 @media (max-width: 480px) {
   .resp-stats { grid-template-columns: repeat(2, 1fr); }
   .page-content { padding: 10px 12px; }
+  .dash-page  { padding: 10px 10px 16px; }
+  .dash-row2  { grid-template-columns: repeat(2, 1fr); }
+  .form-grid  { grid-template-columns: 1fr; }
 }
 
 /* ─── Tooltip ─────────────────────────────────────────────────────────────── */

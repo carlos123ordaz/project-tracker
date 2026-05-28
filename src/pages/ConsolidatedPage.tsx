@@ -9,13 +9,14 @@ import { EmptyState } from '../components/ui/Chips'
 import { Button } from '../components/ui/Button'
 import { fmtDate, fmtMoney, getProjectColor } from '../lib/helpers'
 import { AlertTriangle, Layers, Search } from 'lucide-react'
+import { PageLoader } from '../components/ui/Loader'
 import type { Task } from '../lib/types'
 
 const TH: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap' }
 const TD: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
 
 export default function ConsolidatedPage() {
-  const { tasks }    = useTasks()
+  const { tasks, loading }    = useTasks()
   const { projects } = useProjects()
   const { statuses, priorities, team, getMember } = useConfigData()
 
@@ -103,6 +104,12 @@ export default function ConsolidatedPage() {
       </tr>
     )
   }
+
+  if (loading) return (
+    <div className="page-content" style={{ maxWidth: 1700, margin: '0 auto' }}>
+      <PageLoader />
+    </div>
+  )
 
   return (
     <div className="page-content" style={{ maxWidth: 1700, margin: '0 auto' }}>

@@ -11,12 +11,13 @@ import { Avatar, AvatarGroup } from '../components/ui/Avatar'
 import { Semaforo } from '../components/ui/Semaforo'
 import { Button, IconButton } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/Chips'
+import { SkeletonProjectCard } from '../components/ui/Loader'
 import type { Project } from '../lib/types'
 import { fmtDate, fmtMoneyCompact, getProjectColor } from '../lib/helpers'
 
 export default function ProjectsPage() {
-  const { projects, createProject, updateProject, deleteProject } = useProjects()
-  const { tasks }  = useTasks()
+  const { projects, loading: projLoading, createProject, updateProject, deleteProject } = useProjects()
+  const { tasks, loading: taskLoading }  = useTasks()
   const { semaphoreFor, projectMetrics, getMember } = useConfigData()
   const navigate   = useNavigate()
 
@@ -86,7 +87,11 @@ export default function ProjectsPage() {
         <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nuevo proyecto</Button>
       </div>
 
-      {view === 'grid'
+      {(projLoading || taskLoading) ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(312px, 1fr))', gap: 14 }}>
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonProjectCard key={i} />)}
+        </div>
+      ) : view === 'grid'
         ? <ProjectsGrid rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} />
         : <ProjectsList rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} sort={sort} toggleSort={toggleSort} />}
 

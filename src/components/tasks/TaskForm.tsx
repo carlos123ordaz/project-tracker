@@ -93,7 +93,7 @@ export default function TaskForm({ projectId, projects, nextNumber, initial, onS
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="form-grid">
         {projects && projects.length > 1 && (
           <Field label="Proyecto *" span2>
             <select value={form.project_id} onChange={e => set('project_id', e.target.value)} style={INPUT} onFocus={onFocusStyle} onBlur={onBlurStyle}>
