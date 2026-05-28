@@ -872,7 +872,7 @@ export default function BudgetEditorPage() {
                         return (
                           <tr key={it.id}
                             style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
-                            onClick={() => setEditItem(it)}
+                            onClick={() => setApuItem(isSel ? null : it)}
                             onMouseEnter={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'var(--n-25)' }}
                             onMouseLeave={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'transparent' }}
                           >
@@ -933,7 +933,7 @@ export default function BudgetEditorPage() {
                     return (
                       <tr key={it.id}
                         style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
-                        onClick={() => setEditItem(it)}
+                        onClick={() => setApuItem(isSel ? null : it)}
                         onMouseEnter={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'var(--n-25)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'transparent' }}
                       >
