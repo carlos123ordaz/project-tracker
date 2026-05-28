@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import BudgetsSubNav from '../components/budget/BudgetsSubNav'
-import { getKindMeta, fmtCurrency } from '../lib/budgetHelpers'
+import { fmtCurrency } from '../lib/budgetHelpers'
 import type { BudgetResource, ResourceKind } from '../lib/types'
 import { Plus, Pencil, Trash2, Database } from 'lucide-react'
 
@@ -179,7 +179,7 @@ export default function BudgetResourcesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r, i) => {
+              {filtered.map((r) => {
                 const kc = KIND_COLORS[r.kind] ?? KIND_COLORS['material']
                 return (
                   <tr key={r.id} style={{ borderTop: '1px solid var(--n-150)', transition: 'background .12s' }}

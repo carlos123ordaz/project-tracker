@@ -16,7 +16,7 @@ import { buildResourceMap, getItemUnitPrice, fmtNumber } from '../lib/budgetHelp
 import { fmtCurrency } from '../lib/budgetHelpers'
 import type { BudgetItem, ScheduleTask, ScheduleActual, PeriodType } from '../lib/types'
 import {
-  ChevronLeft, ChevronRight, CalendarRange, BarChart2, TrendingUp,
+  ChevronLeft, ChevronRight, BarChart2, TrendingUp,
   CalendarDays, Info,
 } from 'lucide-react'
 import {
@@ -29,8 +29,6 @@ import {
 const CELL_W: Record<PeriodType, number> = { day: 38, week: 62, month: 90 }
 const LEFT_W = 290
 const ROW_H  = 36
-
-const PERIOD_LABELS: Record<PeriodType, string> = { day: 'Diario', week: 'Semanal', month: 'Mensual' }
 
 // ── GanttTab ─────────────────────────────────────────────────────────────────
 
@@ -564,7 +562,7 @@ function SCurveTab({
               <YAxis tickFormatter={fmtTick} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} width={60} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--n-150)' }}
-                formatter={(v: number, name: string) => [fmtNumber(v), name === 'planned' ? 'Planificado' : 'Real']}
+                formatter={(v: unknown, name: unknown) => [fmtNumber(Number(v ?? 0)), name === 'planned' ? 'Planificado' : 'Real']}
                 labelStyle={{ fontWeight: 600, color: 'var(--n-900)' }}
               />
               {todayIdx >= 0 && todayIdx < chartData.length && (

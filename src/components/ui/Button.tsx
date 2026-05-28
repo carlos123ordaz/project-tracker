@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode, ElementType } from 'react'
+import type { CSSProperties, ReactNode, ElementType, MouseEventHandler } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle'
 type Size    = 'sm' | 'md' | 'lg'
@@ -68,7 +68,7 @@ export function Button({ variant = 'secondary', size = 'md', icon: Icon, iconRig
 
 interface IconButtonProps {
   icon: ElementType
-  onClick?: () => void
+  onClick?: MouseEventHandler<HTMLButtonElement>
   title?: string
   size?: number
   danger?: boolean

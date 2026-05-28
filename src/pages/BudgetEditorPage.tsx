@@ -9,11 +9,11 @@ import { IconButton } from '../components/ui/Button'
 import BudgetsSubNav from '../components/budget/BudgetsSubNav'
 import {
   getStatusMeta, BUDGET_STATUSES, RESOURCE_KINDS,
-  computeApuTotal, getItemUnitPrice, computeBudgetTotals, buildResourceMap,
+  getItemUnitPrice, computeBudgetTotals, buildResourceMap,
   fmtCurrency, fmtNumber,
 } from '../lib/budgetHelpers'
 import type { Budget, BudgetItem, BudgetResource, BudgetStatus, ApuLine } from '../lib/types'
-import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 
 // ── Editable cell (number only, qty/unit_price) ───────────────────────────────
@@ -565,7 +565,7 @@ export default function BudgetEditorPage() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <BudgetsSubNav />
-      <BudgetHeaderSection budget={budget} onUpdate={updateBudget} navigate={navigate} />
+      <BudgetHeaderSection budget={budget} onUpdate={async p => { await updateBudget(p) }} navigate={navigate} />
 
       {/* Editor body */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, background: 'var(--n-50)' }}>
@@ -786,7 +786,7 @@ export default function BudgetEditorPage() {
       {/* Add item modal */}
       {showAdd && (
         <AddItemModal budgetId={id!} groups={groups} defaultGroupId={addGroupId}
-          onAdd={createItem} onClose={() => setShowAdd(false)} />
+          onAdd={async p => { await createItem(p) }} onClose={() => setShowAdd(false)} />
       )}
 
       {/* Delete confirm */}

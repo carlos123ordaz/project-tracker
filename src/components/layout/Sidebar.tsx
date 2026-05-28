@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
-  FileSpreadsheet, CalendarRange,
+  FileSpreadsheet,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 

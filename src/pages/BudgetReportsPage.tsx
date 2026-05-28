@@ -59,7 +59,7 @@ function SCurve({ total }: { total: number }) {
         <YAxis tickFormatter={fmtTick} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} width={56} />
         <Tooltip
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--n-150)', boxShadow: 'var(--shadow-sm)' }}
-          formatter={(value: number, name: string) => [fmtNumber(value), name === 'planned' ? 'Planificado' : 'Real']}
+          formatter={(value: unknown, name: unknown) => [fmtNumber(Number(value ?? 0)), name === 'planned' ? 'Planificado' : 'Real']}
           labelStyle={{ fontWeight: 600, color: 'var(--n-900)' }}
         />
         <ReferenceLine x={`S${todayWeek + 1}`} stroke="var(--red-500)" strokeDasharray="5 4" strokeWidth={1.5}
