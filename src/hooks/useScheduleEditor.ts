@@ -67,5 +67,26 @@ export function useScheduleEditor(scheduleId: string) {
     }
   }
 
-  return { tasks, actuals, loading, upsertTask, deleteTask, upsertActual }
+  const replaceItemActuals = async (
+    itemId: string,
+    entries: { periodDate: string; amount: number }[],
+  ) => {
+    await supabase.from('schedule_actuals')
+      .delete().eq('schedule_id', scheduleId).eq('item_id', itemId)
+    setActuals(prev => prev.filter(a => a.item_id !== itemId))
+    const nonZero = entries.filter(e => e.amount > 0)
+    if (nonZero.length === 0) return
+    const { data } = await supabase
+      .from('schedule_actuals')
+      .insert(nonZero.map(e => ({
+        schedule_id: scheduleId,
+        item_id: itemId,
+        period_date: e.periodDate,
+        executed_amount: e.amount,
+      })))
+      .select()
+    if (data) setActuals(prev => [...prev, ...(data as ScheduleActual[])])
+  }
+
+  return { tasks, actuals, loading, upsertTask, deleteTask, upsertActual, replaceItemActuals }
 }

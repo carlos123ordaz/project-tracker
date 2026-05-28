@@ -7,14 +7,17 @@
 -- 1. ELIMINAR TRIGGERS
 -- ============================================================
 
-DROP TRIGGER IF EXISTS trigger_projects_updated_at ON projects;
-DROP TRIGGER IF EXISTS trigger_tasks_updated_at    ON tasks;
+DROP TRIGGER IF EXISTS trigger_projects_updated_at      ON projects;
+DROP TRIGGER IF EXISTS trigger_tasks_updated_at         ON tasks;
+DROP TRIGGER IF EXISTS trigger_budgets_updated_at       ON budgets;
+DROP TRIGGER IF EXISTS trigger_budget_items_updated_at  ON budget_items;
+DROP TRIGGER IF EXISTS trigger_schedules_updated_at     ON schedules;
 
 -- ============================================================
 -- 2. ELIMINAR FUNCIÓN
 -- ============================================================
 
-DROP FUNCTION IF EXISTS update_updated_at();
+DROP FUNCTION IF EXISTS update_updated_at() CASCADE;
 
 -- ============================================================
 -- 3. ELIMINAR TABLAS (orden por dependencias FK)
@@ -151,10 +154,12 @@ CREATE TABLE budget_items (
   name       TEXT NOT NULL,
   unit       TEXT NOT NULL DEFAULT 'm2',
   qty        NUMERIC(14,4) NOT NULL DEFAULT 1,
-  unit_price NUMERIC(14,4) NOT NULL DEFAULT 0,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  unit_price  NUMERIC(14,4) NOT NULL DEFAULT 0,
+  description TEXT         NOT NULL DEFAULT '',
+  rendimiento TEXT         NOT NULL DEFAULT '',
+  sort_order  INTEGER      NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE apu_lines (

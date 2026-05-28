@@ -34,6 +34,7 @@ const ROW_H  = 36
 
 function GanttTab({
   periodType, periods, groups, itemsOnly, tasks, scheduleStart, scheduleEnd,
+  actuals, replaceItemActuals, itemUnitPrices,
   onUpsert, onDelete,
 }: {
   periodType: PeriodType
@@ -43,6 +44,9 @@ function GanttTab({
   tasks: ScheduleTask[]
   scheduleStart: string
   scheduleEnd: string
+  actuals: ScheduleActual[]
+  replaceItemActuals: (itemId: string, entries: { periodDate: string; amount: number }[]) => Promise<void>
+  itemUnitPrices: Map<string, number>
   onUpsert: (itemId: string, s: string, e: string) => Promise<void>
   onDelete: (itemId: string) => Promise<void>
 }) {
@@ -53,6 +57,20 @@ function GanttTab({
   const [editItem, setEditItem] = useState<BudgetItem | null>(null)
   const [dates,    setDates]    = useState({ start: '', end: '' })
   const [saving,   setSaving]   = useState(false)
+  const [actualPct, setActualPct]         = useState(0)
+  const [actualPctDirty, setActualPctDirty] = useState(false)
+  const [itemCost, setItemCost]           = useState(0)
+
+  const itemActualPcts = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const it of itemsOnly) {
+      const cost = it.qty * (itemUnitPrices.get(it.id) ?? 0)
+      if (cost <= 0) { m.set(it.id, 0); continue }
+      const totalActual = actuals.filter(a => a.item_id === it.id).reduce((s, a) => s + a.executed_amount, 0)
+      m.set(it.id, Math.min(1, totalActual / cost))
+    }
+    return m
+  }, [itemsOnly, actuals, itemUnitPrices])
 
   const rows = useMemo(() => {
     type Row = { kind: 'group'; item: BudgetItem } | { kind: 'item'; item: BudgetItem }
@@ -70,14 +88,25 @@ function GanttTab({
   const openEdit = (item: BudgetItem) => {
     const t = tasks.find(t => t.item_id === item.id)
     setDates({ start: t?.start_date ?? scheduleStart, end: t?.end_date ?? scheduleEnd })
+    const cost = item.qty * (itemUnitPrices.get(item.id) ?? 0)
+    const totalActual = actuals.filter(a => a.item_id === item.id).reduce((s, a) => s + a.executed_amount, 0)
+    setItemCost(cost)
+    setActualPct(cost > 0 ? Math.min(1, totalActual / cost) : 0)
+    setActualPctDirty(false)
     setEditItem(item)
   }
 
   const handleSave = async () => {
     if (!editItem || !dates.start || !dates.end) return
     setSaving(true)
-    try { await onUpsert(editItem.id, dates.start, dates.end); setEditItem(null) }
-    finally { setSaving(false) }
+    try {
+      await onUpsert(editItem.id, dates.start, dates.end)
+      if (actualPctDirty) {
+        const dist = distributeItemCost(itemCost * actualPct, dates.start, dates.end, periods)
+        await replaceItemActuals(editItem.id, periods.map((p, i) => ({ periodDate: p.isoDate, amount: dist[i] })))
+      }
+      setEditItem(null)
+    } finally { setSaving(false) }
   }
 
   const handleRemove = async () => {
@@ -176,10 +205,27 @@ function GanttTab({
                       position: 'sticky', left: 0, zIndex: 1, background: 'inherit',
                       borderRight: '1px solid var(--n-200)', padding: '0 16px', height: ROW_H,
                     }}>
-                      <span style={{ fontSize: 12, color: 'var(--n-800)' }}>
-                        {row.item.code && <span className="mono" style={{ color: 'var(--n-400)', marginRight: 6, fontSize: 10.5 }}>{row.item.code}</span>}
-                        {row.item.name}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <span style={{ fontSize: 12, color: 'var(--n-800)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {row.item.code && <span className="mono" style={{ color: 'var(--n-400)', marginRight: 6, fontSize: 10.5 }}>{row.item.code}</span>}
+                          {row.item.name}
+                        </span>
+                        {(() => {
+                          const pct = itemActualPcts.get(row.item.id) ?? 0
+                          if (pct <= 0) return null
+                          return (
+                            <span className="mono tnum" style={{
+                              fontSize: 9.5, fontWeight: 700, flexShrink: 0,
+                              color: pct >= 1 ? 'var(--green-700)' : 'var(--brand-700)',
+                              background: pct >= 1 ? 'var(--green-50)' : 'var(--brand-50)',
+                              border: `1px solid ${pct >= 1 ? 'var(--green-100)' : 'var(--brand-100)'}`,
+                              borderRadius: 4, padding: '1px 5px',
+                            }}>
+                              {Math.round(pct * 100)}%
+                            </span>
+                          )
+                        })()}
+                      </div>
                     </td>
                     {periods.map((p, i) => {
                       const inBar   = bar !== null && i >= bar.start && i <= bar.end
@@ -214,12 +260,19 @@ function GanttTab({
         )}
       </div>
 
-      <Modal open={!!editItem} onClose={() => setEditItem(null)} title={`Programar partida`}>
+      <Modal open={!!editItem} onClose={() => setEditItem(null)} title="Programar partida">
         {editItem && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ padding: '8px 12px', background: 'var(--n-50)', borderRadius: 6, fontSize: 12.5, color: 'var(--n-700)', fontWeight: 550 }}>
-              {editItem.name}
+            {/* Item header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: 'var(--brand-50)', border: '1px solid var(--brand-100)', borderRadius: 8 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                {editItem.code && <div className="mono tnum" style={{ fontSize: 10.5, color: 'var(--brand-700)', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 2 }}>{editItem.code}</div>}
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>{editItem.name}</div>
+                {itemCost > 0 && <div className="mono tnum" style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 2 }}>{editItem.qty} {editItem.unit} · {fmtNumber(itemCost)}</div>}
+              </div>
             </div>
+
+            {/* Dates */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={LBL}>Inicio</label>
@@ -232,6 +285,35 @@ function GanttTab({
                   onChange={e => setDates(d => ({ ...d, end: e.target.value }))} />
               </div>
             </div>
+
+            {/* Avance real slider */}
+            <div>
+              <label style={LBL}>Avance real — {Math.round(actualPct * 100)}%</label>
+              <input
+                type="range" min="0" max="100" step="5"
+                value={Math.round(actualPct * 100)}
+                onChange={e => { setActualPct(Number(e.target.value) / 100); setActualPctDirty(true) }}
+                style={{ width: '100%', accentColor: 'var(--brand-600)', marginTop: 4, cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--n-400)', marginTop: 2 }} className="mono tnum">
+                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              </div>
+            </div>
+
+            {/* Costo planificado / ganado */}
+            {itemCost > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ padding: '8px 12px', background: 'var(--n-25)', border: '1px solid var(--n-150)', borderRadius: 8 }}>
+                  <div style={{ fontSize: 9.5, color: 'var(--n-500)', fontWeight: 600, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Planificado</div>
+                  <div className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>{fmtNumber(itemCost)}</div>
+                </div>
+                <div style={{ padding: '8px 12px', background: actualPct > 0 ? 'var(--brand-50)' : 'var(--n-25)', border: `1px solid ${actualPct > 0 ? 'var(--brand-100)' : 'var(--n-150)'}`, borderRadius: 8 }}>
+                  <div style={{ fontSize: 9.5, color: actualPct > 0 ? 'var(--brand-700)' : 'var(--n-500)', fontWeight: 600, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Costo ganado</div>
+                  <div className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: actualPct > 0 ? 'var(--brand-700)' : 'var(--n-400)' }}>{fmtNumber(itemCost * actualPct)}</div>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {tasks.find(t => t.item_id === editItem.id)
                 ? <Button variant="danger" onClick={handleRemove} disabled={saving}>Quitar del cronograma</Button>
@@ -477,6 +559,14 @@ function SCurveTab({
 }) {
   const todayIdx = useMemo(() => todayPeriodIndex(periods), [periods])
 
+  const tickInterval = useMemo(() => {
+    const n = periods.length
+    if (n <= 60)  return 0
+    if (n <= 180) return 6
+    if (n <= 365) return 13
+    return 29
+  }, [periods.length])
+
   const chartData = useMemo(() => {
     const cumPlan   = cumulative(plannedByPeriod)
     const cumActual = cumulative(actualByPeriod)
@@ -558,7 +648,7 @@ function SCurveTab({
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 4" stroke="var(--n-150)" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" interval={tickInterval} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={fmtTick} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} width={60} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--n-150)' }}
@@ -634,7 +724,7 @@ export default function ScheduleEditorPage() {
 
   const { items, apuLines, loading: iLoad } = useBudgetItems(schedule?.budget_id ?? '')
   const { resources, loading: rLoad }       = useBudgetResources()
-  const { tasks, actuals, loading: eLoad, upsertTask, deleteTask, upsertActual } = useScheduleEditor(id ?? '')
+  const { tasks, actuals, loading: eLoad, upsertTask, deleteTask, upsertActual, replaceItemActuals } = useScheduleEditor(id ?? '')
 
   const [tab, setTab] = useState<TabId>('gantt')
 
@@ -646,33 +736,56 @@ export default function ScheduleEditorPage() {
     schedule ? generatePeriods(schedule.start_date, schedule.end_date, schedule.period_type) : [],
     [schedule])
 
+  // Daily periods — used exclusively for the S-curve so it's always in days
+  const dailyPeriods = useMemo(() =>
+    schedule ? generatePeriods(schedule.start_date, schedule.end_date, 'day') : [],
+    [schedule])
+
   const itemUnitPrices = useMemo(() => {
     const m = new Map<string, number>()
     itemsOnly.forEach(it => m.set(it.id, getItemUnitPrice(it, apuLines, resourceMap)))
     return m
   }, [itemsOnly, apuLines, resourceMap])
 
-  const plannedByPeriod = useMemo(() => {
-    const byPeriod = periods.map(() => 0)
+  // S-curve: planned distributed daily
+  const dailyPlannedByPeriod = useMemo(() => {
+    const byPeriod = dailyPeriods.map(() => 0)
     for (const task of tasks) {
       const up  = itemUnitPrices.get(task.item_id) ?? 0
       const it  = itemsOnly.find(x => x.id === task.item_id)
       if (!it) continue
       const total = it.qty * up
-      const dist  = distributeItemCost(total, task.start_date, task.end_date, periods)
+      const dist  = distributeItemCost(total, task.start_date, task.end_date, dailyPeriods)
       dist.forEach((v, i) => { byPeriod[i] += v })
     }
     return byPeriod
-  }, [tasks, itemsOnly, itemUnitPrices, periods])
+  }, [tasks, itemsOnly, itemUnitPrices, dailyPeriods])
 
-  const actualByPeriod = useMemo(() => {
-    const byPeriod = periods.map(() => 0)
+  // S-curve: actuals spread evenly across the days of each schedule period
+  const dailyActualByPeriod = useMemo(() => {
+    const byPeriod = dailyPeriods.map(() => 0)
     for (const a of actuals) {
-      const idx = periodContaining(a.period_date, periods)
+      if (a.executed_amount <= 0) continue
+      const periodIdx = periodContaining(a.period_date, periods)
+      if (periodIdx >= 0) {
+        const p = periods[periodIdx]
+        const indices: number[] = []
+        dailyPeriods.forEach((dp, di) => {
+          if (dp.date >= p.date && dp.date <= p.endDate) indices.push(di)
+        })
+        if (indices.length > 0) {
+          const amtPerDay = a.executed_amount / indices.length
+          indices.forEach(di => { byPeriod[di] += amtPerDay })
+          continue
+        }
+      }
+      // Fallback: place on exact day
+      const idx = periodContaining(a.period_date, dailyPeriods)
       if (idx >= 0) byPeriod[idx] += a.executed_amount
     }
     return byPeriod
-  }, [actuals, periods])
+  }, [actuals, dailyPeriods, periods])
+
 
   if (sLoad || iLoad || rLoad || eLoad) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -739,6 +852,8 @@ export default function ScheduleEditorPage() {
             periodType={schedule.period_type} periods={periods}
             groups={groups} itemsOnly={itemsOnly} tasks={tasks}
             scheduleStart={schedule.start_date} scheduleEnd={schedule.end_date}
+            actuals={actuals} replaceItemActuals={replaceItemActuals}
+            itemUnitPrices={itemUnitPrices}
             onUpsert={upsertTask} onDelete={deleteTask}
           />
         )}
@@ -752,8 +867,8 @@ export default function ScheduleEditorPage() {
         )}
         {tab === 'scurve' && (
           <SCurveTab
-            periods={periods} plannedByPeriod={plannedByPeriod}
-            actualByPeriod={actualByPeriod}
+            periods={dailyPeriods} plannedByPeriod={dailyPlannedByPeriod}
+            actualByPeriod={dailyActualByPeriod}
             currency={budget?.currency ?? 'USD'}
           />
         )}

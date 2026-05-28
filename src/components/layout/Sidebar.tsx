@@ -22,7 +22,6 @@ const NAV = [
   { to: '/calendar',     label: 'Calendario',  icon: Calendar },
   { to: '/overview',     label: 'Overview',    icon: Gauge },
   { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
-  { to: '/schedule',     label: 'Programar',   icon: CalendarRange },
 ]
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {

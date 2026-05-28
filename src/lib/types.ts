@@ -73,6 +73,8 @@ export interface BudgetItem {
   unit: string
   qty: number
   unit_price: number
+  description: string
+  rendimiento: string
   sort_order: number
   created_at: string
   updated_at: string
