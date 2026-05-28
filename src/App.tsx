@@ -12,6 +12,12 @@ import ConsolidatedPage from './pages/ConsolidatedPage'
 import CalendarPage from './pages/CalendarPage'
 import OverviewPage from './pages/OverviewPage'
 import SettingsPage from './pages/SettingsPage'
+import BudgetsPage from './pages/BudgetsPage'
+import BudgetResourcesPage from './pages/BudgetResourcesPage'
+import BudgetEditorPage from './pages/BudgetEditorPage'
+import BudgetReportsPage from './pages/BudgetReportsPage'
+import SchedulesPage from './pages/SchedulesPage'
+import ScheduleEditorPage from './pages/ScheduleEditorPage'
 
 function AuthenticatedApp() {
   const { user, loading } = useAuth()
@@ -42,6 +48,12 @@ function AuthenticatedApp() {
           <Route path="/calendar"    element={<CalendarPage />} />
           <Route path="/overview"    element={<OverviewPage />} />
           <Route path="/settings"    element={<SettingsPage />} />
+          <Route path="/budgets"           element={<BudgetsPage />} />
+          <Route path="/budgets/resources" element={<BudgetResourcesPage />} />
+          <Route path="/budgets/reports"   element={<BudgetReportsPage />} />
+          <Route path="/budgets/:id"       element={<BudgetEditorPage />} />
+          <Route path="/schedule"          element={<SchedulesPage />} />
+          <Route path="/schedule/:id"      element={<ScheduleEditorPage />} />
         </Route>
       </Routes>
     </ConfigDataProvider>

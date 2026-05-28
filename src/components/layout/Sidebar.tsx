@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
+  FileSpreadsheet, CalendarRange,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 
@@ -20,6 +21,8 @@ const NAV = [
   { to: '/consolidated', label: 'Consolidado', icon: List },
   { to: '/calendar',     label: 'Calendario',  icon: Calendar },
   { to: '/overview',     label: 'Overview',    icon: Gauge },
+  { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
+  { to: '/schedule',     label: 'Programar',   icon: CalendarRange },
 ]
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
