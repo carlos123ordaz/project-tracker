@@ -14,7 +14,7 @@ import {
   fmtDate, fmtMoneyCompact, TODAY, MONTHS_FULL, DAYS_ES, MONTHS_ES,
   daysBetween, daysFromToday, isoDay, addDays,
 } from '../lib/helpers'
-import type { Project, Task } from '../lib/types'
+import type { Task } from '../lib/types'
 import type { StatusObj } from '../hooks/useConfigData'
 
 // ── Main Page ───────────────────────────────────────────────────────────────
