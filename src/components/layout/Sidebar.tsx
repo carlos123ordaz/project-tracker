@@ -3,6 +3,7 @@ import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
 } from 'lucide-react'
+import LogoMark from './LogoMark'
 
 interface SidebarProps {
   collapsed: boolean
@@ -41,24 +42,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         padding: collapsed ? '0' : '0 16px',
         display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
         borderBottom: '1px solid var(--n-150)',
-        gap: 9, flex: '0 0 56px',
+        flex: '0 0 56px',
+        overflow: 'hidden',
       }}>
-        <span style={{
-          width: collapsed ? 26 : 24, height: collapsed ? 26 : 24,
-          borderRadius: collapsed ? 7 : 6, flexShrink: 0,
-          background: 'linear-gradient(135deg, var(--brand-500), var(--brand-700))',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', boxShadow: '0 1px 2px rgba(79,70,229,0.3)',
-        }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <path d="M5 4h6l2 2h6v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </span>
-        {!collapsed && (
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.012em', whiteSpace: 'nowrap' }}>
-            Project Tracker
-          </span>
-        )}
+        <LogoMark size={collapsed ? 28 : 26} showText={!collapsed} />
       </div>
 
       {/* Nav */}

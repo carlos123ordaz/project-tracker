@@ -5,6 +5,7 @@ import { useTasks } from '../hooks/useTasks'
 import { useConfigData } from '../hooks/useConfigData'
 import Modal from '../components/ui/Modal'
 import TaskForm from '../components/tasks/TaskForm'
+import TaskDrawer from '../components/ui/TaskDrawer'
 import { StatusBadge, PriorityBadge } from '../components/ui/StatusBadge'
 import ProgressBar from '../components/ui/ProgressBar'
 import { Avatar } from '../components/ui/Avatar'
@@ -28,7 +29,7 @@ export default function ProjectDetailPage() {
 
   const [statusFilter,   setStatusFilter]   = useState('')
   const [modalOpen,      setModalOpen]      = useState(false)
-  const [editing,        setEditing]        = useState<Task | null>(null)
+  const [drawerTask,     setDrawerTask]     = useState<Task | null>(null)
   const [confirmDelete,  setConfirmDelete]  = useState<Task | null>(null)
 
   const project = projects.find(p => p.id === id)
@@ -52,8 +53,8 @@ export default function ProjectDetailPage() {
   const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>) => {
     await createTask(data); setModalOpen(false)
   }
-  const handleUpdate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>) => {
-    if (!editing) return; await updateTask(editing.id, data); setEditing(null)
+  const handleDrawerSave = async (taskId: string, changes: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>>) => {
+    await updateTask(taskId, changes as any)
   }
   const handleDelete = async () => {
     if (!confirmDelete) return; await deleteTask(confirmDelete.id); setConfirmDelete(null)
@@ -152,7 +153,8 @@ export default function ProjectDetailPage() {
                 const isDone = t.status === 'Completado'
                 return (
                   <tr key={t.id} className="show-actions"
-                    style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.35)' : 'transparent', transition: 'background .12s' }}
+                    onClick={() => setDrawerTask(t)}
+                    style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.35)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
                     onMouseEnter={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.6)' : 'var(--n-25)'}
                     onMouseLeave={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.35)' : 'transparent'}
                   >
@@ -175,9 +177,9 @@ export default function ProjectDetailPage() {
                       <div style={{ color: 'var(--n-800)' }}>{fmtMoney(t.budget)}</div>
                       <div style={{ fontSize: 10.5, color: t.actual_cost > t.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(t.actual_cost)}</div>
                     </td>
-                    <td style={{ ...TD_STYLE, textAlign: 'right' }}>
+                    <td style={{ ...TD_STYLE, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                       <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }}>
-                        <IconButton icon={Pencil} title="Editar" size={26} onClick={() => setEditing(t)} />
+                        <IconButton icon={Pencil} title="Editar" size={26} onClick={() => setDrawerTask(t)} />
                         <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDelete(t)} />
                       </div>
                     </td>
@@ -196,9 +198,13 @@ export default function ProjectDetailPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nueva tarea" size="lg">
         {id && <TaskForm projectId={id} nextNumber={tasks.length + 1} onSubmit={handleCreate} onCancel={() => setModalOpen(false)} />}
       </Modal>
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Editar tarea" size="lg">
-        {editing && id && <TaskForm projectId={id} nextNumber={editing.number} initial={editing} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />}
-      </Modal>
+      <TaskDrawer
+        task={drawerTask}
+        projects={projects}
+        onClose={() => setDrawerTask(null)}
+        onSave={handleDrawerSave}
+        onDelete={t => { setDrawerTask(null); setConfirmDelete(t) }}
+      />
       <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Eliminar tarea" size="sm">
         {confirmDelete && (
           <div>

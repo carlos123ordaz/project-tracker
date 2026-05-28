@@ -29,6 +29,7 @@ export default function KanbanPage() {
   const [overCol,     setOverCol]     = useState<string | null>(null)
   const [dropTarget,  setDropTarget]  = useState<DropTarget | null>(null)
   const [modalOpen,    setModalOpen]    = useState(false)
+  const [modalStatus,  setModalStatus]  = useState('')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Task | null>(null)
 
@@ -151,7 +152,7 @@ export default function KanbanPage() {
         </select>
         <div style={{ flex: 1 }} />
         <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-500)' }}>{visibleTasks.length} tareas</span>
-        <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nueva tarea</Button>
+        <Button icon={Plus} variant="primary" onClick={() => { setModalStatus(''); setModalOpen(true) }}>Nueva tarea</Button>
       </div>
 
       {/* Board */}
@@ -184,7 +185,7 @@ export default function KanbanPage() {
                       {list.length}
                     </span>
                   </div>
-                  <IconButton icon={Plus} size={24} title="Agregar" onClick={() => setModalOpen(true)} />
+                  <IconButton icon={Plus} size={24} title="Agregar" onClick={() => { setModalStatus(status.name); setModalOpen(true) }} />
                 </div>
 
                 {/* Cards */}
@@ -269,12 +270,13 @@ export default function KanbanPage() {
       </div>
 
       {/* New task modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nueva tarea" size="lg">
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setModalStatus('') }} title="Nueva tarea" size="lg">
         <TaskForm
           projects={projects}
           nextNumber={tasks.length + 1}
+          initial={modalStatus ? { status: modalStatus } : undefined}
           onSubmit={handleCreate}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => { setModalOpen(false); setModalStatus('') }}
         />
       </Modal>
 
