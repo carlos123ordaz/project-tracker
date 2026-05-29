@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
+import ProjectForm from '../components/projects/ProjectForm'
 import { useConfigData } from '../hooks/useConfigData'
 import Modal from '../components/ui/Modal'
 import TaskForm from '../components/tasks/TaskForm'
@@ -23,14 +24,17 @@ const TD_STYLE: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'mid
 export default function ProjectDetailPage() {
   const { id }       = useParams<{ id: string }>()
   const navigate     = useNavigate()
-  const { projects } = useProjects()
+  const { projects, updateProject, deleteProject } = useProjects()
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks(id)
   const { projectMetrics, semaphoreFor, getMember, statuses } = useConfigData()
 
-  const [statusFilter,   setStatusFilter]   = useState('')
-  const [modalOpen,      setModalOpen]      = useState(false)
-  const [drawerTask,     setDrawerTask]     = useState<Task | null>(null)
-  const [confirmDelete,  setConfirmDelete]  = useState<Task | null>(null)
+  const [statusFilter,    setStatusFilter]    = useState('')
+  const [modalOpen,       setModalOpen]       = useState(false)
+  const [drawerTask,      setDrawerTask]      = useState<Task | null>(null)
+  const [confirmDelete,   setConfirmDelete]   = useState<Task | null>(null)
+  const [showEditProject, setShowEditProject] = useState(false)
+  const [confirmDelProj,  setConfirmDelProj]  = useState(false)
+  const [deletingProj,    setDeletingProj]    = useState(false)
 
   const project = projects.find(p => p.id === id)
   if (!project && !loading) return (
@@ -89,6 +93,8 @@ export default function ProjectDetailPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <Button icon={Pencil} onClick={() => setShowEditProject(true)}>Editar proyecto</Button>
+          <Button icon={Trash2} variant="danger" onClick={() => setConfirmDelProj(true)}>Eliminar</Button>
           <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nueva tarea</Button>
         </div>
       </div>
@@ -215,6 +221,37 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Edit project modal */}
+      {showEditProject && project && (
+        <Modal open onClose={() => setShowEditProject(false)} title="Editar proyecto" size="lg">
+          <ProjectForm
+            initial={project}
+            onSubmit={async data => { await updateProject(project.id, data); setShowEditProject(false) }}
+            onCancel={() => setShowEditProject(false)}
+          />
+        </Modal>
+      )}
+
+      {/* Delete project confirm */}
+      <Modal open={confirmDelProj} onClose={() => setConfirmDelProj(false)} title="Eliminar proyecto" size="sm">
+        <div>
+          <p style={{ fontSize: 13, color: 'var(--n-700)', marginBottom: 16, lineHeight: 1.5 }}>
+            ¿Eliminar <strong>{project?.name}</strong>? Se eliminarán todas las tareas del proyecto. Esta acción no se puede deshacer.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setConfirmDelProj(false)}>Cancelar</Button>
+            <Button variant="danger" disabled={deletingProj} onClick={async () => {
+              if (!project) return
+              setDeletingProj(true)
+              try { await deleteProject(project.id); navigate('/projects') }
+              finally { setDeletingProj(false) }
+            }}>
+              {deletingProj ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

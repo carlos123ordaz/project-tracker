@@ -7,10 +7,9 @@ import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
 import { StatCard } from '../components/ui/StatCard'
 import Modal from '../components/ui/Modal'
-import BudgetsSubNav from '../components/budget/BudgetsSubNav'
 import { getStatusMeta, BUDGET_STATUSES } from '../lib/budgetHelpers'
 import type { Budget, BudgetStatus } from '../lib/types'
-import { Plus, Pencil, Trash2, FileText, ExternalLink, CheckCircle, Users, DollarSign } from 'lucide-react'
+import { Plus, Pencil, Trash2, FileText, ExternalLink, CheckCircle, Users, DollarSign, LayoutGrid, List } from 'lucide-react'
 
 // ── status badge (with dot) ───────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -65,6 +64,7 @@ function BudgetForm({
         indirect_pct: parseFloat(indPct) / 100,
         utility_pct:  parseFloat(utilPct)  / 100,
         igv_pct:      parseFloat(igvPct)   / 100,
+        gg_months: 3,
       })
       onClose()
     } finally { setSaving(false) }
@@ -139,6 +139,7 @@ export default function BudgetsPage() {
 
   const [query,    setQuery]    = useState('')
   const [statusF,  setStatusF]  = useState('')
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
   const [showForm, setShowForm] = useState(false)
   const [editing,  setEditing]  = useState<Budget | null>(null)
   const [confirmDel, setConfirmDel] = useState<Budget | null>(null)
@@ -156,7 +157,7 @@ export default function BudgetsPage() {
 
   if (loading) return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
+
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <PageLoader />
       </div>
@@ -174,7 +175,7 @@ export default function BudgetsPage() {
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
+
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
         {/* Stat cards */}
@@ -199,55 +200,30 @@ export default function BudgetsPage() {
           </select>
           <div style={{ flex: 1 }} />
           <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-500)' }}>{filtered.length} de {budgets.length}</span>
+
+          {/* View toggle */}
+          <div style={{ display: 'flex', gap: 2, padding: 2, background: 'var(--n-100)', borderRadius: 7 }}>
+            {([['cards', LayoutGrid], ['list', List]] as const).map(([mode, Icon]) => (
+              <button key={mode} onClick={() => setViewMode(mode)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, borderRadius: 5, cursor: 'pointer', border: 'none',
+                  background: viewMode === mode ? 'var(--n-0)' : 'transparent',
+                  color: viewMode === mode ? 'var(--n-900)' : 'var(--n-500)',
+                  boxShadow: viewMode === mode ? 'var(--shadow-xs)' : 'none',
+                  transition: 'all .15s',
+                }}>
+                <Icon size={14} />
+              </button>
+            ))}
+          </div>
+
           <Button variant="primary" icon={Plus} onClick={openCreate}>Nuevo presupuesto</Button>
         </div>
 
-        {/* Table */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ background: 'var(--n-25)' }}>
-                <th style={{ ...TH, width: 44, textAlign: 'right' }}>#</th>
-                <th style={{ ...TH, minWidth: 280 }}>Proyecto</th>
-                <th style={{ ...TH, minWidth: 160 }}>Cliente</th>
-                <th style={{ ...TH, width: 90, textAlign: 'right' }}>Partidas</th>
-                <th style={{ ...TH, width: 130 }}>Estado</th>
-                <th style={{ ...TH, width: 60, textAlign: 'right' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((b, i) => (
-                <tr key={b.id}
-                  onClick={() => navigate(`/budgets/${b.id}`)}
-                  style={{ borderTop: '1px solid var(--n-150)', cursor: 'pointer', transition: 'background .12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{i + 1}</td>
-                  <td style={TD}>
-                    <div style={{ fontWeight: 550, color: 'var(--n-900)' }}>{b.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>
-                      {b.currency} · GG {(b.indirect_pct * 100).toFixed(0)}% · IGV {(b.igv_pct * 100).toFixed(0)}%
-                    </div>
-                  </td>
-                  <td style={{ ...TD, color: 'var(--n-700)' }}>{b.client || <span style={{ color: 'var(--n-400)' }}>—</span>}</td>
-                  <td style={{ ...TD, textAlign: 'right', color: 'var(--n-600)' }} className="mono tnum">—</td>
-                  <td style={TD}><StatusBadge status={b.status} /></td>
-                  <td style={{ ...TD, textAlign: 'right' }}>
-                    <span style={{ display: 'inline-flex', gap: 2 }}>
-                      <IconButton icon={Pencil} title="Editar" size={26}
-                        onClick={e => { e.stopPropagation(); openEdit(b) }} />
-                      <IconButton icon={Trash2} title="Eliminar" size={26} danger
-                        onClick={e => { e.stopPropagation(); setConfirmDel(b) }} />
-                      <IconButton icon={ExternalLink} title="Abrir" size={26}
-                        onClick={e => { e.stopPropagation(); navigate(`/budgets/${b.id}`) }} />
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
+        {/* Cards view */}
+        {viewMode === 'cards' && (
+          filtered.length === 0 ? (
             <div style={{ padding: '48px 0', textAlign: 'center' }}>
               <FileText size={28} style={{ color: 'var(--n-300)', margin: '0 auto 10px' }} />
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-700)' }}>Sin presupuestos</div>
@@ -255,8 +231,95 @@ export default function BudgetsPage() {
                 {query || statusF ? 'Cambia los filtros o crea uno nuevo.' : 'Crea tu primer presupuesto.'}
               </div>
             </div>
-          )}
-        </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              {filtered.map(b => (
+                <div key={b.id} className="card"
+                  onClick={() => navigate(`/budgets/${b.id}`)}
+                  style={{ padding: 16, cursor: 'pointer', transition: 'box-shadow .15s', display: 'flex', flexDirection: 'column', gap: 10 }}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = ''}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--n-900)', lineHeight: 1.35, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {b.name}
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+
+                  <div style={{ fontSize: 12, color: 'var(--n-600)' }}>
+                    {b.client || <span style={{ color: 'var(--n-400)' }}>Sin cliente</span>}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <span className="mono" style={{ fontSize: 11, background: 'var(--n-100)', padding: '2px 8px', borderRadius: 4, color: 'var(--n-700)', fontWeight: 600 }}>{b.currency}</span>
+                    <span style={{ fontSize: 11, color: 'var(--n-500)' }}>GG {(b.indirect_pct * 100).toFixed(0)}%</span>
+                    <span style={{ fontSize: 11, color: 'var(--n-500)' }}>IGV {(b.igv_pct * 100).toFixed(0)}%</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 2, marginTop: 'auto' }} onClick={e => e.stopPropagation()}>
+                    <IconButton icon={Pencil} title="Editar" size={26} onClick={() => openEdit(b)} />
+                    <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDel(b)} />
+                    <IconButton icon={ExternalLink} title="Abrir editor" size={26} onClick={() => navigate(`/budgets/${b.id}`)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* List (table) view */}
+        {viewMode === 'list' && (
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ background: 'var(--n-25)' }}>
+                  <th style={{ ...TH, width: 44, textAlign: 'right' }}>#</th>
+                  <th style={{ ...TH, minWidth: 280 }}>Proyecto</th>
+                  <th style={{ ...TH, minWidth: 160 }}>Cliente</th>
+                  <th style={{ ...TH, width: 130 }}>Estado</th>
+                  <th style={{ ...TH, width: 60, textAlign: 'right' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((b, i) => (
+                  <tr key={b.id}
+                    onClick={() => navigate(`/budgets/${b.id}`)}
+                    style={{ borderTop: '1px solid var(--n-150)', cursor: 'pointer', transition: 'background .12s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{i + 1}</td>
+                    <td style={TD}>
+                      <div style={{ fontWeight: 550, color: 'var(--n-900)' }}>{b.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>
+                        {b.currency} · GG {(b.indirect_pct * 100).toFixed(0)}% · IGV {(b.igv_pct * 100).toFixed(0)}%
+                      </div>
+                    </td>
+                    <td style={{ ...TD, color: 'var(--n-700)' }}>{b.client || <span style={{ color: 'var(--n-400)' }}>—</span>}</td>
+                    <td style={TD}><StatusBadge status={b.status} /></td>
+                    <td style={{ ...TD, textAlign: 'right' }}>
+                      <span style={{ display: 'inline-flex', gap: 2 }}>
+                        <IconButton icon={Pencil} title="Editar" size={26} onClick={e => { e.stopPropagation(); openEdit(b) }} />
+                        <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={e => { e.stopPropagation(); setConfirmDel(b) }} />
+                        <IconButton icon={ExternalLink} title="Abrir" size={26} onClick={e => { e.stopPropagation(); navigate(`/budgets/${b.id}`) }} />
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <FileText size={28} style={{ color: 'var(--n-300)', margin: '0 auto 10px' }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-700)' }}>Sin presupuestos</div>
+                <div style={{ fontSize: 12, color: 'var(--n-500)', marginTop: 4 }}>
+                  {query || statusF ? 'Cambia los filtros o crea uno nuevo.' : 'Crea tu primer presupuesto.'}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Form modal */}

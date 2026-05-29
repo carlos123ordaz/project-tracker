@@ -559,22 +559,35 @@ function SCurveTab({
 }) {
   const todayIdx = useMemo(() => todayPeriodIndex(periods), [periods])
 
-  const tickInterval = useMemo(() => {
-    const n = periods.length
-    if (n <= 60)  return 0
-    if (n <= 180) return 6
-    if (n <= 365) return 13
-    return 29
-  }, [periods.length])
-
-  const chartData = useMemo(() => {
+  // Always aggregate to monthly data points so X-axis shows "May '26", "Jun '26"
+  // regardless of whether the underlying periods are daily or weekly.
+  const { chartData, todayMonthLabel, monthPlanned, monthActual } = useMemo(() => {
     const cumPlan   = cumulative(plannedByPeriod)
     const cumActual = cumulative(actualByPeriod)
-    return periods.map((p, i) => ({
-      label: p.label,
-      planned: cumPlan[i],
-      actual: i <= todayIdx ? cumActual[i] : undefined,
-    }))
+
+    type MonthEntry = { label: string; planned: number; actual: number | undefined; planPeriod: number; actPeriod: number }
+    const monthMap = new Map<string, MonthEntry>()
+    let todayLabel = ''
+
+    periods.forEach((p, i) => {
+      const d   = p.date
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
+      const lbl = d.toLocaleDateString('es-PE', { month: 'short', year: '2-digit' }).toUpperCase()
+      const prev = monthMap.get(key)
+      monthMap.set(key, {
+        label:      lbl,
+        planned:    cumPlan[i],
+        actual:     i <= todayIdx ? cumActual[i] : undefined,
+        planPeriod: (prev?.planPeriod ?? 0) + plannedByPeriod[i],
+        actPeriod:  (prev?.actPeriod  ?? 0) + actualByPeriod[i],
+      })
+      if (i === todayIdx) todayLabel = lbl
+    })
+
+    const data      = Array.from(monthMap.values())
+    const mPlanned  = data.map(d => d.planPeriod)
+    const mActual   = data.map(d => d.actPeriod)
+    return { chartData: data, todayMonthLabel: todayLabel, monthPlanned: mPlanned, monthActual: mActual }
   }, [periods, plannedByPeriod, actualByPeriod, todayIdx])
 
   const totalPlanned = plannedByPeriod.reduce((s, v) => s + v, 0)
@@ -613,7 +626,7 @@ function SCurveTab({
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
           <div>
             <h2 style={{ fontSize: 14, color: 'var(--n-900)', fontWeight: 600 }}>Curva S — Avance acumulado</h2>
-            <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>Costo planificado vs. ejecutado por período</div>
+            <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>Costo planificado vs. ejecutado · agrupado por mes</div>
           </div>
           <div style={{ display: 'flex', gap: 14 }}>
             {[['#4F46E5', 'Planificado'], ['#10B981', 'Real']] .map(([color, label]) => (
@@ -648,47 +661,47 @@ function SCurveTab({
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 4" stroke="var(--n-150)" vertical={false} />
-              <XAxis dataKey="label" interval={tickInterval} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" interval={0} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={fmtTick} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} width={60} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--n-150)' }}
                 formatter={(v: unknown, name: unknown) => [fmtNumber(Number(v ?? 0)), name === 'planned' ? 'Planificado' : 'Real']}
                 labelStyle={{ fontWeight: 600, color: 'var(--n-900)' }}
               />
-              {todayIdx >= 0 && todayIdx < chartData.length && (
-                <ReferenceLine x={chartData[todayIdx]?.label} stroke="#EF4444" strokeDasharray="5 4" strokeWidth={1.5}
+              {todayMonthLabel && chartData.some(d => d.label === todayMonthLabel) && (
+                <ReferenceLine x={todayMonthLabel} stroke="#EF4444" strokeDasharray="5 4" strokeWidth={1.5}
                   label={{ value: 'HOY', position: 'top', fontSize: 9.5, fill: '#EF4444', fontWeight: 700 }} />
               )}
-              <Area type="monotone" dataKey="planned" stroke="#4F46E5" strokeWidth={2.2} fill="url(#scPlanGrad)" dot={{ r: 2.5, fill: '#4F46E5', opacity: 0.5 }} connectNulls />
-              <Area type="monotone" dataKey="actual"  stroke="#10B981" strokeWidth={2.5} fill="url(#scActGrad)"  dot={{ r: 3.2, fill: '#fff', stroke: '#10B981', strokeWidth: 2 }} connectNulls />
+              <Area type="monotone" dataKey="planned" stroke="#4F46E5" strokeWidth={2.2} fill="url(#scPlanGrad)" dot={{ r: 3, fill: '#4F46E5', opacity: 0.6 }} connectNulls />
+              <Area type="monotone" dataKey="actual"  stroke="#10B981" strokeWidth={2.5} fill="url(#scActGrad)"  dot={{ r: 3.5, fill: '#fff', stroke: '#10B981', strokeWidth: 2 }} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
 
-      {/* Period breakdown */}
+      {/* Period breakdown by month */}
       {totalPlanned > 0 && (
         <div className="card" style={{ padding: '16px 18px' }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-900)', marginBottom: 12 }}>Detalle por período</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 110px 100px', gap: 8, marginBottom: 8 }}>
-            {['Período', 'Progreso', 'Planificado', 'Real', '% Avance'].map(h => (
+          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-900)', marginBottom: 12 }}>Detalle por mes</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 110px 110px 100px', gap: 8, marginBottom: 8 }}>
+            {['Mes', 'Progreso', 'Planificado', 'Real', '% acum.'].map(h => (
               <div key={h} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
             ))}
           </div>
-          {chartData.slice(0, 20).map((d, i) => {
-            const pct = totalPlanned > 0 ? d.planned / totalPlanned : 0
-            const hasPlan = plannedByPeriod[i] > 0
-            const hasAct  = actualByPeriod[i]  > 0
+          {chartData.map((d, i) => {
+            const pct     = totalPlanned > 0 ? d.planned / totalPlanned : 0
+            const hasPlan = monthPlanned[i] > 0
+            const hasAct  = monthActual[i]  > 0
             if (!hasPlan && !hasAct) return null
             return (
-              <div key={d.label} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 110px 100px', gap: 8, alignItems: 'center', padding: '5px 0', borderTop: '1px solid var(--n-100)' }}>
+              <div key={d.label} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 110px 110px 100px', gap: 8, alignItems: 'center', padding: '5px 0', borderTop: '1px solid var(--n-100)' }}>
                 <div style={{ fontSize: 11.5, fontWeight: 600 }} className="mono">{d.label}</div>
                 <div style={{ height: 6, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
                   <div style={{ width: `${pct * 100}%`, height: '100%', background: 'var(--brand-500)', borderRadius: 999 }} />
                 </div>
-                <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-700)', textAlign: 'right' }}>{fmtNumber(d.planned)}</div>
-                <div className="mono tnum" style={{ fontSize: 11.5, color: d.actual != null ? 'var(--green-600)' : 'var(--n-400)', textAlign: 'right', fontWeight: d.actual != null ? 600 : 400 }}>
-                  {d.actual != null ? fmtNumber(d.actual) : '—'}
+                <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-700)', textAlign: 'right' }}>{fmtNumber(monthPlanned[i])}</div>
+                <div className="mono tnum" style={{ fontSize: 11.5, color: hasAct ? 'var(--green-600)' : 'var(--n-400)', textAlign: 'right', fontWeight: hasAct ? 600 : 400 }}>
+                  {hasAct ? fmtNumber(monthActual[i]) : '—'}
                 </div>
                 <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-600)', textAlign: 'right' }}>
                   {totalPlanned > 0 ? `${(pct * 100).toFixed(1)}%` : '—'}

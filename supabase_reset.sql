@@ -7,11 +7,12 @@
 -- 1. ELIMINAR TRIGGERS
 -- ============================================================
 
-DROP TRIGGER IF EXISTS trigger_projects_updated_at      ON projects;
-DROP TRIGGER IF EXISTS trigger_tasks_updated_at         ON tasks;
-DROP TRIGGER IF EXISTS trigger_budgets_updated_at       ON budgets;
-DROP TRIGGER IF EXISTS trigger_budget_items_updated_at  ON budget_items;
-DROP TRIGGER IF EXISTS trigger_schedules_updated_at     ON schedules;
+DROP TRIGGER IF EXISTS trigger_projects_updated_at           ON projects;
+DROP TRIGGER IF EXISTS trigger_tasks_updated_at              ON tasks;
+DROP TRIGGER IF EXISTS trigger_budgets_updated_at            ON budgets;
+DROP TRIGGER IF EXISTS trigger_budget_items_updated_at       ON budget_items;
+DROP TRIGGER IF EXISTS trigger_schedules_updated_at          ON schedules;
+-- Nota: trigger_budget_gg_items_updated_at se elimina automáticamente con DROP TABLE budget_gg_items
 
 -- ============================================================
 -- 2. ELIMINAR FUNCIÓN
@@ -28,6 +29,7 @@ DROP TABLE IF EXISTS schedule_tasks;
 DROP TABLE IF EXISTS schedules;
 DROP TABLE IF EXISTS apu_lines;
 DROP TABLE IF EXISTS budget_items;
+DROP TABLE IF EXISTS budget_gg_items;
 DROP TABLE IF EXISTS budget_resources;
 DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS audit_logs;
@@ -131,6 +133,7 @@ CREATE TABLE budgets (
   indirect_pct  NUMERIC(5,4) NOT NULL DEFAULT 0.10,
   utility_pct   NUMERIC(5,4) NOT NULL DEFAULT 0.08,
   igv_pct       NUMERIC(5,4) NOT NULL DEFAULT 0.18,
+  gg_months     INTEGER      NOT NULL DEFAULT 3,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -192,6 +195,21 @@ CREATE TABLE schedule_tasks (
   UNIQUE(schedule_id, item_id)
 );
 
+CREATE TABLE budget_gg_items (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  budget_id   UUID NOT NULL REFERENCES budgets(id) ON DELETE CASCADE,
+  rubro       TEXT NOT NULL DEFAULT 'gestion',
+  code        TEXT NOT NULL DEFAULT '',
+  name        TEXT NOT NULL,
+  unit        TEXT NOT NULL DEFAULT 'glb',
+  qty         NUMERIC(12, 4) NOT NULL DEFAULT 1,
+  unit_price  NUMERIC(12, 4) NOT NULL DEFAULT 0,
+  months      INTEGER,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE schedule_actuals (
   id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   schedule_id      UUID NOT NULL REFERENCES schedules(id) ON DELETE CASCADE,
@@ -220,8 +238,9 @@ CREATE INDEX idx_budget_resources_kind      ON budget_resources(kind);
 CREATE INDEX idx_schedules_budget_id        ON schedules(budget_id);
 CREATE INDEX idx_schedule_tasks_schedule_id ON schedule_tasks(schedule_id);
 CREATE INDEX idx_schedule_tasks_item_id     ON schedule_tasks(item_id);
-CREATE INDEX idx_schedule_actuals_schedule  ON schedule_actuals(schedule_id);
-CREATE INDEX idx_schedule_actuals_period    ON schedule_actuals(period_date);
+CREATE INDEX idx_schedule_actuals_schedule   ON schedule_actuals(schedule_id);
+CREATE INDEX idx_schedule_actuals_period     ON schedule_actuals(period_date);
+CREATE INDEX idx_budget_gg_items_budget_id   ON budget_gg_items(budget_id);
 
 -- ============================================================
 -- 6. FUNCIÓN Y TRIGGERS updated_at
@@ -255,6 +274,10 @@ CREATE TRIGGER trigger_schedules_updated_at
   BEFORE UPDATE ON schedules
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+CREATE TRIGGER trigger_budget_gg_items_updated_at
+  BEFORE UPDATE ON budget_gg_items
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- ============================================================
 -- 7. ROW LEVEL SECURITY
 -- ============================================================
@@ -273,6 +296,7 @@ ALTER TABLE apu_lines         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedules         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_tasks    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_actuals  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_gg_items   ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all on projects"          ON projects          FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on tasks"             ON tasks             FOR ALL USING (true) WITH CHECK (true);
@@ -288,6 +312,7 @@ CREATE POLICY "Allow all on apu_lines"         ON apu_lines         FOR ALL USIN
 CREATE POLICY "Allow all on schedules"         ON schedules         FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on schedule_tasks"    ON schedule_tasks    FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on schedule_actuals"  ON schedule_actuals  FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budget_gg_items"   ON budget_gg_items   FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- 8. DATOS INICIALES DE CONFIGURACIÓN

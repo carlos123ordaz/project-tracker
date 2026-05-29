@@ -9,9 +9,10 @@ export const BUDGET_STATUSES: { value: BudgetStatus; color: string; bg: string }
 ]
 
 export const RESOURCE_KINDS: { value: string; label: string; color: string }[] = [
-  { value: 'material',  label: 'Material',   color: '#2563EB' },
-  { value: 'labor',     label: 'Mano de obra', color: '#D97706' },
-  { value: 'equipment', label: 'Equipo',      color: '#7C3AED' },
+  { value: 'material',    label: 'Material',      color: '#2563EB' },
+  { value: 'labor',       label: 'Mano de obra',  color: '#D97706' },
+  { value: 'equipment',   label: 'Equipo',        color: '#7C3AED' },
+  { value: 'subcontrato', label: 'Subcontrato',   color: '#0F766E' },
 ]
 
 export function getStatusMeta(status: string) {
@@ -69,11 +70,15 @@ export function computeBudgetTotals(
   items: BudgetItem[],
   apuLines: ApuLine[],
   resourceMap: Map<string, BudgetResource>,
+  ggTotal?: number,
 ): BudgetTotals {
   const direct = items
     .filter(it => it.type === 'item')
     .reduce((sum, it) => sum + it.qty * getItemUnitPrice(it, apuLines, resourceMap), 0)
-  const indirect = direct * (budget.indirect_pct ?? 0.10)
+  // When GG items exist, their total replaces the flat indirect_pct
+  const indirect = (ggTotal != null && ggTotal > 0)
+    ? ggTotal
+    : direct * (budget.indirect_pct ?? 0.10)
   const utility  = direct * (budget.utility_pct  ?? 0.08)
   const subtotal = direct + indirect + utility
   const igv      = subtotal * (budget.igv_pct ?? 0.18)

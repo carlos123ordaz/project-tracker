@@ -1,22 +1,23 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBudgetResources } from '../hooks/useBudgetResources'
 import { PageLoader } from '../components/ui/Loader'
 import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
-import BudgetsSubNav from '../components/budget/BudgetsSubNav'
 import { fmtCurrency } from '../lib/budgetHelpers'
 import type { BudgetResource, ResourceKind } from '../lib/types'
-import { Plus, Pencil, Trash2, Database } from 'lucide-react'
+import { Plus, Pencil, Trash2, Database, TrendingUp } from 'lucide-react'
 
 // ── kind colors ───────────────────────────────────────────────────────────────
 const KIND_COLORS: Record<string, { bg: string; fg: string }> = {
-  material:  { bg: '#EFF6FF', fg: '#1D4ED8' },
-  labor:     { bg: '#FEF3C7', fg: '#B45309' },
-  equipment: { bg: '#E0E7FF', fg: '#4338CA' },
+  material:    { bg: '#EFF6FF', fg: '#1D4ED8' },
+  labor:       { bg: '#FEF3C7', fg: '#B45309' },
+  equipment:   { bg: '#E0E7FF', fg: '#4338CA' },
+  subcontrato: { bg: '#F0FDFA', fg: '#0F766E' },
 }
 const KIND_LABELS: Record<string, string> = {
-  material: 'Material', labor: 'Mano de obra', equipment: 'Equipo',
+  material: 'Material', labor: 'Mano de obra', equipment: 'Equipo', subcontrato: 'Subcontrato',
 }
 
 // ── Form ─────────────────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ function ResourceForm({
             <option value="material">Material</option>
             <option value="labor">Mano de obra</option>
             <option value="equipment">Equipo</option>
+            <option value="subcontrato">Subcontrato</option>
           </select>
         </div>
         <div>
@@ -104,10 +106,11 @@ export default function BudgetResourcesPage() {
   const [deleting,   setDeleting]   = useState(false)
 
   const kinds = useMemo(() => [
-    { id: 'all',       label: 'Todos',        count: resources.length },
-    { id: 'material',  label: 'Materiales',   count: resources.filter(r => r.kind === 'material').length,  color: '#1D4ED8' },
-    { id: 'labor',     label: 'Mano de obra', count: resources.filter(r => r.kind === 'labor').length,     color: '#B45309' },
-    { id: 'equipment', label: 'Equipos',      count: resources.filter(r => r.kind === 'equipment').length, color: '#4338CA' },
+    { id: 'all',         label: 'Todos',        count: resources.length },
+    { id: 'material',    label: 'Materiales',   count: resources.filter(r => r.kind === 'material').length,    color: '#1D4ED8' },
+    { id: 'labor',       label: 'Mano de obra', count: resources.filter(r => r.kind === 'labor').length,       color: '#B45309' },
+    { id: 'equipment',   label: 'Equipos',      count: resources.filter(r => r.kind === 'equipment').length,   color: '#4338CA' },
+    { id: 'subcontrato', label: 'Subcontratos', count: resources.filter(r => r.kind === 'subcontrato').length, color: '#0F766E' },
   ], [resources])
 
   const filtered = useMemo(() => resources.filter(r => {
@@ -116,10 +119,11 @@ export default function BudgetResourcesPage() {
     return true
   }), [resources, kind, query])
 
+  const navigate = useNavigate()
+
   if (loading) return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PageLoader /></div>
+    <div className="fade-in" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <PageLoader />
     </div>
   )
 
@@ -132,10 +136,37 @@ export default function BudgetResourcesPage() {
   const openCreate = () => { setEditing(null); setShowForm(true) }
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
+    <div className="fade-in" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+      {/* Vertical module rail */}
+      <aside style={{ flex: '0 0 200px', width: 200, borderRight: '1px solid var(--n-200)', background: 'var(--n-25)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <nav style={{ flex: 1, padding: 8 }}>
+          {[
+            { id: 'prices',  label: 'Base de precios', Icon: Database,   path: '/budgets/resources', active: true  },
+            { id: 'reports', label: 'Reportes',        Icon: TrendingUp, path: '/budgets/reports',   active: false },
+          ].map(({ id, label, Icon, path, active: on }) => (
+            <button key={id} onClick={() => navigate(path)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+                padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
+                cursor: 'pointer', textAlign: 'left', position: 'relative',
+                background: on ? 'var(--brand-50)' : 'transparent',
+                color: on ? 'var(--brand-700)' : 'var(--n-700)',
+                fontWeight: on ? 600 : 500, fontSize: 12.5,
+                border: 'none', transition: 'background .14s, color .14s',
+              }}
+              onMouseEnter={e => { if (!on) { e.currentTarget.style.background = 'var(--n-100)'; e.currentTarget.style.color = 'var(--n-900)'; } }}
+              onMouseLeave={e => { if (!on) { e.currentTarget.style.background = on ? 'var(--brand-50)' : 'transparent'; e.currentTarget.style.color = on ? 'var(--brand-700)' : 'var(--n-700)'; } }}
+            >
+              {on && <span style={{ position: 'absolute', left: 0, top: 7, bottom: 7, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />}
+              <Icon size={15} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', padding: '20px 24px' }}>
         {/* Toolbar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
           <input value={query} onChange={e => setQuery(e.target.value)}

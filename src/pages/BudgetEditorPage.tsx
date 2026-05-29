@@ -5,20 +5,26 @@ import { useBudgetItems } from '../hooks/useBudgetItems'
 import { useBudgetResources } from '../hooks/useBudgetResources'
 import { useSchedules } from '../hooks/useSchedules'
 import { useScheduleEditor } from '../hooks/useScheduleEditor'
+import { useGastosGenerales } from '../hooks/useGastosGenerales'
 import { PageLoader } from '../components/ui/Loader'
 import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
-import BudgetsSubNav from '../components/budget/BudgetsSubNav'
 import { EmbeddedGantt } from '../components/budget/EmbeddedGantt'
 import {
   getStatusMeta, BUDGET_STATUSES, RESOURCE_KINDS,
   getItemUnitPrice, computeBudgetTotals, buildResourceMap,
   fmtCurrency, fmtNumber,
 } from '../lib/budgetHelpers'
+import { ggTotals } from '../lib/ggHelpers'
 import { generatePeriods } from '../lib/scheduleHelpers'
 import type { Budget, BudgetItem, BudgetResource, BudgetStatus, ApuLine } from '../lib/types'
-import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List, Layers, Database, TrendingUp, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react'
 import Modal from '../components/ui/Modal'
+import GastosGeneralesTab from './GastosGeneralesTab'
+import { StatCard } from '../components/ui/StatCard'
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
+} from 'recharts'
 
 // ── Editable cell ─────────────────────────────────────────────────────────────
 function EditableCell({ value, onChange, decimals = 2 }: { value: number; onChange: (v: number) => void; decimals?: number }) {
@@ -53,13 +59,15 @@ function EditableCell({ value, onChange, decimals = 2 }: { value: number; onChan
 }
 
 // ── Summary panel ─────────────────────────────────────────────────────────────
-function SummaryPanel({ budget, items, apuLines, resources }: {
+function SummaryPanel({ budget, items, apuLines, resources, ggTotal }: {
   budget: Budget; items: BudgetItem[]; apuLines: ApuLine[]; resources: BudgetResource[]
+  ggTotal?: number
 }) {
   const rMap = useMemo(() => buildResourceMap(resources), [resources])
-  const t    = computeBudgetTotals(budget, items, apuLines, rMap)
+  const t    = computeBudgetTotals(budget, items, apuLines, rMap, ggTotal)
   const cur  = budget.currency
   const itemCount = items.filter(i => i.type === 'item').length
+  const hasGG = ggTotal != null && ggTotal > 0
 
   const SumRow = ({ label, sub, value, bold = false, large = false }: { label: string; sub?: string; value: number; bold?: boolean; large?: boolean }) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
@@ -88,11 +96,15 @@ function SummaryPanel({ budget, items, apuLines, resources }: {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        <SumRow label="Costo directo"     value={t.direct} />
-        <SumRow label="Costos indirectos" sub={`${(budget.indirect_pct * 100).toFixed(0)}%`} value={t.indirect} />
-        <SumRow label="Utilidad"          sub={`${(budget.utility_pct  * 100).toFixed(0)}%`} value={t.utility} />
-        <SumRow label="Subtotal"          value={t.subtotal} bold />
-        <SumRow label="IGV"               sub={`${(budget.igv_pct * 100).toFixed(0)}%`}      value={t.igv} />
+        <SumRow label="Costo directo" value={t.direct} />
+        <SumRow
+          label={hasGG ? 'Gastos generales' : 'Costos indirectos'}
+          sub={hasGG ? undefined : `${(budget.indirect_pct * 100).toFixed(0)}%`}
+          value={t.indirect}
+        />
+        <SumRow label="Utilidad" sub={`${(budget.utility_pct * 100).toFixed(0)}%`} value={t.utility} />
+        <SumRow label="Subtotal" value={t.subtotal} bold />
+        <SumRow label="IGV"      sub={`${(budget.igv_pct * 100).toFixed(0)}%`}     value={t.igv} />
         <div style={{ height: 1, background: 'var(--n-200)', margin: '8px 0' }} />
         <SumRow label="Total" value={t.total} bold large />
       </div>
@@ -256,12 +268,12 @@ function APUPanel({
       </div>
 
       {available.length > 0 && (
-        <div style={{ flex: '0 0 auto', padding: '10px 18px 18px', borderTop: '1px solid var(--n-150)', background: 'var(--n-0)' }}>
+        <div style={{ flex: '0 0 auto', padding: '10px 18px 16px', borderTop: '1px solid var(--n-150)', background: 'var(--n-0)' }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', marginBottom: 6 }}>Agregar recurso</div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <select value={selResource} onChange={e => setSelResource(e.target.value)}
-              style={{ ...INP, flex: 1, cursor: 'pointer' }}>
-              <option value="">— Seleccionar —</option>
+              style={{ ...INP, width: '100%', cursor: 'pointer' }}>
+              <option value="">— Seleccionar recurso —</option>
               {RESOURCE_KINDS.map(k => (
                 <optgroup key={k.value} label={k.label}>
                   {available.filter(r => r.kind === k.value).map(r => (
@@ -270,11 +282,14 @@ function APUPanel({
                 </optgroup>
               ))}
             </select>
-            <input type="number" step="any" min="0" value={qty} onChange={e => setQty(e.target.value)}
-              placeholder="Cant." style={{ ...INP, width: 52, textAlign: 'right' }} />
-            <Button variant="primary" size="sm" onClick={handleAdd} disabled={!selResource || adding} icon={Plus}>
-              {adding ? '…' : ''}
-            </Button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input type="number" step="any" min="0" value={qty} onChange={e => setQty(e.target.value)}
+                placeholder="Cantidad" style={{ ...INP, flex: 1, textAlign: 'right' }} />
+              <Button variant="primary" size="sm" onClick={handleAdd} disabled={!selResource || adding} icon={Plus}
+                style={{ flexShrink: 0 }}>
+                {adding ? 'Agregando…' : 'Agregar'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -327,12 +342,13 @@ const TH: React.CSSProperties = {
 const TD: React.CSSProperties = { padding: '6px 12px', verticalAlign: 'middle', fontSize: 12.5 }
 
 // ── Budget header ─────────────────────────────────────────────────────────────
-function BudgetHeaderSection({ budget, view, onUpdate, navigate, onAddItem }: {
+function BudgetHeaderSection({ budget, view, onUpdate, navigate, onAddItem, onDelete }: {
   budget: Budget
-  view: 'items' | 'schedule'
+  view: 'items' | 'schedule' | 'gastos' | 'prices' | 'reports'
   onUpdate: (u: Partial<Budget>) => Promise<void>
   navigate: (path: string) => void
   onAddItem: () => void
+  onDelete: () => void
 }) {
   const meta = getStatusMeta(budget.status)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -368,6 +384,7 @@ function BudgetHeaderSection({ budget, view, onUpdate, navigate, onAddItem }: {
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <Button icon={Pencil} onClick={() => setShowEditModal(true)}>Editar metadatos</Button>
+          <Button icon={Trash2} variant="danger" onClick={onDelete}>Eliminar</Button>
           {view === 'items' && (
             <Button icon={Plus} variant="primary" onClick={onAddItem}>Agregar partida</Button>
           )}
@@ -418,7 +435,6 @@ function AddItemModal({ budgetId, groups, defaultGroupId, onAdd, onClose }: {
   const [name,   setName]   = useState('')
   const [unit,   setUnit]   = useState('m2')
   const [qty,    setQty]    = useState('1')
-  const [uprice, setUprice] = useState('0')
   const [gid,    setGid]    = useState(defaultGroupId ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -434,7 +450,7 @@ function AddItemModal({ budgetId, groups, defaultGroupId, onAdd, onClose }: {
         code: code.trim(), name: name.trim(),
         unit: type === 'group' ? '' : unit.trim() || 'm2',
         qty: parseFloat(qty) || 1,
-        unit_price: parseFloat(uprice) || 0,
+        unit_price: 0,
         description: '', rendimiento: '',
         sort_order: 0,
       })
@@ -477,10 +493,6 @@ function AddItemModal({ budgetId, groups, defaultGroupId, onAdd, onClose }: {
             <div>
               <label style={LBL}>Metrado</label>
               <input type="number" step="any" min="0" style={INP} value={qty} onChange={e => setQty(e.target.value)} />
-            </div>
-            <div>
-              <label style={LBL}>Precio unit.</label>
-              <input type="number" step="any" min="0" style={INP} value={uprice} onChange={e => setUprice(e.target.value)} />
             </div>
             {groups.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
@@ -662,27 +674,160 @@ function CreateScheduleInline({ budgetId, onCreated }: {
   )
 }
 
+// ── Resource management helpers ───────────────────────────────────────────────
+const RKIND_COLORS: Record<string, { bg: string; fg: string }> = {
+  material:    { bg: '#EFF6FF', fg: '#1D4ED8' },
+  labor:       { bg: '#FEF3C7', fg: '#B45309' },
+  equipment:   { bg: '#E0E7FF', fg: '#4338CA' },
+  subcontrato: { bg: '#F0FDFA', fg: '#0F766E' },
+}
+const RKINDS = [
+  { value: 'material'    as const, label: 'Material' },
+  { value: 'labor'       as const, label: 'Mano de obra' },
+  { value: 'equipment'   as const, label: 'Equipo' },
+  { value: 'subcontrato' as const, label: 'Subcontrato' },
+]
+
+function InlineResourceForm({ initial, onSave, onClose }: {
+  initial?: BudgetResource
+  onSave: (data: Omit<BudgetResource, 'id' | 'created_at'>) => Promise<void>
+  onClose: () => void
+}) {
+  const [kind,   setKind]   = useState<BudgetResource['kind']>(initial?.kind ?? 'material')
+  const [name,   setName]   = useState(initial?.name ?? '')
+  const [unit,   setUnit]   = useState(initial?.unit ?? 'und')
+  const [price,  setPrice]  = useState(initial?.price ?? 0)
+  const [saving, setSaving] = useState(false)
+
+  const INP: React.CSSProperties = { height: 32, padding: '0 10px', fontSize: 12.5, width: '100%', border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', outline: 'none', boxSizing: 'border-box' }
+  const LBL: React.CSSProperties = { fontSize: 11.5, fontWeight: 600, color: 'var(--n-700)', marginBottom: 4, display: 'block' }
+
+  const handle = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      await onSave({ kind, name: name.trim(), unit: unit.trim() || 'und', price: Number(price), sort_order: initial?.sort_order ?? 0 })
+      onClose()
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="form-grid">
+        <div>
+          <label style={LBL}>Tipo</label>
+          <select style={{ ...INP, cursor: 'pointer' }} value={kind} onChange={e => setKind(e.target.value as BudgetResource['kind'])}>
+            {RKINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={LBL}>Unidad</label>
+          <input style={INP} value={unit} onChange={e => setUnit(e.target.value)} placeholder="m2, kg, hr, und…" />
+        </div>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <label style={LBL}>Nombre / descripción *</label>
+          <input style={INP} value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Cemento Portland Tipo I" required />
+        </div>
+        <div>
+          <label style={LBL}>Precio unitario</label>
+          <input type="number" step="0.01" min="0" style={INP} value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} />
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Button onClick={onClose} type="button">Cancelar</Button>
+        <Button variant="primary" type="submit" disabled={saving}>
+          {saving ? 'Guardando…' : initial?.id ? 'Guardar cambios' : 'Agregar recurso'}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+// ── S-curve chart ─────────────────────────────────────────────────────────────
+function SCurve({ total }: { total: number }) {
+  const chartData = useMemo(() => {
+    const planned = Array.from({ length: 12 }, (_, i) =>
+      (1 / (1 + Math.exp(-10 * (i / 11 - 0.5)))) * total
+    )
+    const actual = planned.slice(0, 8).map((p, i) =>
+      p * (1 + Math.sin(i * 0.9) * 0.08 - i / 12 * 0.05)
+    )
+    return Array.from({ length: 12 }, (_, i) => ({
+      week: `S${i + 1}`,
+      planned: planned[i],
+      actual: i <= 7 ? actual[i] : undefined,
+    }))
+  }, [total])
+
+  const fmtTick = (v: number) => {
+    if (total === 0) return '0'
+    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+    if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`
+    return `$${v.toFixed(0)}`
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <AreaChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+        <defs>
+          <linearGradient id="edPlanGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor="#4F46E5" stopOpacity={0.15} />
+            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="edActGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor="#10B981" stopOpacity={0.20} />
+            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 4" stroke="var(--n-150)" vertical={false} />
+        <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+        <YAxis tickFormatter={fmtTick} tick={{ fontSize: 10, fill: 'var(--n-500)', fontFamily: 'inherit' }} axisLine={false} tickLine={false} width={56} />
+        <Tooltip
+          contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--n-150)', boxShadow: 'var(--shadow-sm)' }}
+          formatter={(v: unknown, name: unknown) => [fmtNumber(Number(v ?? 0)), name === 'planned' ? 'Planificado' : 'Real']}
+          labelStyle={{ fontWeight: 600, color: 'var(--n-900)' }}
+        />
+        <ReferenceLine x="S8" stroke="var(--red-500)" strokeDasharray="5 4" strokeWidth={1.5}
+          label={{ value: 'HOY', position: 'top', fontSize: 9.5, fill: 'var(--red-500)', fontWeight: 700 }} />
+        <Area type="monotone" dataKey="planned" stroke="#4F46E5" strokeWidth={2.2} fill="url(#edPlanGrad)" dot={{ r: 2.5, fill: '#4F46E5', opacity: 0.5 }} connectNulls />
+        <Area type="monotone" dataKey="actual"  stroke="#10B981" strokeWidth={2.5} fill="url(#edActGrad)"  dot={{ r: 3.2, fill: '#fff', stroke: '#10B981', strokeWidth: 2 }} connectNulls />
+      </AreaChart>
+    </ResponsiveContainer>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BudgetEditorPage() {
   const { id }   = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const { budget, loading: bLoad, updateBudget } = useBudget(id)
+  const { budget, loading: bLoad, updateBudget, deleteBudget } = useBudget(id)
   const { items, apuLines, loading: iLoad, createItem, updateItem, deleteItem, upsertApuLine, deleteApuLine } = useBudgetItems(id)
-  const { resources, loading: rLoad } = useBudgetResources()
+  const { resources, loading: rLoad, createResource, updateResource, deleteResource } = useBudgetResources()
+  const { items: ggItems, loading: ggLoad, createItem: createGGItem, updateItem: updateGGItem, deleteItem: deleteGGItem } = useGastosGenerales(id)
 
   // Schedule data for "Programar" tab
   const { schedules, loading: sLoad, createSchedule } = useSchedules()
   const budgetSchedule = schedules.find(s => s.budget_id === id)
-  const { tasks, actuals, upsertTask, deleteTask } = useScheduleEditor(budgetSchedule?.id ?? '')
+  const { tasks, actuals, upsertTask, deleteTask, replaceItemActuals } = useScheduleEditor(budgetSchedule?.id ?? '')
 
-  const [view,       setView]       = useState<'items' | 'schedule'>('items')
+  const [view,       setView]       = useState<'items' | 'schedule' | 'gastos' | 'prices' | 'reports'>('items')
   const [expanded,   setExpanded]   = useState<Set<string>>(new Set())
   const [apuItem,    setApuItem]    = useState<BudgetItem | null>(null)
   const [editItem,   setEditItem]   = useState<BudgetItem | null>(null)
   const [showAdd,    setShowAdd]    = useState(false)
   const [addGroupId, setAddGroupId] = useState<string | undefined>(undefined)
-  const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [confirmDel,       setConfirmDel]       = useState<string | null>(null)
+  const [confirmDelBudget, setConfirmDelBudget] = useState(false)
+  const [deletingBudget,   setDeletingBudget]   = useState(false)
+
+  const [resourceQuery,      setResourceQuery]      = useState('')
+  const [resourceKindFilter, setResourceKindFilter] = useState('all')
+  const [showResourceForm,   setShowResourceForm]   = useState(false)
+  const [editingResource,    setEditingResource]    = useState<BudgetResource | null>(null)
+  const [confirmDelResource, setConfirmDelResource] = useState<BudgetResource | null>(null)
+  const [deletingResource,   setDeletingResource]   = useState(false)
 
   const resourceMap = useMemo(() => buildResourceMap(resources), [resources])
 
@@ -708,11 +853,6 @@ export default function BudgetEditorPage() {
     return m
   }, [items, apuLines, resourceMap])
 
-  const totalDirect = useMemo(() =>
-    items.filter(it => it.type === 'item').reduce((s, it) => s + it.qty * getItemUnitPrice(it, apuLines, resourceMap), 0),
-    [items, apuLines, resourceMap],
-  )
-
   // Schedule periods (always weekly for the embedded Gantt)
   const periods = useMemo(() =>
     budgetSchedule ? generatePeriods(budgetSchedule.start_date, budgetSchedule.end_date, 'day') : [],
@@ -725,15 +865,41 @@ export default function BudgetEditorPage() {
     return m
   }, [items, apuLines, resourceMap])
 
-  if (bLoad || iLoad || rLoad) return (
+  // Direct cost (also used as GG reference)
+  const ggDirectCost = useMemo(() =>
+    items.filter(it => it.type === 'item').reduce((s, it) => s + it.qty * getItemUnitPrice(it, apuLines, resourceMap), 0),
+    [items, apuLines, resourceMap],
+  )
+
+  const ggTotal = useMemo(() => {
+    if (ggItems.length === 0) return undefined
+    return ggTotals(ggItems, ggDirectCost).total
+  }, [ggItems, ggDirectCost])
+
+  const totals = useMemo(() =>
+    budget ? computeBudgetTotals(budget, items, apuLines, resourceMap, ggTotal) : null,
+    [budget, items, apuLines, resourceMap, ggTotal],
+  )
+  const reportPlanned = useMemo(() => {
+    const v = totals?.total ?? 0
+    return Array.from({ length: 12 }, (_, i) => (1 / (1 + Math.exp(-10 * (i / 11 - 0.5)))) * v)
+  }, [totals])
+  const reportActual = useMemo(() =>
+    reportPlanned.slice(0, 8).map((p, i) => p * (1 + Math.sin(i * 0.9) * 0.08 - i / 12 * 0.05)),
+    [reportPlanned],
+  )
+  const reportAdvancePct = (totals?.total ?? 0) > 0 ? (reportActual[7] ?? 0) / (totals?.total ?? 1) : 0
+  const reportVariance   = (reportActual[7] ?? 0) - (reportPlanned[7] ?? 0)
+
+  if (bLoad || iLoad || rLoad || ggLoad) return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <BudgetsSubNav />
+
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PageLoader /></div>
     </div>
   )
   if (!budget) return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <BudgetsSubNav />
+
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--n-500)', fontSize: 13 }}>
         Presupuesto no encontrado.
         <Button onClick={() => navigate('/budgets')} style={{ marginLeft: 12 }}>Volver</Button>
@@ -745,50 +911,107 @@ export default function BudgetEditorPage() {
 
   // ── View tabs ──────────────────────────────────────────────────────────────
   const VIEW_TABS = [
-    { id: 'items',    label: 'Edición',   Icon: List },
-    { id: 'schedule', label: 'Programar', Icon: CalendarDays },
+    { id: 'items',    label: 'Partidas',           Icon: List },
+    { id: 'schedule', label: 'Programar',          Icon: CalendarDays },
+    { id: 'gastos',   label: 'Gastos generales',  Icon: Layers },
+  ] as const
+
+  const MODULE_TABS = [
+    { id: 'prices',  label: 'Insumos', Icon: Database,   mv: 'prices'  as const },
+    { id: 'reports', label: 'Curva S',        Icon: TrendingUp, mv: 'reports' as const },
   ] as const
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
+
       <BudgetHeaderSection
         budget={budget}
         view={view}
         onUpdate={async p => { await updateBudget(p) }}
         navigate={navigate}
         onAddItem={() => { setAddGroupId(undefined); setShowAdd(true) }}
+        onDelete={() => setConfirmDelBudget(true)}
       />
 
-      {/* View tabs row */}
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        padding: '0 24px', borderBottom: '1px solid var(--n-150)',
-        background: 'var(--n-0)', flex: '0 0 auto', gap: 2,
-      }}>
-        {VIEW_TABS.map(({ id: tid, label, Icon }) => {
-          const isActive = view === tid
-          return (
-            <button key={tid} onClick={() => setView(tid as 'items' | 'schedule')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 7,
-                padding: '10px 14px', fontSize: 12.5, fontWeight: 550,
-                color: isActive ? 'var(--brand-700)' : 'var(--n-600)',
-                borderBottom: `2px solid ${isActive ? 'var(--brand-600)' : 'transparent'}`,
-                marginBottom: -1, cursor: 'pointer', transition: 'color .15s, border-color .15s',
-                background: 'none', border: 'none',
-                borderBottomWidth: 2,
-                borderBottomStyle: 'solid',
-                borderBottomColor: isActive ? 'var(--brand-600)' : 'transparent',
-              }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--n-900)' }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--n-600)' }}
-            >
-              <Icon size={14} /> {label}
-            </button>
-          )
-        })}
-      </div>
+      {/* Body: vertical section rail + content */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+
+        {/* Section rail */}
+        <aside style={{
+          flex: '0 0 200px', width: 200,
+          borderRight: '1px solid var(--n-200)',
+          background: 'var(--n-25)',
+          display: 'flex', flexDirection: 'column',
+          overflowY: 'auto',
+        }}>
+          <nav style={{ flex: 1, padding: 8 }}>
+            {VIEW_TABS.map(({ id: tid, label, Icon }) => {
+              const on = view === tid
+              return (
+                <button key={tid}
+                  onClick={() => setView(tid as 'items' | 'gastos' | 'schedule')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+                    padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
+                    cursor: 'pointer', textAlign: 'left', position: 'relative',
+                    background: on ? 'var(--brand-50)' : 'transparent',
+                    color: on ? 'var(--brand-700)' : 'var(--n-700)',
+                    fontWeight: on ? 600 : 500, fontSize: 12.5,
+                    border: 'none', transition: 'background .14s, color .14s',
+                  }}
+                  onMouseEnter={e => { if (!on) { e.currentTarget.style.background = 'var(--n-100)'; e.currentTarget.style.color = 'var(--n-900)'; } }}
+                  onMouseLeave={e => { if (!on) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-700)'; } }}
+                >
+                  {on && <span style={{ position: 'absolute', left: 0, top: 7, bottom: 7, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />}
+                  <Icon size={15} />
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+
+            <div style={{ height: 1, background: 'var(--n-200)', margin: '8px 4px' }} />
+
+            {MODULE_TABS.map(({ id, label, Icon, mv }) => {
+              const on = view === mv
+              return (
+                <button key={id}
+                  onClick={() => setView(mv)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+                    padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
+                    cursor: 'pointer', textAlign: 'left', position: 'relative',
+                    background: on ? 'var(--brand-50)' : 'transparent',
+                    color: on ? 'var(--brand-700)' : 'var(--n-700)',
+                    fontWeight: on ? 600 : 500, fontSize: 12.5,
+                    border: 'none', transition: 'background .14s, color .14s',
+                  }}
+                  onMouseEnter={e => { if (!on) { e.currentTarget.style.background = 'var(--n-100)'; e.currentTarget.style.color = 'var(--n-900)'; } }}
+                  onMouseLeave={e => { if (!on) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-700)'; } }}
+                >
+                  {on && <span style={{ position: 'absolute', left: 0, top: 7, bottom: 7, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />}
+                  <Icon size={15} />
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+          </nav>
+        </aside>
+
+        {/* Content column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+
+        {/* ── Gastos Generales tab ── */}
+      {view === 'gastos' && (
+        <GastosGeneralesTab
+          budget={budget}
+          items={ggItems}
+          directCost={ggDirectCost}
+          onUpdateBudget={async p => { await updateBudget(p) }}
+          onCreateItem={createGGItem}
+          onUpdateItem={updateGGItem}
+          onDeleteItem={deleteGGItem}
+        />
+      )}
 
       {/* ── Programar tab ── */}
       {view === 'schedule' && (
@@ -805,6 +1028,7 @@ export default function BudgetEditorPage() {
             actuals={actuals}
             itemUnitPrices={itemUnitPrices}
             currency={budget.currency}
+            replaceItemActuals={replaceItemActuals}
             onUpsert={upsertTask}
             onDelete={deleteTask}
           />
@@ -991,7 +1215,7 @@ export default function BudgetEditorPage() {
                         <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--n-700)', paddingLeft: 6 }}>COSTO DIRECTO</span>
                       </td>
                       <td style={{ ...TD, textAlign: 'right' }} className="mono tnum">
-                        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--n-900)' }}>{fmtNumber(totalDirect)}</span>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--n-900)' }}>{fmtNumber(ggDirectCost)}</span>
                       </td>
                       <td style={TD} />
                     </tr>
@@ -1020,12 +1244,178 @@ export default function BudgetEditorPage() {
                 onClose={() => setApuItem(null)} />
             ) : (
               <div style={{ flex: 1, overflowY: 'auto' }}>
-                <SummaryPanel budget={budget} items={items} apuLines={apuLines} resources={resources} />
+                <SummaryPanel budget={budget} items={items} apuLines={apuLines} resources={resources} ggTotal={ggTotal} />
               </div>
             )}
           </aside>
         </div>
       )}
+
+      {/* ── Base de precios tab ── */}
+      {view === 'prices' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* toolbar + chips – fixed */}
+          <div style={{ flex: '0 0 auto', padding: '16px 24px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+              <input value={resourceQuery} onChange={e => setResourceQuery(e.target.value)}
+                placeholder="Buscar recurso…"
+                style={{ height: 32, padding: '0 10px', fontSize: 12.5, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', outline: 'none', width: 280, color: 'var(--n-900)' }}
+              />
+              <div style={{ flex: 1 }} />
+              <Button variant="primary" icon={Plus} onClick={() => { setEditingResource(null); setShowResourceForm(true) }}>Nuevo recurso</Button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { id: 'all',         label: 'Todos',        count: resources.length,                                       color: undefined    },
+                { id: 'material',    label: 'Materiales',   count: resources.filter(r => r.kind === 'material').length,    color: '#1D4ED8' },
+                { id: 'labor',       label: 'Mano de obra', count: resources.filter(r => r.kind === 'labor').length,       color: '#B45309' },
+                { id: 'equipment',   label: 'Equipos',      count: resources.filter(r => r.kind === 'equipment').length,   color: '#4338CA' },
+                { id: 'subcontrato', label: 'Subcontratos', count: resources.filter(r => r.kind === 'subcontrato').length, color: '#0F766E' },
+              ].map(k => {
+                const active = resourceKindFilter === k.id
+                return (
+                  <button key={k.id} onClick={() => setResourceKindFilter(k.id)} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    height: 30, padding: '0 12px', borderRadius: 99, cursor: 'pointer',
+                    fontSize: 12, fontWeight: active ? 600 : 500,
+                    border: active ? `1.5px solid ${k.color ?? 'var(--brand-600)'}` : '1px solid var(--n-200)',
+                    background: active ? (k.color ? k.color + '15' : 'var(--brand-50)') : 'var(--n-0)',
+                    color: active ? (k.color ?? 'var(--brand-700)') : 'var(--n-600)',
+                  }}>
+                    {k.label}
+                    <span className="mono tnum" style={{ fontSize: 10.5, opacity: 0.75 }}>{k.count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {/* scrollable table */}
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 24px 20px' }}>
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+                <thead>
+                  <tr style={{ background: 'var(--n-25)' }}>
+                    <th style={{ ...TH, minWidth: 280 }}>Nombre</th>
+                    <th style={{ ...TH, width: 140 }}>Tipo</th>
+                    <th style={{ ...TH, width: 80, textAlign: 'center' }}>Unidad</th>
+                    <th style={{ ...TH, width: 140, textAlign: 'right' }}>Precio</th>
+                    <th style={{ ...TH, width: 80 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resources
+                    .filter(r => resourceKindFilter === 'all' || r.kind === resourceKindFilter)
+                    .filter(r => !resourceQuery || r.name.toLowerCase().includes(resourceQuery.toLowerCase()))
+                    .map(r => {
+                      const kc = RKIND_COLORS[r.kind] ?? RKIND_COLORS['material']
+                      const kindLabel = RKINDS.find(k => k.value === r.kind)?.label ?? r.kind
+                      return (
+                        <tr key={r.id} style={{ borderTop: '1px solid var(--n-150)', transition: 'background .12s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <td style={{ ...TD, fontWeight: 550, color: 'var(--n-900)' }}>{r.name}</td>
+                          <td style={TD}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 5, background: kc.bg, color: kc.fg, fontSize: 11, fontWeight: 600 }}>
+                              <span style={{ width: 5, height: 5, borderRadius: 999, background: kc.fg }} />
+                              {kindLabel}
+                            </span>
+                          </td>
+                          <td style={{ ...TD, textAlign: 'center', color: 'var(--n-600)' }} className="mono">{r.unit}</td>
+                          <td style={{ ...TD, textAlign: 'right', fontWeight: 600, color: 'var(--n-900)' }} className="mono tnum">
+                            {fmtCurrency(r.price)}
+                          </td>
+                          <td style={{ ...TD, textAlign: 'right' }}>
+                            <span style={{ display: 'inline-flex', gap: 2 }}>
+                              <IconButton icon={Pencil} title="Editar" size={26} onClick={() => { setEditingResource(r); setShowResourceForm(true) }} />
+                              <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDelResource(r)} />
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+              {resources
+                .filter(r => resourceKindFilter === 'all' || r.kind === resourceKindFilter)
+                .filter(r => !resourceQuery || r.name.toLowerCase().includes(resourceQuery.toLowerCase()))
+                .length === 0 && (
+                <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                  <Database size={28} style={{ color: 'var(--n-300)', margin: '0 auto 10px' }} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-700)' }}>Sin resultados</div>
+                  <div style={{ fontSize: 12, color: 'var(--n-500)', marginTop: 4 }}>Cambia los filtros o agrega un recurso.</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reportes tab ── */}
+      {view === 'reports' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+            <StatCard icon={DollarSign}    label="Costo total"       value={fmtCurrency(totals?.total ?? 0, budget.currency)} sub="con IGV"                   accent="brand"  sparkSeed={2.1} sparkBase={50} />
+            <StatCard icon={TrendingUp}    label="% de avance"       numericValue={Math.round(reportAdvancePct * 100)} displaySuffix="%" sub="ejecutado a la fecha" accent="green"  sparkSeed={3.3} sparkBase={Math.round(reportAdvancePct * 100)} />
+            <StatCard icon={CheckCircle}   label="Planificado a hoy" value={fmtCurrency(reportPlanned[7] ?? 0, budget.currency)} sub="semana 8 de 12"           accent="amber"  sparkSeed={4.4} sparkBase={50} />
+            <StatCard icon={AlertTriangle} label="Variación"
+              value={(reportVariance >= 0 ? '+' : '') + fmtCurrency(Math.abs(reportVariance), budget.currency)}
+              sub={reportVariance >= 0 ? 'adelantado' : 'atrasado'}
+              accent={reportVariance >= 0 ? 'green' : 'red'} urgent={reportVariance < 0} sparkSeed={5.5} sparkBase={50} />
+          </div>
+          <div className="card" style={{ padding: '16px 18px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 14, color: 'var(--n-900)' }}>Curva S — Avance acumulado</h2>
+                <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>Costo planificado vs. ejecutado, semana a semana</div>
+              </div>
+              <div style={{ display: 'flex', gap: 14 }}>
+                {[['#4F46E5', 'Planificado'], ['#10B981', 'Real']].map(([color, label]) => (
+                  <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--n-700)', fontWeight: 500 }}>
+                    <span style={{ width: 14, height: 3, background: color, borderRadius: 2 }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <SCurve total={totals?.total ?? 0} />
+          </div>
+          <div className="card" style={{ padding: '16px 18px' }}>
+            <h2 style={{ fontSize: 14, marginBottom: 12, color: 'var(--n-900)' }}>Distribución por capítulo</h2>
+            {groups.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 12 }}>
+                Sin capítulos. Agrega grupos al presupuesto para ver la distribución.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {groups.map(g => {
+                  const children = items.filter(it => it.parent_id === g.id && it.type === 'item')
+                  const gValue   = children.reduce((s, it) => s + it.qty * getItemUnitPrice(it, apuLines, resourceMap), 0)
+                  const pct      = ggDirectCost > 0 ? gValue / ggDirectCost : 0
+                  return (
+                    <div key={g.id} style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 110px', gap: 14, alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--n-900)' }}>{g.name}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--n-500)' }} className="mono">{g.code || '—'} · {children.length} partidas</div>
+                      </div>
+                      <div style={{ height: 8, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{ width: `${pct * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--brand-500), var(--brand-700))', borderRadius: 999 }} />
+                      </div>
+                      <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-600)', textAlign: 'right' }}>{(pct * 100).toFixed(1)}%</div>
+                      <div className="mono tnum" style={{ fontSize: 12.5, color: 'var(--n-900)', fontWeight: 600, textAlign: 'right' }}>{fmtNumber(gValue)}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+        </div>
+      )}
+
+        </div>{/* end content column */}
+      </div>{/* end body row */}
 
       {/* Add item modal */}
       {showAdd && (
@@ -1043,7 +1433,7 @@ export default function BudgetEditorPage() {
         />
       )}
 
-      {/* Delete confirm */}
+      {/* Delete item confirm */}
       <Modal open={!!confirmDel} onClose={() => setConfirmDel(null)} title="Eliminar" size="sm">
         {confirmDel && (
           <div>
@@ -1056,6 +1446,54 @@ export default function BudgetEditorPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Resource form modal */}
+      <Modal open={showResourceForm} onClose={() => setShowResourceForm(false)} title={editingResource ? 'Editar recurso' : 'Nuevo insumo'}>
+        <InlineResourceForm
+          initial={editingResource ?? undefined}
+          onSave={async data => { editingResource ? await updateResource(editingResource.id, data) : await createResource(data) }}
+          onClose={() => setShowResourceForm(false)}
+        />
+      </Modal>
+
+      {/* Delete resource confirm */}
+      <Modal open={!!confirmDelResource} onClose={() => setConfirmDelResource(null)} title="Eliminar recurso" size="sm">
+        {confirmDelResource && (
+          <div>
+            <p style={{ fontSize: 13, color: 'var(--n-700)', marginBottom: 16, lineHeight: 1.5 }}>
+              ¿Eliminar <strong>{confirmDelResource.name}</strong>? Las líneas APU que lo usen serán eliminadas.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <Button onClick={() => setConfirmDelResource(null)}>Cancelar</Button>
+              <Button variant="danger" disabled={deletingResource} onClick={async () => {
+                setDeletingResource(true)
+                try { await deleteResource(confirmDelResource.id) } finally { setDeletingResource(false); setConfirmDelResource(null) }
+              }}>
+                {deletingResource ? 'Eliminando…' : 'Eliminar'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete budget confirm */}
+      <Modal open={confirmDelBudget} onClose={() => setConfirmDelBudget(false)} title="Eliminar presupuesto" size="sm">
+        <div>
+          <p style={{ fontSize: 13, color: 'var(--n-700)', marginBottom: 16, lineHeight: 1.5 }}>
+            ¿Eliminar <strong>{budget.name}</strong>? Se borrarán todas sus partidas y líneas APU. Esta acción no se puede deshacer.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setConfirmDelBudget(false)}>Cancelar</Button>
+            <Button variant="danger" disabled={deletingBudget} onClick={async () => {
+              setDeletingBudget(true)
+              try { await deleteBudget(); navigate('/budgets') }
+              finally { setDeletingBudget(false) }
+            }}>
+              {deletingBudget ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

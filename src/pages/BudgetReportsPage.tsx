@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBudgets } from '../hooks/useBudgets'
 import { useBudgetItems } from '../hooks/useBudgetItems'
 import { useBudgetResources } from '../hooks/useBudgetResources'
 import { PageLoader } from '../components/ui/Loader'
 import { StatCard } from '../components/ui/StatCard'
-import BudgetsSubNav from '../components/budget/BudgetsSubNav'
 import { computeBudgetTotals, buildResourceMap, getItemUnitPrice, fmtCurrency, fmtNumber } from '../lib/budgetHelpers'
-import { DollarSign, TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react'
+import { DollarSign, TrendingUp, CheckCircle, AlertTriangle, Database } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine,
@@ -196,19 +196,48 @@ function ReportContent({ budgetId }: { budgetId: string }) {
 export default function BudgetReportsPage() {
   const { budgets, loading } = useBudgets()
   const [selectedId, setSelectedId] = useState('')
+  const navigate = useNavigate()
 
   const budgetId = selectedId || budgets[0]?.id || ''
 
   if (loading) return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PageLoader /></div>
+    <div className="fade-in" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <PageLoader />
     </div>
   )
 
+  const RAIL = [
+    { id: 'prices',  label: 'Base de precios', Icon: Database,   path: '/budgets/resources', active: false },
+    { id: 'reports', label: 'Reportes',        Icon: TrendingUp, path: '/budgets/reports',   active: true  },
+  ]
+
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <BudgetsSubNav />
+    <div className="fade-in" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+
+      {/* Vertical module rail */}
+      <aside style={{ flex: '0 0 200px', width: 200, borderRight: '1px solid var(--n-200)', background: 'var(--n-25)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <nav style={{ flex: 1, padding: 8 }}>
+          {RAIL.map(({ id, label, Icon, path, active: on }) => (
+            <button key={id} onClick={() => navigate(path)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+                padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
+                cursor: 'pointer', textAlign: 'left', position: 'relative',
+                background: on ? 'var(--brand-50)' : 'transparent',
+                color: on ? 'var(--brand-700)' : 'var(--n-700)',
+                fontWeight: on ? 600 : 500, fontSize: 12.5,
+                border: 'none', transition: 'background .14s, color .14s',
+              }}
+              onMouseEnter={e => { if (!on) { e.currentTarget.style.background = 'var(--n-100)'; e.currentTarget.style.color = 'var(--n-900)'; } }}
+              onMouseLeave={e => { if (!on) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-700)'; } }}
+            >
+              {on && <span style={{ position: 'absolute', left: 0, top: 7, bottom: 7, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />}
+              <Icon size={15} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
         {/* Toolbar */}

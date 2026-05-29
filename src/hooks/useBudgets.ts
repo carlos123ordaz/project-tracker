@@ -75,5 +75,11 @@ export function useBudget(id: string | undefined) {
     return data as Budget
   }
 
-  return { budget, loading, error, refetch: fetchBudget, updateBudget }
+  const deleteBudget = async (): Promise<void> => {
+    if (!id) throw new Error('No budget id')
+    const { error: err } = await supabase.from('budgets').delete().eq('id', id)
+    if (err) throw new Error(err.message)
+  }
+
+  return { budget, loading, error, refetch: fetchBudget, updateBudget, deleteBudget }
 }

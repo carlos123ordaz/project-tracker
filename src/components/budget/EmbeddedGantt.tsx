@@ -215,7 +215,7 @@ function fmtDate(iso: string): string {
 // ── Schedule item modal ────────────────────────────────────────────────────────
 
 function ScheduleItemModalProto({
-  item, task, periods, totalCost, totalActual, currency, onSave, onDelete, onClose,
+  item, task, periods, totalCost, totalActual, currency, replaceItemActuals, onSave, onDelete, onClose,
 }: {
   item: BudgetItem
   task: ScheduleTask | undefined
@@ -223,6 +223,7 @@ function ScheduleItemModalProto({
   totalCost: number
   totalActual: number
   currency: string
+  replaceItemActuals?: (itemId: string, entries: { periodDate: string; amount: number }[]) => Promise<void>
   onSave: (startDate: string, endDate: string) => Promise<void>
   onDelete: () => Promise<void>
   onClose: () => void
@@ -236,8 +237,12 @@ function ScheduleItemModalProto({
     defaultStart && defaultEnd ? diffDays(defaultStart, defaultEnd) : 7
   )
   const [saving, setSaving] = useState(false)
+  const [actualPctLocal, setActualPctLocal] = useState(() =>
+    totalCost > 0 ? Math.min(1, totalActual / totalCost) : 0
+  )
+  const [actualDirty, setActualDirty] = useState(false)
 
-  const progress = totalCost > 0 ? Math.min(1, totalActual / totalCost) : 0
+  const progress = actualDirty ? actualPctLocal : (totalCost > 0 ? Math.min(1, totalActual / totalCost) : 0)
   const earned   = totalCost * progress
   const valid    = !!startDate && !!endDate && endDate >= startDate
 
@@ -277,8 +282,13 @@ function ScheduleItemModalProto({
   const handleSave = async () => {
     if (!valid) return
     setSaving(true)
-    try { await onSave(startDate, endDate) }
-    finally { setSaving(false) }
+    try {
+      await onSave(startDate, endDate)
+      if (actualDirty && replaceItemActuals && startDate && endDate) {
+        const dist = distributeItemCost(totalCost * actualPctLocal, startDate, endDate, periods)
+        await replaceItemActuals(item.id, periods.map((p, i) => ({ periodDate: p.isoDate, amount: dist[i] })))
+      }
+    } finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
@@ -367,16 +377,32 @@ function ScheduleItemModalProto({
         {/* Avance real */}
         <div style={{ gridColumn: '1 / -1' }}>
           <label style={LBL}>Avance real — {Math.round(progress * 100)}%</label>
-          <div style={{ height: 8, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{
-              width: `${progress * 100}%`, height: '100%',
-              background: progress >= 1 ? '#10B981' : 'var(--brand-500)',
-              borderRadius: 999, transition: 'width .3s',
-            }} />
-          </div>
-          <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 4 }}>
-            Derivado del costo ejecutado registrado
-          </div>
+          {replaceItemActuals ? (
+            <>
+              <input
+                type="range" min="0" max="100" step="5"
+                value={Math.round(progress * 100)}
+                onChange={e => { setActualPctLocal(Number(e.target.value) / 100); setActualDirty(true) }}
+                style={{ width: '100%', accentColor: 'var(--brand-600)', marginTop: 4, cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--n-400)', marginTop: 2 }} className="mono tnum">
+                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ height: 8, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{
+                  width: `${progress * 100}%`, height: '100%',
+                  background: progress >= 1 ? '#10B981' : 'var(--brand-500)',
+                  borderRadius: 999, transition: 'width .3s',
+                }} />
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 4 }}>
+                Derivado del costo ejecutado registrado
+              </div>
+            </>
+          )}
         </div>
 
         {/* Costo planificado */}
@@ -423,7 +449,7 @@ function ScheduleItemModalProto({
 // ── EmbeddedGantt (main export) ───────────────────────────────────────────────
 
 export function EmbeddedGantt({
-  periods, groups, itemsOnly, tasks, actuals, itemUnitPrices, currency, onUpsert, onDelete,
+  periods, groups, itemsOnly, tasks, actuals, itemUnitPrices, currency, replaceItemActuals, onUpsert, onDelete,
 }: {
   periods: Period[]
   groups: BudgetItem[]
@@ -432,6 +458,7 @@ export function EmbeddedGantt({
   actuals: ScheduleActual[]
   itemUnitPrices: Map<string, number>
   currency: string
+  replaceItemActuals?: (itemId: string, entries: { periodDate: string; amount: number }[]) => Promise<void>
   onUpsert: (itemId: string, s: string, e: string) => Promise<void>
   onDelete: (itemId: string) => Promise<void>
 }) {
@@ -793,6 +820,7 @@ export function EmbeddedGantt({
           <ScheduleItemModalProto
             item={editItem} task={task} periods={periods}
             totalCost={totalCost} totalActual={totalActual} currency={currency}
+            replaceItemActuals={replaceItemActuals}
             onSave={async (s, e) => { await onUpsert(editItem.id, s, e); setEditItem(null) }}
             onDelete={async () => { await onDelete(editItem.id); setEditItem(null) }}
             onClose={() => setEditItem(null)}

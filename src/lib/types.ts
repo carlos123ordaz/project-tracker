@@ -47,7 +47,8 @@ export interface DashboardStats {
 }
 
 export type BudgetStatus = 'Borrador' | 'Revisión' | 'Aprobado' | 'Ejecutando' | 'Cerrado'
-export type ResourceKind = 'material' | 'labor' | 'equipment'
+export type ResourceKind = 'material' | 'labor' | 'equipment' | 'subcontrato'
+export type GGRubroId = 'gestion' | 'garantias' | 'ensayos' | 'personal_tec' | 'personal_adm' | 'servicios' | 'oficina'
 
 export interface Budget {
   id: string
@@ -59,6 +60,22 @@ export interface Budget {
   indirect_pct: number
   utility_pct: number
   igv_pct: number
+  gg_months: number
+  created_at: string
+  updated_at: string
+}
+
+export interface GGItem {
+  id: string
+  budget_id: string
+  rubro: GGRubroId
+  code: string
+  name: string
+  unit: string
+  qty: number
+  unit_price: number
+  months: number | null
+  sort_order: number
   created_at: string
   updated_at: string
 }
