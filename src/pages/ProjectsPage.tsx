@@ -92,7 +92,7 @@ export default function ProjectsPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonProjectCard key={i} />)}
         </div>
       ) : view === 'grid'
-        ? <ProjectsGrid rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} />
+        ? <ProjectsGrid rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} onAdd={() => setModalOpen(true)} />
         : <ProjectsList rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} sort={sort} toggleSort={toggleSort} />}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuevo proyecto" size="lg">
@@ -138,8 +138,8 @@ function ViewToggle({ value, onChange }: { value: string; onChange: (v: 'grid' |
 }
 
 
-function ProjectsGrid({ rows, onEdit, onDelete, navigate }: {
-  rows: any[]; onEdit: (p: Project) => void; onDelete: (p: Project) => void; navigate: (p: string) => void
+function ProjectsGrid({ rows, onEdit, onDelete, navigate, onAdd }: {
+  rows: any[]; onEdit: (p: Project) => void; onDelete: (p: Project) => void; navigate: (p: string) => void; onAdd: () => void
 }) {
   return (
     <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(312px, 1fr))', gap: 14 }}>
@@ -147,7 +147,7 @@ function ProjectsGrid({ rows, onEdit, onDelete, navigate }: {
         <ProjectCard key={p.id} p={p} onEdit={onEdit} onDelete={onDelete} navigate={navigate} />
       ))}
       <div
-        onClick={() => {}} /* handled by parent modal */
+        onClick={onAdd}
         style={{ background: 'transparent', border: '1.5px dashed var(--n-300)', borderRadius: 12, minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--n-500)', transition: 'all .18s' }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-400)'; e.currentTarget.style.background = 'var(--brand-50)'; e.currentTarget.style.color = 'var(--brand-700)' }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-300)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-500)' }}

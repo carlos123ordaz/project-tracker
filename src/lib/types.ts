@@ -146,3 +146,100 @@ export interface ScheduleActual {
   executed_amount: number
   created_at: string
 }
+
+// ── RRHH ──────────────────────────────────────────────────────
+
+export type Shift = 'Día' | 'Noche'
+
+export type AttendanceCondition =
+  | 'Asistencia'
+  | 'Falta'
+  | 'Descanso Médico'
+  | 'Enfermedad'
+  | 'Días Compensados'
+  | 'Vacaciones'
+  | 'Permiso'
+
+export const ATTENDANCE_CONDITIONS: AttendanceCondition[] = [
+  'Asistencia', 'Falta', 'Descanso Médico', 'Enfermedad', 'Días Compensados', 'Vacaciones', 'Permiso',
+]
+
+export type AttendanceMotive =
+  | 'Ninguno'
+  | 'Enfermedad común'
+  | 'Accidente laboral'
+  | 'Descanso médico'
+  | 'Descanso por trabajo'
+  | 'Vacaciones'
+  | 'Permiso personal'
+  | 'Capacitación'
+  | 'Comisión de servicio'
+
+export const ATTENDANCE_MOTIVES: AttendanceMotive[] = [
+  'Ninguno',
+  'Enfermedad común',
+  'Accidente laboral',
+  'Descanso médico',
+  'Descanso por trabajo',
+  'Vacaciones',
+  'Permiso personal',
+  'Capacitación',
+  'Comisión de servicio',
+]
+
+export const MODULES_LIST = [
+  { key: 'proyectos',     label: 'Proyectos' },
+  { key: 'ingenieria',    label: 'Ingeniería' },
+  { key: 'presupuestos',  label: 'Presupuestos' },
+  { key: 'cronogramas',   label: 'Cronogramas' },
+  { key: 'rrhh',          label: 'RRHH' },
+  { key: 'configuracion', label: 'Configuración' },
+] as const
+
+export interface UserProfile {
+  id: string
+  email: string
+  full_name: string
+  role: string
+  check_in_time: string | null
+  check_out_time: string | null
+  shift: Shift
+  is_superadmin: boolean
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ModulePermission {
+  id: string
+  user_id: string
+  module: string
+  can_view: boolean
+  can_add: boolean
+  can_edit: boolean
+  can_delete: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AttendanceRecord {
+  id: string
+  date: string
+  collaborator_id: string
+  collaborator_name: string
+  project_id: string | null
+  project_name: string | null
+  project_type: string | null
+  shift: Shift
+  check_in_time: string | null
+  check_out_time: string | null
+  scheduled_hours: number
+  real_hours: number
+  extra_hours: number
+  condition: AttendanceCondition
+  motive: AttendanceMotive
+  observations: string
+  created_at: string
+  updated_at: string
+}

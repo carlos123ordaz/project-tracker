@@ -5,8 +5,10 @@ import {
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
   FileSpreadsheet, ChevronDown, CheckSquare, BarChart2,
   ShoppingCart, Briefcase, Users, Cpu, TrendingUp,
+  UserCheck, ClipboardList, BarChart3,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
+import { useAuth } from '../../hooks/useAuth'
 
 interface SidebarProps {
   collapsed: boolean
@@ -29,60 +31,8 @@ interface NavGroupDef {
   items: NavItem[]
 }
 
-const GROUPS: NavGroupDef[] = [
-  {
-    key: 'proyectos',
-    label: 'Proyectos',
-    icon: FolderOpen,
-    items: [
-      { to: '/',             label: 'Dashboard',    icon: LayoutDashboard, end: true },
-      { to: '/projects',     label: 'Catálogo',    icon: FolderOpen },
-      { to: '/kanban',       label: 'Kanban',       icon: Kanban },
-      { to: '/timeline',     label: 'Timeline',     icon: CalendarRange },
-      { to: '/consolidated', label: 'Consolidado',  icon: List },
-      { to: '/calendar',     label: 'Calendario',   icon: Calendar },
-      { to: '/overview',     label: 'Overview',     icon: Gauge },
-      { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
-    ],
-  },
-  {
-    key: 'ingenieria',
-    label: 'Ingeniería',
-    icon: Cpu,
-    items: [
-      { to: '/ingenieria/tasks',     label: 'Tasks',     icon: CheckSquare },
-      { to: '/ingenieria/dashboard', label: 'Dashboard', icon: BarChart2 },
-    ],
-  },
-  {
-    key: 'ventas',
-    label: 'Ventas',
-    icon: TrendingUp,
-    items: [],
-  },
-  {
-    key: 'compras',
-    label: 'Compras',
-    icon: ShoppingCart,
-    items: [],
-  },
-  {
-    key: 'comercial',
-    label: 'Comercial',
-    icon: Briefcase,
-    items: [],
-  },
-  {
-    key: 'rrhh',
-    label: 'RRHH',
-    icon: Users,
-    items: [],
-  },
-]
-
-const ALL_ITEMS = GROUPS.flatMap(g => g.items)
-
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+  const { isSuperAdmin, hasPermission } = useAuth()
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['proyectos']))
   const W = collapsed ? 64 : 232
 
@@ -94,6 +44,69 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       return next
     })
   }
+
+  const rrhhItems: NavItem[] = []
+  if (isSuperAdmin || hasPermission('rrhh', 'view')) {
+    rrhhItems.push({ to: '/rrhh/equipo',     label: 'Equipo',       icon: Users })
+    rrhhItems.push({ to: '/rrhh/asistencia', label: 'Asistencia',   icon: ClipboardList })
+    rrhhItems.push({ to: '/rrhh/hh',         label: 'Dashboard HH', icon: BarChart3 })
+  }
+  if (isSuperAdmin) {
+    rrhhItems.push({ to: '/rrhh/usuarios', label: 'Usuarios', icon: UserCheck })
+  }
+
+  const GROUPS: NavGroupDef[] = [
+    {
+      key: 'proyectos',
+      label: 'Proyectos',
+      icon: FolderOpen,
+      items: [
+        { to: '/',             label: 'Dashboard',    icon: LayoutDashboard, end: true },
+        { to: '/projects',     label: 'Catálogo',    icon: FolderOpen },
+        { to: '/kanban',       label: 'Kanban',       icon: Kanban },
+        { to: '/timeline',     label: 'Timeline',     icon: CalendarRange },
+        { to: '/consolidated', label: 'Consolidado',  icon: List },
+        { to: '/calendar',     label: 'Calendario',   icon: Calendar },
+        { to: '/overview',     label: 'Overview',     icon: Gauge },
+        { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
+      ],
+    },
+    {
+      key: 'ingenieria',
+      label: 'Ingeniería',
+      icon: Cpu,
+      items: [
+        { to: '/ingenieria/tasks',     label: 'Tasks',     icon: CheckSquare },
+        { to: '/ingenieria/dashboard', label: 'Dashboard', icon: BarChart2 },
+      ],
+    },
+    {
+      key: 'ventas',
+      label: 'Ventas',
+      icon: TrendingUp,
+      items: [],
+    },
+    {
+      key: 'compras',
+      label: 'Compras',
+      icon: ShoppingCart,
+      items: [],
+    },
+    {
+      key: 'comercial',
+      label: 'Comercial',
+      icon: Briefcase,
+      items: [],
+    },
+    {
+      key: 'rrhh',
+      label: 'RRHH',
+      icon: Users,
+      items: rrhhItems,
+    },
+  ]
+
+  const ALL_ITEMS = GROUPS.flatMap(g => g.items)
 
   return (
     <aside

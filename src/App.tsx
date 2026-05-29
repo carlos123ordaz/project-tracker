@@ -18,9 +18,13 @@ import BudgetEditorPage from './pages/BudgetEditorPage'
 import BudgetReportsPage from './pages/BudgetReportsPage'
 import SchedulesPage from './pages/SchedulesPage'
 import ScheduleEditorPage from './pages/ScheduleEditorPage'
+import EquipoPage from './pages/rrhh/EquipoPage'
+import UsersPage from './pages/rrhh/UsersPage'
+import AttendancePage from './pages/rrhh/AttendancePage'
+import HHDashboardPage from './pages/rrhh/HHDashboardPage'
 
 function AuthenticatedApp() {
-  const { user, loading } = useAuth()
+  const { user, loading, accountDisabled, signOut } = useAuth()
 
   if (loading) {
     return (
@@ -34,6 +38,26 @@ function AuthenticatedApp() {
   }
 
   if (!user) return <LoginPage />
+
+  if (accountDisabled) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--n-50)', flexDirection: 'column', gap: 10,
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--n-800)' }}>Cuenta desactivada</div>
+        <div style={{ fontSize: 13, color: 'var(--n-500)' }}>
+          Contacta al administrador para reactivar tu acceso.
+        </div>
+        <button
+          onClick={signOut}
+          style={{ marginTop: 8, fontSize: 12.5, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    )
+  }
 
   return (
     <ConfigDataProvider>
@@ -54,6 +78,11 @@ function AuthenticatedApp() {
           <Route path="/budgets/:id"       element={<BudgetEditorPage />} />
           <Route path="/schedule"          element={<SchedulesPage />} />
           <Route path="/schedule/:id"      element={<ScheduleEditorPage />} />
+          {/* RRHH */}
+          <Route path="/rrhh/equipo"     element={<EquipoPage />} />
+          <Route path="/rrhh/usuarios"   element={<UsersPage />} />
+          <Route path="/rrhh/asistencia" element={<AttendancePage />} />
+          <Route path="/rrhh/hh"         element={<HHDashboardPage />} />
         </Route>
       </Routes>
     </ConfigDataProvider>

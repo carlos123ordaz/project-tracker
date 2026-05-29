@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Check, X, GripVertical, Database, CheckCircle } from 'lucide-react'
-import { useTeamMembers, useTaskStatuses, useTaskPriorities, useTaskTypes, type TeamMember } from '../hooks/useConfig'
-import { Avatar } from '../components/ui/Avatar'
+import { useTaskStatuses, useTaskPriorities, useTaskTypes } from '../hooks/useConfig'
 import { StatusBadge, PriorityBadge } from '../components/ui/StatusBadge'
 import { Button, IconButton } from '../components/ui/Button'
-import { getMemberColor, getInitials } from '../lib/helpers'
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
@@ -22,90 +20,6 @@ function SettingsPanel({ title, sub, action, children }: { title: string; sub?: 
       </div>
       {children}
     </div>
-  )
-}
-
-// ─── Team ─────────────────────────────────────────────────────────────────────
-
-function TeamSection() {
-  const { items, loading, create, update, remove } = useTeamMembers()
-  const [adding,   setAdding]   = useState(false)
-  const [editing,  setEditing]  = useState<string | null>(null)
-  const [form,     setForm]     = useState({ name: '', role: '', email: '' })
-  const [editForm, setEditForm] = useState({ name: '', role: '', email: '' })
-  const [busy,     setBusy]     = useState(false)
-
-  const handleAdd = async () => {
-    if (!form.name.trim()) return
-    setBusy(true)
-    try {
-      await create({ name: form.name.trim(), role: form.role.trim(), email: form.email.trim() || null, sort_order: items.length } as any)
-      setForm({ name: '', role: '', email: '' }); setAdding(false)
-    } finally { setBusy(false) }
-  }
-  const startEdit = (m: TeamMember) => { setEditing(m.id); setEditForm({ name: m.name, role: m.role, email: m.email || '' }) }
-  const handleUpdate = async (id: string) => {
-    setBusy(true)
-    try { await update(id, { name: editForm.name.trim(), role: editForm.role.trim(), email: editForm.email.trim() || null }); setEditing(null) }
-    finally { setBusy(false) }
-  }
-
-  if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando...</div>
-
-  return (
-    <SettingsPanel
-      title="Miembros del equipo"
-      sub="Personas a las que se pueden asignar tareas"
-      action={<Button icon={Plus} variant="primary" onClick={() => setAdding(true)}>Agregar</Button>}
-    >
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        {adding && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--brand-50)', borderBottom: '1px solid var(--n-150)' }}>
-            <GripVertical size={14} style={{ color: 'var(--n-300)', flexShrink: 0 }} />
-            <input autoFocus value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre *" style={{ ...INPUT, flex: 1 }} />
-            <input value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} placeholder="Rol" style={{ ...INPUT, width: 140 }} />
-            <input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="Email" style={{ ...INPUT, width: 180 }} />
-            <IconButton icon={Check} onClick={handleAdd} disabled={busy || !form.name.trim()} size={28} title="Guardar" />
-            <IconButton icon={X} onClick={() => { setAdding(false); setForm({ name: '', role: '', email: '' }) }} size={28} title="Cancelar" />
-          </div>
-        )}
-        {items.map((m, i) => (
-          <div key={m.id}
-            style={{ display: 'grid', gridTemplateColumns: '40px 1.3fr 1fr 1.4fr 80px', gap: 14, alignItems: 'center', padding: '10px 16px', borderTop: i === 0 ? 'none' : '1px solid var(--n-150)', transition: 'background .12s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            <Avatar member={{ id: m.id, name: m.name, initials: getInitials(m.name), color: getMemberColor(i), role: m.role, email: m.email }} size={32} />
-            {editing === m.id ? (
-              <>
-                <input autoFocus value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} style={INPUT} />
-                <input value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))} placeholder="Rol" style={INPUT} />
-                <input value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} placeholder="Email" style={INPUT} />
-                <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <IconButton icon={Check} onClick={() => handleUpdate(m.id)} disabled={busy} size={28} title="Guardar" />
-                  <IconButton icon={X} onClick={() => setEditing(null)} size={28} title="Cancelar" />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 550, color: 'var(--n-900)' }}>{m.name}</div>
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--n-700)' }}>{m.role}</div>
-                <div style={{ fontSize: 12, color: 'var(--n-600)', fontFamily: 'monospace' }}>{m.email}</div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <IconButton icon={Pencil} onClick={() => startEdit(m)} size={26} title="Editar" />
-                  <IconButton icon={Trash2} onClick={() => remove(m.id)} size={26} title="Eliminar" danger />
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-        {items.length === 0 && !adding && (
-          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Sin miembros. Agrega el equipo.</div>
-        )}
-      </div>
-    </SettingsPanel>
   )
 }
 
@@ -216,12 +130,15 @@ function ItemListSection<T extends ItemBase>({
 
 function ConnectionSection() {
   const tables = [
-    { name: 'projects',        desc: 'Proyectos' },
-    { name: 'tasks',           desc: 'Tareas' },
-    { name: 'team_members',    desc: 'Equipo de trabajo' },
-    { name: 'task_statuses',   desc: 'Status de tareas' },
-    { name: 'task_priorities', desc: 'Prioridades' },
-    { name: 'task_types',      desc: 'Tipos de tarea' },
+    { name: 'projects',           desc: 'Proyectos' },
+    { name: 'tasks',              desc: 'Tareas' },
+    { name: 'team_members',       desc: 'Equipo de trabajo' },
+    { name: 'task_statuses',      desc: 'Status de tareas' },
+    { name: 'task_priorities',    desc: 'Prioridades' },
+    { name: 'task_types',         desc: 'Tipos de tarea' },
+    { name: 'user_profiles',      desc: 'Perfiles de usuario' },
+    { name: 'module_permissions', desc: 'Permisos de módulo' },
+    { name: 'attendance_records', desc: 'Registros de asistencia' },
   ]
   return (
     <SettingsPanel title="Conexión Supabase" sub="Estado de la base de datos y configuración de entorno">
@@ -240,8 +157,11 @@ function ConnectionSection() {
             <div style={{ color: '#4ADE80' }}># .env</div>
             <div style={{ color: '#D1D5DB' }}>VITE_SUPABASE_URL=<span style={{ color: '#FCD34D' }}>tu-url</span></div>
             <div style={{ color: '#D1D5DB' }}>VITE_SUPABASE_ANON_KEY=<span style={{ color: '#FCD34D' }}>tu-key</span></div>
+            <div style={{ color: '#D1D5DB' }}>VITE_SUPABASE_SERVICE_ROLE_KEY=<span style={{ color: '#FCD34D' }}>tu-service-key</span></div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 8 }}>Encuéntralas en Supabase → Settings → API</div>
+          <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 8 }}>
+            Service role key requerida para gestión de usuarios (RRHH → Usuarios)
+          </div>
         </div>
         <div className="card" style={{ padding: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--n-900)' }}>Tablas activas</div>
@@ -262,11 +182,11 @@ function ConnectionSection() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const TABS = ['Equipo', 'Status', 'Prioridades', 'Tipos', 'Conexión'] as const
+const TABS = ['Status', 'Prioridades', 'Tipos', 'Conexión'] as const
 type Tab = typeof TABS[number]
 
 export default function SettingsPage() {
-  const [tab,  setTab]  = useState<Tab>('Equipo')
+  const [tab,  setTab]  = useState<Tab>('Status')
   const statuses   = useTaskStatuses()
   const priorities = useTaskPriorities()
   const types      = useTaskTypes()
@@ -288,8 +208,6 @@ export default function SettingsPage() {
           >{t}</button>
         ))}
       </div>
-
-      {tab === 'Equipo' && <TeamSection />}
 
       {tab === 'Status' && (
         <ItemListSection
