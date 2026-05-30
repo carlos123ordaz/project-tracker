@@ -34,6 +34,7 @@ interface Ctx {
   getPriority: (name: string) => PriorityObj | undefined
   getMember: (nameOrId: string) => MemberObj | undefined
   projectMetrics: (project: Project, tasks: Task[]) => ProjectMetrics
+  semaphoreFromMetrics: (project: Project, metrics: ProjectMetrics) => SemaphoreResult
   semaphoreFor: (project: Project, tasks: Task[]) => SemaphoreResult
 }
 
@@ -85,21 +86,24 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
     return { total, completed, late, pending, progress, totalBudget, totalCost }
   }
 
-  function semaphoreFor(project: Project, tasks: Task[]): SemaphoreResult {
-    const m = projectMetrics(project, tasks)
-    if (m.total === 0) return { kind: 'gray', label: 'Sin planificar' }
-    const dueDays = daysFromToday(project.end_date)
-    const lateRate = m.total ? m.late / m.total : 0
-    if (lateRate > 0.30 || (dueDays !== null && dueDays < 0)) return { kind: 'red',   label: 'Crítico' }
-    if (m.late > 0 || (dueDays !== null && dueDays <= 7))     return { kind: 'amber', label: 'En riesgo' }
+  function semaphoreFromMetrics(project: Project, metrics: ProjectMetrics): SemaphoreResult {
+    if (metrics.total === 0) return { kind: 'gray', label: 'Sin planificar' }
+    const dueDays  = daysFromToday(project.end_date)
+    const lateRate = metrics.late / metrics.total
+    if (lateRate > 0.30 || (dueDays !== null && dueDays < 0))  return { kind: 'red',   label: 'Crítico' }
+    if (metrics.late > 0 || (dueDays !== null && dueDays <= 7)) return { kind: 'amber', label: 'En riesgo' }
     return { kind: 'green', label: 'En curso' }
+  }
+
+  function semaphoreFor(project: Project, tasks: Task[]): SemaphoreResult {
+    return semaphoreFromMetrics(project, projectMetrics(project, tasks))
   }
 
   const value = useMemo<Ctx>(() => ({
     statuses, priorities, types, team,
     loading: sl || pl || tl || ml,
     getStatus, getPriority, getMember,
-    projectMetrics, semaphoreFor,
+    projectMetrics, semaphoreFromMetrics, semaphoreFor,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [statuses, priorities, types, team, sl, pl, tl, ml])
 

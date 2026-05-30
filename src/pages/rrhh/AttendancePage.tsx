@@ -6,7 +6,6 @@ import {
 import { useAttendance } from '../../hooks/useAttendance'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useAuth } from '../../hooks/useAuth'
-import { useProjects } from '../../hooks/useProjects'
 import { Button } from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import {
@@ -70,11 +69,16 @@ type CheckInConfirmParams = {
   shift: Shift; project_id: string | null; project_name: string | null; project_type: string | null
 }
 
+const PROJECT_TYPES = [
+  'Minería', 'Saneamiento', 'Metalmecánica', 'Automatización',
+  'Food & Beverage', 'Energía', 'Oil & Gas', 'Construcción',
+  'Mantenimiento', 'Servicios Generales', 'Cotizaciones',
+]
+
 function CheckInModal({ onClose, onConfirm }: {
   onClose: () => void
   onConfirm: (params: CheckInConfirmParams) => Promise<void>
 }) {
-  const { projects } = useProjects()
   const { profile }  = useAuth()
   const isMobile     = useIsMobile()
 
@@ -82,11 +86,10 @@ function CheckInModal({ onClose, onConfirm }: {
   const [motive,       setMotive]       = useState<AttendanceMotive>('Ninguno')
   const [observations, setObservations] = useState('')
   const [shift,        setShift]        = useState<Shift>(profile?.shift ?? 'Día')
-  const [projectId,    setProjectId]    = useState('')
+  const [projectName,  setProjectName]  = useState('')
+  const [projectType,  setProjectType]  = useState('')
   const [busy,         setBusy]         = useState(false)
   const [err,          setErr]          = useState<string | null>(null)
-
-  const selectedProject = projects.find(p => p.id === projectId)
 
   const handleConfirm = async () => {
     if (condition !== 'Asistencia' && motive === 'Ninguno') return setErr('Selecciona un motivo')
@@ -94,9 +97,9 @@ function CheckInModal({ onClose, onConfirm }: {
     try {
       await onConfirm({
         condition, motive, observations, shift,
-        project_id:   projectId || null,
-        project_name: selectedProject?.name ?? null,
-        project_type: selectedProject?.focus_area ?? null,
+        project_id:   null,
+        project_name: projectName.trim() || null,
+        project_type: projectType || null,
       })
       onClose()
     } catch (e: any) { setErr(e.message) }
@@ -137,12 +140,24 @@ function CheckInModal({ onClose, onConfirm }: {
           </div>
         </div>
 
-        <div>
-          <span style={LABEL}>Proyecto (opcional)</span>
-          <select value={projectId} onChange={e => setProjectId(e.target.value)} style={INPUT}>
-            <option value="">Sin proyecto asignado</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+          <div>
+            <span style={LABEL}>Proyecto (opcional)</span>
+            <input
+              type="text"
+              value={projectName}
+              onChange={e => setProjectName(e.target.value)}
+              placeholder="Nombre del proyecto..."
+              style={INPUT}
+            />
+          </div>
+          <div>
+            <span style={LABEL}>Tipo de proyecto (opcional)</span>
+            <select value={projectType} onChange={e => setProjectType(e.target.value)} style={INPUT}>
+              <option value="">— Seleccionar —</option>
+              {PROJECT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         {condition !== 'Asistencia' && (
@@ -437,14 +452,15 @@ function DesktopTable({ records, showCollaborator }: { records: AttendanceRecord
 export default function AttendancePage() {
   const { profile, isSuperAdmin } = useAuth()
   const isMobile = useIsMobile()
-  const { records, loading, refetch, checkIn, checkOut } = useAttendance(
-    isSuperAdmin ? undefined : profile?.id
-  )
-
   const [showCheckIn,  setShowCheckIn]  = useState(false)
   const [showCheckOut, setShowCheckOut] = useState(false)
   const [filterUser,   setFilterUser]   = useState('')
   const [filterDate,   setFilterDate]   = useState(() => new Date().toISOString().split('T')[0])
+
+  const { records, loading, refetch, checkIn, checkOut } = useAttendance(
+    isSuperAdmin ? undefined : profile?.id,
+    filterDate || undefined,
+  )
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const today    = new Date().toISOString().split('T')[0]

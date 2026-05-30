@@ -17,12 +17,14 @@ function calcRealHours(checkIn: string | null, checkOut: string | null): number 
   return Math.max(0, (end.getTime() - start.getTime()) / 3_600_000)
 }
 
-export function useAttendance(userId?: string) {
+export function useAttendance(userId?: string, dateFilter?: string) {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetch = useCallback(async () => {
     setLoading(true)
+    const today = new Date().toISOString().split('T')[0]
+
     let q = supabase
       .from('attendance_records')
       .select('*')
@@ -31,10 +33,24 @@ export function useAttendance(userId?: string) {
 
     if (userId) q = q.eq('collaborator_id', userId)
 
+    if (dateFilter) {
+      // Trae la fecha seleccionada + siempre hoy (para estado de check-in/out)
+      if (dateFilter === today) {
+        q = q.eq('date', today)
+      } else {
+        q = q.or(`date.eq.${today},date.eq.${dateFilter}`)
+      }
+    } else {
+      // Sin filtro: últimos 90 días para no traer toda la tabla
+      const since = new Date()
+      since.setDate(since.getDate() - 90)
+      q = q.gte('date', since.toISOString().split('T')[0])
+    }
+
     const { data } = await q
     setRecords((data as AttendanceRecord[]) || [])
     setLoading(false)
-  }, [userId])
+  }, [userId, dateFilter])
 
   useEffect(() => { fetch() }, [fetch])
 

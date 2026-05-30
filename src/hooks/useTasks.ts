@@ -16,6 +16,7 @@ export function useTasks(projectId?: string) {
       .select('*, project:projects(id, name, color, focus_area, initiative)')
       .order('sort_order')
       .order('number')
+      .limit(5000)
     if (projectId) {
       query = query.eq('project_id', projectId)
     }

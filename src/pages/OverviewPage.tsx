@@ -29,15 +29,13 @@ const TD: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', 
 export default function OverviewPage() {
   const { projects, loading: projLoading } = useProjects()
   const { tasks }    = useTasks()
-  const { semaphoreFor, projectMetrics, getMember } = useConfigData()
+  const { semaphoreFromMetrics, projectMetrics, getMember } = useConfigData()
   const navigate     = useNavigate()
 
-  const rows = useMemo(() => projects.map(p => ({
-    project: p,
-    metrics: projectMetrics(p, tasks),
-    sem:     semaphoreFor(p, tasks),
-    lead:    getMember(p.leader || ''),
-  })), [projects, tasks, semaphoreFor, projectMetrics, getMember])
+  const rows = useMemo(() => projects.map(p => {
+    const metrics = projectMetrics(p, tasks)
+    return { project: p, metrics, sem: semaphoreFromMetrics(p, metrics), lead: getMember(p.leader || '') }
+  }), [projects, tasks, semaphoreFromMetrics, projectMetrics, getMember])
 
   const counts = useMemo<Record<SemKind, number>>(() => ({
     green: rows.filter(r => r.sem.kind === 'green').length,

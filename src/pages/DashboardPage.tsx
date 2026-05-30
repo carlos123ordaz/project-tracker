@@ -30,20 +30,25 @@ export default function DashboardPage() {
   const [selectedPid, setSelectedPid] = useState('')
   const selectedProject = selectedPid ? (projects.find(p => p.id === selectedPid) ?? null) : null
 
-  const scopedTasks    = selectedPid ? tasks.filter(t => t.project_id === selectedPid) : tasks
-  const scopedProjects = selectedPid ? (selectedProject ? [selectedProject] : []) : projects
+  const scopedTasks = useMemo(
+    () => selectedPid ? tasks.filter(t => t.project_id === selectedPid) : tasks,
+    [selectedPid, tasks]
+  )
+  const scopedProjects = useMemo(
+    () => selectedPid ? (selectedProject ? [selectedProject] : []) : projects,
+    [selectedPid, selectedProject, projects]
+  )
 
-  const projectsActive = useMemo(() =>
-    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.total > 0 && m.completed < m.total }).length
-  , [scopedProjects, tasks, projectMetrics])
-
-  const projectsDone = useMemo(() =>
-    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.total > 0 && m.completed === m.total }).length
-  , [scopedProjects, tasks, projectMetrics])
-
-  const projectsLate = useMemo(() =>
-    scopedProjects.filter(p => { const m = projectMetrics(p, tasks); return m.late > 0 }).length
-  , [scopedProjects, tasks, projectMetrics])
+  const { projectsActive, projectsDone, projectsLate } = useMemo(() => {
+    let active = 0, done = 0, late = 0
+    scopedProjects.forEach(p => {
+      const m = projectMetrics(p, tasks)
+      if (m.total > 0 && m.completed < m.total)  active++
+      if (m.total > 0 && m.completed === m.total) done++
+      if (m.late > 0)                             late++
+    })
+    return { projectsActive: active, projectsDone: done, projectsLate: late }
+  }, [scopedProjects, tasks, projectMetrics])
 
   const tasksByStatus = useMemo(() =>
     statuses.reduce((acc, s) => {
@@ -52,16 +57,26 @@ export default function DashboardPage() {
     }, {} as Record<string, number>)
   , [statuses, scopedTasks])
 
-  const totalTasks  = scopedTasks.length
-  const tasksInProg = scopedTasks.filter(t => t.status === 'En Progreso').length
-  const tasksCrit   = scopedTasks.filter(t => t.priority === 'Crítica' && t.status !== 'Completado').length
-  const doneCount   = tasksByStatus[statuses.find(s => s.name === 'Completado')?.id ?? ''] ?? 0
+  const totalTasks = scopedTasks.length
+  const doneCount  = tasksByStatus[statuses.find(s => s.name === 'Completado')?.id ?? ''] ?? 0
 
-  const avgProgress = scopedTasks.length === 0 ? 0
-    : scopedTasks.reduce((s, t) => s + (t.progress || 0), 0) / scopedTasks.length
-
-  const totalBudget = scopedTasks.reduce((s, t) => s + (t.budget || 0), 0)
-  const totalCost   = scopedTasks.reduce((s, t) => s + (t.actual_cost || 0), 0)
+  const { tasksInProg, tasksCrit, avgProgress, totalBudget, totalCost } = useMemo(() => {
+    let inProg = 0, crit = 0, progress = 0, budget = 0, cost = 0
+    scopedTasks.forEach(t => {
+      if (t.status === 'En Progreso') inProg++
+      if (t.priority === 'Crítica' && t.status !== 'Completado') crit++
+      progress += t.progress    || 0
+      budget   += t.budget      || 0
+      cost     += t.actual_cost || 0
+    })
+    return {
+      tasksInProg:  inProg,
+      tasksCrit:    crit,
+      avgProgress:  scopedTasks.length === 0 ? 0 : progress / scopedTasks.length,
+      totalBudget:  budget,
+      totalCost:    cost,
+    }
+  }, [scopedTasks])
 
   // Timeline progress
   let timelineProgress = 0
@@ -86,10 +101,11 @@ export default function DashboardPage() {
     }
   }
 
-  const daysLeft = selectedProject
+  const daysLeft = useMemo(() => selectedProject
     ? (daysFromToday(selectedProject.end_date) ?? 0)
     : scopedProjects.length === 0 ? 0
     : Math.min(...scopedProjects.filter(p => p.end_date).map(p => daysFromToday(p.end_date) ?? 0))
+  , [selectedProject, scopedProjects])
 
   const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'equipo'
   const firstName   = displayName.split(' ')[0]
@@ -194,10 +210,21 @@ function MiniCalendar({ tasks }: { tasks: Task[] }) {
   const shouldShow42 = lastRowStart && lastRowStart.getMonth() === view.month
   const visibleDays  = shouldShow42 ? days : days.slice(0, 35)
 
-  const hasTask = (d: Date) => {
-    const ds = isoDay(d)
-    return tasks.some(t => t.start_date && t.end_date && t.start_date <= ds && t.end_date >= ds)
-  }
+  const taskDaySet = useMemo(() => {
+    const set = new Set<string>()
+    tasks.forEach(t => {
+      if (!t.start_date || !t.end_date) return
+      const cur = new Date(t.start_date + 'T12:00:00')
+      const end = new Date(t.end_date   + 'T12:00:00')
+      while (cur <= end) {
+        set.add(cur.toISOString().split('T')[0])
+        cur.setDate(cur.getDate() + 1)
+      }
+    })
+    return set
+  }, [tasks])
+
+  const hasTask = (d: Date) => taskDaySet.has(isoDay(d))
 
   const goMonth = (delta: number) => {
     setView(v => {

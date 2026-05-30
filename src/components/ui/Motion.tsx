@@ -42,6 +42,7 @@ export function CountUpNumber({ value, decimals = 0, prefix = '', suffix = '', d
 export function Sparkline({ data, color = 'var(--brand-600)', height = 28, width = 96, fill = true, strokeWidth = 1.5 }: {
   data: number[]; color?: string; height?: number; width?: number; fill?: boolean; strokeWidth?: number
 }) {
+  const gradId = useRef('sg-' + Math.random().toString(36).slice(2, 8)).current
   if (!data || data.length < 2) return null
   const min   = Math.min(...data)
   const max   = Math.max(...data)
@@ -59,13 +60,13 @@ export function Sparkline({ data, color = 'var(--brand-600)', height = 28, width
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
       {fill && (
         <defs>
-          <linearGradient id={'sg-' + color.replace(/[^a-z0-9]/gi, '')} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor={color} stopOpacity="0.22" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
       )}
-      {fill && <path d={areaPath} fill={`url(#sg-${color.replace(/[^a-z0-9]/gi, '')})`} />}
+      {fill && <path d={areaPath} fill={`url(#${gradId})`} />}
       <path d={path} stroke={color} fill="none" strokeWidth={strokeWidth} strokeLinejoin="round" strokeLinecap="round"
         style={{ strokeDasharray: 200, strokeDashoffset: 200, animation: 'sparkDraw .9s cubic-bezier(.4,0,.2,1) forwards' }} />
       <circle cx={lastPt[0]} cy={lastPt[1]} r="2.4" fill={color} stroke="#fff" strokeWidth="1.2"

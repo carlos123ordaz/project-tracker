@@ -10,10 +10,65 @@ import { Button } from '../components/ui/Button'
 import { fmtDate, fmtMoney, getProjectColor } from '../lib/helpers'
 import { AlertTriangle, Layers, Search } from 'lucide-react'
 import { PageLoader } from '../components/ui/Loader'
-import type { Task } from '../lib/types'
+import type { Task, Project } from '../lib/types'
+import type { MemberObj } from '../hooks/useConfigData'
 
 const TH: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap' }
 const TD: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
+
+function TaskRow({ t, showProject, projectMap, getMember }: {
+  t: Task
+  showProject: boolean
+  projectMap: Map<string, Project>
+  getMember: (nameOrId: string) => MemberObj | undefined
+}) {
+  const isLate = t.status === 'Retrasado'
+  const isDone = t.status === 'Completado'
+  const p      = projectMap.get(t.project_id)
+  const color  = getProjectColor(p?.color)
+  const member = getMember(t.assigned_to || '')
+  return (
+    <tr
+      style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.30)' : 'transparent', transition: 'background .12s', cursor: 'default' }}
+      onMouseEnter={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.55)' : 'var(--n-25)'}
+      onMouseLeave={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.30)' : 'transparent'}
+    >
+      {showProject && (
+        <td style={TD}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: 'var(--n-700)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p?.name}</span>
+          </div>
+        </td>
+      )}
+      <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{t.number}</td>
+      <td style={TD}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!showProject && <span style={{ width: 2, height: 16, background: color, borderRadius: 1, flexShrink: 0 }} />}
+          {isLate && <AlertTriangle size={13} style={{ color: 'var(--red-500)', flexShrink: 0 }} />}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 550, color: 'var(--n-900)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.6 : 1 }}>{t.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{t.type}</div>
+          </div>
+        </div>
+      </td>
+      <td style={TD}><StatusBadge status={t.status} size="sm" /></td>
+      <td style={TD}><PriorityBadge priority={t.priority} size="sm" /></td>
+      <td style={TD} className="mono tnum"><span style={{ color: 'var(--n-600)' }}>{fmtDate(t.start_date)}</span></td>
+      <td style={TD} className="mono tnum"><span style={{ color: isLate ? 'var(--red-700)' : 'var(--n-600)', fontWeight: isLate ? 600 : 400 }}>{fmtDate(t.end_date)}</span></td>
+      <td style={TD}>
+        {member
+          ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Avatar member={member} size={20} /><span style={{ fontSize: 12 }}>{member.name}</span></div>
+          : <span style={{ color: 'var(--n-400)', fontSize: 12 }}>{t.assigned_to || '—'}</span>}
+      </td>
+      <td style={TD}><ProgressBar value={t.progress} showLabel /></td>
+      <td style={{ ...TD, textAlign: 'right' }} className="mono tnum">
+        <div style={{ color: 'var(--n-800)' }}>{fmtMoney(t.budget)}</div>
+        <div style={{ fontSize: 10.5, color: t.actual_cost > t.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(t.actual_cost)}</div>
+      </td>
+    </tr>
+  )
+}
 
 export default function ConsolidatedPage() {
   const { tasks, loading }    = useTasks()
@@ -38,71 +93,25 @@ export default function ConsolidatedPage() {
     })
   }, [tasks, query, projectFilter, statusFilter, priorityFilter, memberFilter])
 
+  const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
+
   const groupedTasks = useMemo(() => {
     const groups: Record<string, Task[]> = {}
     filtered.forEach(t => {
       if (!groups[t.project_id]) groups[t.project_id] = []
       groups[t.project_id].push(t)
     })
+    const projectOrder = new Map(projects.map((p, i) => [p.id, i]))
     return Object.entries(groups)
-      .map(([pjId, ts]) => ({ project: projects.find(p => p.id === pjId), tasks: ts }))
-      .filter(g => g.project)
-      .sort((a, b) => projects.findIndex(p => p.id === a.project!.id) - projects.findIndex(p => p.id === b.project!.id))
-  }, [filtered, projects])
+      .map(([pjId, ts]) => ({ project: projectMap.get(pjId), tasks: ts }))
+      .filter((g): g is { project: Project; tasks: Task[] } => g.project != null)
+      .sort((a, b) => (projectOrder.get(a.project.id) ?? 0) - (projectOrder.get(b.project.id) ?? 0))
+  }, [filtered, projects, projectMap])
 
   const SEL: React.CSSProperties = {
     height: 32, padding: '0 10px', fontSize: 12.5,
     border: '1px solid var(--n-200)', borderRadius: 6,
     background: 'var(--n-0)', color: 'var(--n-800)', cursor: 'pointer',
-  }
-
-  const TaskRow = ({ t, showProject }: { t: Task; showProject: boolean }) => {
-    const isLate = t.status === 'Retrasado'
-    const isDone = t.status === 'Completado'
-    const p      = projects.find(pj => pj.id === t.project_id)
-    const color  = getProjectColor(p?.color)
-    const member = getMember(t.assigned_to || '')
-    return (
-      <tr
-        style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.30)' : 'transparent', transition: 'background .12s', cursor: 'default' }}
-        onMouseEnter={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.55)' : 'var(--n-25)'}
-        onMouseLeave={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.30)' : 'transparent'}
-      >
-        {showProject && (
-          <td style={TD}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: 'var(--n-700)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p?.name}</span>
-            </div>
-          </td>
-        )}
-        <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{t.number}</td>
-        <td style={TD}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {!showProject && <span style={{ width: 2, height: 16, background: color, borderRadius: 1, flexShrink: 0 }} />}
-            {isLate && <AlertTriangle size={13} style={{ color: 'var(--red-500)', flexShrink: 0 }} />}
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 550, color: 'var(--n-900)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.6 : 1 }}>{t.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{t.type}</div>
-            </div>
-          </div>
-        </td>
-        <td style={TD}><StatusBadge status={t.status} size="sm" /></td>
-        <td style={TD}><PriorityBadge priority={t.priority} size="sm" /></td>
-        <td style={TD} className="mono tnum"><span style={{ color: 'var(--n-600)' }}>{fmtDate(t.start_date)}</span></td>
-        <td style={TD} className="mono tnum"><span style={{ color: isLate ? 'var(--red-700)' : 'var(--n-600)', fontWeight: isLate ? 600 : 400 }}>{fmtDate(t.end_date)}</span></td>
-        <td style={TD}>
-          {member
-            ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Avatar member={member} size={20} /><span style={{ fontSize: 12 }}>{member.name}</span></div>
-            : <span style={{ color: 'var(--n-400)', fontSize: 12 }}>{t.assigned_to || '—'}</span>}
-        </td>
-        <td style={TD}><ProgressBar value={t.progress} showLabel /></td>
-        <td style={{ ...TD, textAlign: 'right' }} className="mono tnum">
-          <div style={{ color: 'var(--n-800)' }}>{fmtMoney(t.budget)}</div>
-          <div style={{ fontSize: 10.5, color: t.actual_cost > t.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(t.actual_cost)}</div>
-        </td>
-      </tr>
-    )
   }
 
   if (loading) return (
@@ -180,12 +189,12 @@ export default function ConsolidatedPage() {
                         </div>
                       </td>
                     </tr>
-                    {ts.map(t => <TaskRow key={t.id} t={t} showProject={false} />)}
+                    {ts.map(t => <TaskRow key={t.id} t={t} showProject={false} projectMap={projectMap} getMember={getMember} />)}
                   </React.Fragment>
                 )
               })
             ) : (
-              filtered.map(t => <TaskRow key={t.id} t={t} showProject={true} />)
+              filtered.map(t => <TaskRow key={t.id} t={t} showProject={true} projectMap={projectMap} getMember={getMember} />)
             )}
           </tbody>
         </table>
