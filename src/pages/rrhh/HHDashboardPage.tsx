@@ -33,8 +33,6 @@ const PROJECT_COLORS = ['#4f46e5', '#0d9488', '#d97706', '#dc2626', '#16a34a', '
 
 // ── Helpers de período ────────────────────────────────────────
 
-const today = () => new Date().toISOString().split('T')[0]
-
 function getWeekRange() {
   const d = new Date()
   const day = d.getDay()

@@ -2,14 +2,14 @@ import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Plus, ArrowLeft, FileText, Pencil, Trash2, TrendingUp } from 'lucide-react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Line, ComposedChart,
 } from 'recharts'
 import { useValuations } from '../../hooks/useValuations'
 import { useProjects } from '../../hooks/useProjects'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { Button, IconButton } from '../../components/ui/Button'
-import { VALUATION_STATUSES, type ValuationStatus } from '../../lib/types'
+import { type ValuationStatus } from '../../lib/types'
 import { fmtDate } from '../../lib/helpers'
 
 const STATUS_STYLE: Record<ValuationStatus, { bg: string; color: string }> = {
@@ -76,11 +76,6 @@ export default function ValuationsPage() {
 
   const totalValorized = useMemo(() =>
     valuations.reduce((s, v) => s + computeNeto(v), 0),
-    [valuations]
-  )
-
-  const totalBruto = useMemo(() =>
-    valuations.reduce((s, v) => s + v.contract_amount, 0),  // use bruto from items — approx with contract_amount
     [valuations]
   )
 
