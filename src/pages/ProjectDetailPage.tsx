@@ -16,7 +16,7 @@ import { Button, IconButton } from '../components/ui/Button'
 import { StatCard } from '../components/ui/StatCard'
 import type { Task } from '../lib/types'
 import { fmtDate, fmtDateFull, fmtMoney, fmtMoneyCompact, getProjectColor } from '../lib/helpers'
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, AlertTriangle, List, TrendingUp, DollarSign } from 'lucide-react'
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, AlertTriangle, List, TrendingUp, DollarSign, Receipt } from 'lucide-react'
 
 const TH_STYLE: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap' }
 const TD_STYLE: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
@@ -92,7 +92,8 @@ export default function ProjectDetailPage() {
             <DaysLeftChip endIso={project?.end_date} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button icon={Receipt} onClick={() => navigate(`/projects/${id}/valuations`)}>Valorizaciones</Button>
           <Button icon={Pencil} onClick={() => setShowEditProject(true)}>Editar proyecto</Button>
           <Button icon={Trash2} variant="danger" onClick={() => setConfirmDelProj(true)}>Eliminar</Button>
           <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nueva tarea</Button>

@@ -147,6 +147,43 @@ export interface ScheduleActual {
   created_at: string
 }
 
+// ── Valorizaciones ────────────────────────────────────────────
+
+export type ValuationStatus = 'Borrador' | 'Enviada' | 'Aprobada' | 'Pagada'
+
+export const VALUATION_STATUSES: ValuationStatus[] = ['Borrador', 'Enviada', 'Aprobada', 'Pagada']
+
+export interface Valuation {
+  id: string
+  project_id: string
+  number: number
+  title: string | null
+  period_start: string
+  period_end: string
+  status: ValuationStatus
+  contract_amount: number
+  advance_pct: number
+  retention_pct: number
+  igv_rate: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ValuationItem {
+  id: string
+  valuation_id: string
+  code: string
+  description: string
+  unit: string
+  unit_price: number
+  quantity_contract: number
+  quantity_previous: number
+  quantity_current: number
+  sort_order: number
+  created_at: string
+}
+
 // ── RRHH ──────────────────────────────────────────────────────
 
 export type Shift = 'Día' | 'Noche'

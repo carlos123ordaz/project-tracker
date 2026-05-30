@@ -22,6 +22,8 @@ import EquipoPage from './pages/rrhh/EquipoPage'
 import UsersPage from './pages/rrhh/UsersPage'
 import AttendancePage from './pages/rrhh/AttendancePage'
 import HHDashboardPage from './pages/rrhh/HHDashboardPage'
+import ValuationsPage from './pages/valuations/ValuationsPage'
+import ValuationEditorPage from './pages/valuations/ValuationEditorPage'
 
 function AuthenticatedApp() {
   const { user, loading, accountDisabled, signOut } = useAuth()
@@ -83,6 +85,9 @@ function AuthenticatedApp() {
           <Route path="/rrhh/usuarios"   element={<UsersPage />} />
           <Route path="/rrhh/asistencia" element={<AttendancePage />} />
           <Route path="/rrhh/hh"         element={<HHDashboardPage />} />
+          {/* Valorizaciones */}
+          <Route path="/projects/:id/valuations"      element={<ValuationsPage />} />
+          <Route path="/projects/:id/valuations/:vid" element={<ValuationEditorPage />} />
         </Route>
       </Routes>
     </ConfigDataProvider>
