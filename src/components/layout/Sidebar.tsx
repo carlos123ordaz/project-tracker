@@ -3,9 +3,8 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
-  FileSpreadsheet, ChevronDown, CheckSquare, BarChart2,
-  ShoppingCart, Briefcase, Users, Cpu, TrendingUp,
-  UserCheck, ClipboardList, BarChart3,
+  FileSpreadsheet, ChevronDown,
+  Users, UserCheck, ClipboardList, BarChart3,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -70,33 +69,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/overview',     label: 'Overview',     icon: Gauge },
         { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
       ],
-    },
-    {
-      key: 'ingenieria',
-      label: 'Ingeniería',
-      icon: Cpu,
-      items: [
-        { to: '/ingenieria/tasks',     label: 'Tasks',     icon: CheckSquare },
-        { to: '/ingenieria/dashboard', label: 'Dashboard', icon: BarChart2 },
-      ],
-    },
-    {
-      key: 'ventas',
-      label: 'Ventas',
-      icon: TrendingUp,
-      items: [],
-    },
-    {
-      key: 'compras',
-      label: 'Compras',
-      icon: ShoppingCart,
-      items: [],
-    },
-    {
-      key: 'comercial',
-      label: 'Comercial',
-      icon: Briefcase,
-      items: [],
     },
     {
       key: 'rrhh',
@@ -170,7 +142,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             </NavLink>
           ))
         ) : (
-          GROUPS.map(group => {
+          GROUPS.filter(g => g.items.length > 0).map(group => {
             const isOpen = openGroups.has(group.key)
             return (
               <div key={group.key} style={{ marginBottom: 2 }}>

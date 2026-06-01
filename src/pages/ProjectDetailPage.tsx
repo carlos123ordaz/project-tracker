@@ -37,11 +37,6 @@ export default function ProjectDetailPage() {
   const [deletingProj,    setDeletingProj]    = useState(false)
 
   const project = projects.find(p => p.id === id)
-  if (!project && !loading) return (
-    <div style={{ padding: 32 }}>
-      <EmptyState icon={FolderOpen} title="Proyecto no encontrado" description="Vuelve al catálogo." action={<Button icon={ArrowLeft} onClick={() => navigate('/projects')}>Volver</Button>} />
-    </div>
-  )
 
   const color  = getProjectColor(project?.color)
   const m      = project ? projectMetrics(project, tasks) : { total: 0, completed: 0, late: 0, pending: 0, progress: 0, totalBudget: 0, totalCost: 0 }
@@ -53,6 +48,12 @@ export default function ProjectDetailPage() {
   const statusCounts = useMemo(() =>
     statuses.reduce((acc, s) => { acc[s.name] = tasks.filter(t => t.status === s.name).length; return acc }, {} as Record<string, number>)
   , [statuses, tasks])
+
+  if (!project && !loading) return (
+    <div style={{ padding: 32 }}>
+      <EmptyState icon={FolderOpen} title="Proyecto no encontrado" description="Vuelve al catálogo." action={<Button icon={ArrowLeft} onClick={() => navigate('/projects')}>Volver</Button>} />
+    </div>
+  )
 
   const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>) => {
     await createTask(data); setModalOpen(false)
