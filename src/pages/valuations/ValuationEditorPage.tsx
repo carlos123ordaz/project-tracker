@@ -374,7 +374,7 @@ export default function ValuationEditorPage() {
                       </td>
                       <td style={{ ...TD('center') }}>
                         {pctAv !== null ? (
-                          <span style={{ fontSize: 11, fontWeight: 600, color: pctAv >= 100 ? '#16a34a' : 'var(--n-700)', padding: '1px 5px', borderRadius: 4, background: pctAv >= 100 ? 'var(--green-50)' : 'transparent' }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: pctAv >= 100 ? 'var(--green-600)' : 'var(--n-700)', padding: '1px 5px', borderRadius: 4, background: pctAv >= 100 ? 'var(--green-50)' : 'transparent' }}>
                             {pctAv.toFixed(0)}%
                           </span>
                         ) : '—'}
@@ -436,13 +436,13 @@ export default function ValuationEditorPage() {
               <SumLineSmall label="Acumulado"       value={summary.monto_acumulado} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
                 <span style={{ fontSize: 11.5, color: 'var(--n-600)' }}>% Avance</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: summary.pct_avance >= 100 ? '#16a34a' : 'var(--brand-700)' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: summary.pct_avance >= 100 ? 'var(--green-600)' : 'var(--brand-700)' }}>
                   {summary.monto_contrato > 0 ? `${summary.pct_avance.toFixed(1)}%` : '—'}
                 </span>
               </div>
               {summary.monto_contrato > 0 && (
                 <div style={{ marginTop: 4, height: 6, borderRadius: 999, background: 'var(--n-200)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 999, background: summary.pct_avance >= 100 ? '#16a34a' : 'var(--brand-500)', width: `${Math.min(100, summary.pct_avance)}%`, transition: 'width .4s' }} />
+                  <div style={{ height: '100%', borderRadius: 999, background: summary.pct_avance >= 100 ? 'var(--green-600)' : 'var(--brand-500)', width: `${Math.min(100, summary.pct_avance)}%`, transition: 'width .4s' }} />
                 </div>
               )}
             </div>
@@ -497,7 +497,7 @@ function SumLine({ label, value, bold, big, red, green }: { label: string; value
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
       <span style={{ fontSize: big ? 13 : 12, fontWeight: bold || big ? 700 : 400, color: 'var(--n-700)', flex: 1, paddingRight: 8 }}>{label}</span>
-      <span style={{ fontSize: big ? 16 : 13, fontWeight: bold || big ? 700 : 500, color: big ? 'var(--n-900)' : red ? '#dc2626' : green ? '#16a34a' : 'var(--n-800)', fontFamily: 'monospace' }}>
+      <span style={{ fontSize: big ? 16 : 13, fontWeight: bold || big ? 700 : 500, color: big ? 'var(--n-900)' : red ? 'var(--red-600)' : green ? 'var(--green-600)' : 'var(--n-800)', fontFamily: 'monospace' }}>
         {value < 0 ? `(${fmtS(-value)})` : fmtS(value)}
       </span>
     </div>

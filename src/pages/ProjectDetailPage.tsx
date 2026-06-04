@@ -162,9 +162,9 @@ export default function ProjectDetailPage() {
                 return (
                   <tr key={t.id} className="show-actions"
                     onClick={() => setDrawerTask(t)}
-                    style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.35)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.6)' : 'var(--n-25)'}
-                    onMouseLeave={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.35)' : 'transparent'}
+                    style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'var(--red-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = isLate ? 'var(--red-100)' : 'var(--n-25)'}
+                    onMouseLeave={e => e.currentTarget.style.background = isLate ? 'var(--red-50)' : 'transparent'}
                   >
                     <td style={{ ...TD_STYLE, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{t.number}</td>
                     <td style={TD_STYLE}>

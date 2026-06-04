@@ -59,14 +59,14 @@ function fmt0(n: number) { return n.toFixed(0) }
 
 type KPIColor = 'green' | 'red' | 'blue' | 'amber' | 'brand' | 'teal' | 'default'
 
-const KPI_PALETTE: Record<KPIColor, { bg: string; accent: string; val: string }> = {
-  green:   { bg: '#f0fdf4', accent: '#15803d', val: '#14532d' },
-  red:     { bg: '#fef2f2', accent: '#dc2626', val: '#991b1b' },
-  blue:    { bg: '#eff6ff', accent: '#2563eb', val: '#1e3a8a' },
-  amber:   { bg: '#fffbeb', accent: '#d97706', val: '#78350f' },
-  brand:   { bg: '#eef2ff', accent: '#4f46e5', val: '#312e81' },
-  teal:    { bg: '#f0fdfa', accent: '#0d9488', val: '#134e4a' },
-  default: { bg: 'var(--n-0)', accent: 'var(--n-500)', val: 'var(--n-900)' },
+const KPI_PALETTE: Record<KPIColor, { bg: string; accent: string; val: string; border: string }> = {
+  green:   { bg: 'var(--green-50)',  accent: 'var(--green-700)', val: 'var(--green-700)',  border: 'var(--green-100)'  },
+  red:     { bg: 'var(--red-50)',    accent: 'var(--red-600)',   val: 'var(--red-700)',    border: 'var(--red-100)'    },
+  blue:    { bg: 'var(--blue-50)',   accent: 'var(--blue-600)',  val: 'var(--blue-600)',   border: 'var(--blue-100)'   },
+  amber:   { bg: 'var(--amber-50)',  accent: 'var(--amber-600)', val: 'var(--amber-700)',  border: 'var(--amber-100)'  },
+  brand:   { bg: 'var(--brand-50)',  accent: 'var(--brand-600)', val: 'var(--brand-700)',  border: 'var(--brand-100)'  },
+  teal:    { bg: 'var(--green-50)',  accent: 'var(--green-600)', val: 'var(--green-700)',  border: 'var(--green-100)'  },
+  default: { bg: 'var(--n-0)',       accent: 'var(--n-500)',     val: 'var(--n-900)',      border: 'var(--n-150)'      },
 }
 
 function KPICard({ label, value, sub, color = 'default', large = false }: {
@@ -75,15 +75,17 @@ function KPICard({ label, value, sub, color = 'default', large = false }: {
   const p = KPI_PALETTE[color]
   return (
     <div style={{
-      background: p.bg, borderRadius: 12, flex: 1,
-      padding: large ? '18px 20px' : '13px 16px',
+      background: p.bg, borderRadius: 10, flex: 1,
+      padding: large ? '16px 18px' : '12px 14px',
       minWidth: large ? 130 : 110,
-      border: '1px solid', borderColor: color === 'default' ? 'var(--n-150)' : 'transparent',
+      border: `1px solid ${p.border}`,
+      borderLeft: `3px solid ${p.accent}`,
+      boxShadow: '0 1px 3px rgba(0,0,0,.04)',
     }}>
       <div style={{ fontSize: 10.5, fontWeight: 700, color: p.accent, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
         {label}
       </div>
-      <div style={{ fontSize: large ? 30 : 22, fontWeight: 700, color: p.val, lineHeight: 1 }}>
+      <div style={{ fontSize: large ? 28 : 21, fontWeight: 700, color: p.val, lineHeight: 1 }}>
         {value}
       </div>
       {sub && <div style={{ fontSize: 11, color: p.accent, marginTop: 4, fontWeight: 500 }}>{sub}</div>}
@@ -224,7 +226,7 @@ export default function HHDashboardPage() {
   const pad = isMobile ? '16px' : '20px 28px 32px'
 
   return (
-    <div style={{ padding: pad, maxWidth: 1400 }}>
+    <div style={{ padding: pad }}>
 
       {/* ── Header + filtros ── */}
       <div style={{ marginBottom: 20 }}>
@@ -389,10 +391,10 @@ export default function HHDashboardPage() {
                     return (
                       <tr key={row.day} style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n-100)', background: isEmpty ? 'var(--n-25)' : (i % 2 === 0 ? 'var(--n-0)' : 'var(--n-25)'), opacity: isEmpty ? 0.5 : 1 }}>
                         <td style={{ ...TD, fontWeight: 600, color: 'var(--n-800)' }}>{row.dayFull}</td>
-                        <td style={{ ...TD_NUM, color: row.asist > 0 ? '#16a34a' : 'var(--n-300)' }}>{row.asist}</td>
+                        <td style={{ ...TD_NUM, color: row.asist > 0 ? 'var(--green-600)' : 'var(--n-300)' }}>{row.asist}</td>
                         <td style={TD_NUM}>{fmt1(row.hhReal)}</td>
                         <td style={TD_NUM}>{fmt1(row.hhProg)}</td>
-                        <td style={{ ...TD_NUM, color: cumpl === null ? 'var(--n-300)' : cumpl >= 100 ? '#16a34a' : '#d97706' }}>
+                        <td style={{ ...TD_NUM, color: cumpl === null ? 'var(--n-300)' : cumpl >= 100 ? 'var(--green-600)' : 'var(--amber-600)' }}>
                           {cumpl !== null ? `${fmt0(cumpl)}%` : '—'}
                         </td>
                       </tr>
@@ -415,9 +417,9 @@ export default function HHDashboardPage() {
               <SectionTitle>HH por tipo de proyecto</SectionTitle>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={hhByType} margin={{ top: 4, right: 8, left: -10, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="type" tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--n-150)" />
+                  <XAxis dataKey="type" tick={{ fontSize: 11, fill: 'var(--n-500)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--n-500)' }} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="hh" name="HH Reales" radius={[6, 6, 0, 0]}>
                     {hhByType.map((_, i) => (
@@ -433,9 +435,9 @@ export default function HHDashboardPage() {
               <SectionTitle>HH reales vs programadas por día</SectionTitle>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={dailySummary} margin={{ top: 4, right: 16, left: -10, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--n-150)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--n-500)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--n-500)' }} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                   <Line

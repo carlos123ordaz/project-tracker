@@ -395,6 +395,7 @@ function StatusBreakdownCard({ statuses, counts, total }: {
       <div className="stagger" style={{ display: 'grid', gridTemplateColumns: `repeat(${statuses.length}, 1fr)`, gap: 6 }}>
         {statuses.map(s => (
           <div key={s.id}
+            className="status-chip"
             style={{
               border: `1px solid ${s.dot}33`,
               background: s.bg,
@@ -540,8 +541,8 @@ function TimelineProgressCard({ progress, label }: { progress: number; label: st
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             width: 32, height: 32, borderRadius: 8,
-            background: '#F5F3FF', color: '#7C3AED',
-            border: '1px solid #DDD6FE',
+            background: 'var(--brand-50)', color: 'var(--brand-600)',
+            border: '1px solid var(--brand-200)',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <Calendar size={16} />
@@ -561,7 +562,7 @@ function TimelineProgressCard({ progress, label }: { progress: number; label: st
           <div style={{
             position: 'absolute', top: 0, left: 0, bottom: 0,
             width: `${pct * 100}%`,
-            background: 'linear-gradient(90deg, var(--brand-500) 0%, #7C3AED 100%)',
+            background: 'linear-gradient(90deg, var(--brand-500) 0%, var(--brand-700) 100%)',
             borderRadius: 999,
             transition: 'width 1.2s cubic-bezier(.4,0,.2,1)',
             boxShadow: '0 1px 2px rgba(79,70,229,0.3)',
@@ -571,7 +572,7 @@ function TimelineProgressCard({ progress, label }: { progress: number; label: st
           <div style={{
             position: 'absolute', top: -3, bottom: -3,
             left: `calc(${pct * 100}% - 1px)`,
-            width: 2, background: '#fff', borderRadius: 1,
+            width: 2, background: 'var(--n-0)', borderRadius: 1,
             boxShadow: '0 0 0 1px var(--n-200), 0 2px 4px rgba(0,0,0,0.1)',
             transition: 'left 1.2s cubic-bezier(.4,0,.2,1)',
           }} />

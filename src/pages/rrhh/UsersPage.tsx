@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Plus, Pencil, Shield, UserX, UserCheck,
-  Check, AlertCircle, Mail,
+  Check, AlertCircle, Mail, Search, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { useUserProfiles, useModulePermissions } from '../../hooks/useUserProfiles'
 import { useAuth } from '../../hooks/useAuth'
@@ -334,11 +334,16 @@ export default function UsersPage() {
   const { profiles, loading, createUser, updateProfile, sendPasswordReset, toggleActive } = useUserProfiles()
   const isMobile = useIsMobile()
 
+  const [query,       setQuery]       = useState('')
+  const [page,        setPage]        = useState(0)
+  const [pageSize,    setPageSize]    = useState(15)
   const [showCreate,  setShowCreate]  = useState(false)
   const [editTarget,  setEditTarget]  = useState<UserProfile | null>(null)
   const [permsTarget, setPermsTarget] = useState<UserProfile | null>(null)
   const [resetBusy,   setResetBusy]   = useState<string | null>(null)
   const [toggleBusy,  setToggleBusy]  = useState<string | null>(null)
+
+  useEffect(() => { setPage(0) }, [query, pageSize])
 
   if (!isSuperAdmin) {
     return (
@@ -390,10 +395,20 @@ export default function UsersPage() {
     finally { setToggleBusy(null) }
   }
 
+  const q = query.toLowerCase()
+  const filtered = profiles.filter(p =>
+    !q ||
+    p.full_name?.toLowerCase().includes(q) ||
+    p.email?.toLowerCase().includes(q) ||
+    p.role?.toLowerCase().includes(q)
+  )
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1
+  const paginated  = filtered.slice(page * pageSize, (page + 1) * pageSize)
+
   const pad = isMobile ? '16px 16px 24px' : '20px 28px 28px'
 
   return (
-    <div style={{ padding: pad, maxWidth: isMobile ? '100%' : 1100 }}>
+    <div style={{ padding: pad }}>
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 600, color: 'var(--n-900)' }}>Usuarios</h1>
         <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginTop: 2 }}>
@@ -401,8 +416,22 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-        <Button icon={Plus} variant="primary" onClick={() => setShowCreate(true)}>Nuevo usuario</Button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+          <Search size={14} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)', pointerEvents: 'none' }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Buscar por nombre, email o cargo…"
+            style={{ ...INPUT, paddingLeft: 30, width: '100%' }}
+          />
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--n-500)', flexShrink: 0 }}>
+          {filtered.length} usuario{filtered.length !== 1 ? 's' : ''}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <Button icon={Plus} variant="primary" onClick={() => setShowCreate(true)}>Nuevo usuario</Button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -412,9 +441,13 @@ export default function UsersPage() {
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>
             Sin usuarios. Crea el primero.
           </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>
+            Sin resultados para "{query}"
+          </div>
         ) : isMobile ? (
           /* ── Tarjetas móvil ── */
-          profiles.map(p => (
+          paginated.map(p => (
             <UserCard
               key={p.id}
               p={p}
@@ -442,7 +475,7 @@ export default function UsersPage() {
               ))}
             </div>
 
-            {profiles.map((p, i) => (
+            {paginated.map((p, i) => (
               <div
                 key={p.id}
                 style={{
@@ -526,6 +559,25 @@ export default function UsersPage() {
           </>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 12 }}>
+          <span style={{ fontSize: 12, color: 'var(--n-400)' }}>Filas:</span>
+          <select
+            value={pageSize}
+            onChange={e => setPageSize(Number(e.target.value))}
+            style={{ height: 30, padding: '0 8px', fontSize: 12.5, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}
+          >
+            {[15, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <div style={{ width: 1, height: 16, background: 'var(--n-200)', margin: '0 4px' }} />
+          <span style={{ fontSize: 12.5, color: 'var(--n-500)' }}>
+            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, filtered.length)} de {filtered.length}
+          </span>
+          <IconButton icon={ChevronLeft} onClick={() => setPage(p => p - 1)} disabled={page === 0} size={28} title="Anterior" />
+          <IconButton icon={ChevronRight} onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1} size={28} title="Siguiente" />
+        </div>
+      )}
 
       {showCreate && (
         <UserFormModal

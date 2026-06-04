@@ -53,7 +53,7 @@ function EditableCell({ value, onChange, decimals = 2 }: { value: number; onChan
         width: 84, padding: '2px 6px',
         border: '1.5px solid var(--brand-500)', borderRadius: 4, outline: 'none',
         textAlign: 'right', fontFamily: 'inherit', fontSize: 12.5, color: 'var(--n-900)',
-        background: '#fff', boxShadow: '0 0 0 3px rgba(79,70,229,.12)',
+        background: 'var(--n-0)', boxShadow: '0 0 0 3px rgba(79,70,229,.12)',
       }}
     />
   )

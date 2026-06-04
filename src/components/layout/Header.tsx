@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Bell, Search, ChevronDown, LogOut, Menu } from 'lucide-react'
+import { Bell, Search, ChevronDown, LogOut, Menu, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useTheme } from '../../hooks/useTheme'
 import { getInitials, getMemberColor } from '../../lib/helpers'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -26,6 +27,7 @@ export default function Header({ action, onMenuToggle }: HeaderProps) {
   const title    = PAGE_TITLES[basePath] || 'Project Tracker'
 
   const { user, signOut } = useAuth()
+  const { theme, toggle: toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
@@ -74,6 +76,20 @@ export default function Header({ action, onMenuToggle }: HeaderProps) {
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-500)' }}
         >
           <Search size={14} />
+        </button>
+
+        <button
+          title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          onClick={toggleTheme}
+          style={{
+            width: 28, height: 28, borderRadius: 6,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--n-500)', cursor: 'pointer', transition: 'background .15s, color .15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--n-100)'; e.currentTarget.style.color = 'var(--n-800)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-500)' }}
+        >
+          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
         </button>
 
         <span style={{ position: 'relative' }} className="resp-hide">

@@ -146,14 +146,14 @@ function GanttTab({
                   <th key={p.isoDate} style={{
                     width: CW, minWidth: CW, textAlign: 'center', height: ROW_H,
                     fontSize: 10, fontWeight: 600,
-                    color: i === todayIdx ? '#DC2626' : 'var(--n-500)',
+                    color: i === todayIdx ? 'var(--red-600)' : 'var(--n-500)',
                     borderBottom: '2px solid var(--n-200)',
-                    borderLeft: i === todayIdx ? '2px solid #EF4444' : '1px solid var(--n-150)',
+                    borderLeft: i === todayIdx ? '2px solid var(--red-500)' : '1px solid var(--n-150)',
                     background: i === todayIdx ? 'rgba(239,68,68,0.05)' : 'var(--n-25)',
                     padding: 0,
                   }}>
                     {p.label}
-                    {i === todayIdx && <div style={{ width: 4, height: 4, borderRadius: 999, background: '#EF4444', margin: '1px auto 0' }} />}
+                    {i === todayIdx && <div style={{ width: 4, height: 4, borderRadius: 999, background: 'var(--red-500)', margin: '1px auto 0' }} />}
                   </th>
                 ))}
               </tr>
@@ -409,7 +409,7 @@ function DistributionTab({
           </span>
         </td>
         {periods.map((_, i) => (
-          <td key={i} colSpan={1} style={{ background: i % 2 === 0 ? 'var(--brand-50)' : 'rgba(239,246,255,0.5)', borderLeft: '1px solid var(--brand-100)' }} />
+          <td key={i} colSpan={1} style={{ background: i % 2 === 0 ? 'var(--brand-50)' : 'var(--blue-50)', borderLeft: '1px solid var(--brand-100)' }} />
         ))}
         <td style={{ background: 'var(--brand-50)', borderLeft: '2px solid var(--n-200)' }} />
       </tr>,

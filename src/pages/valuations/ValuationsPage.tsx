@@ -153,9 +153,9 @@ export default function ValuationsPage() {
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <ComposedChart data={chartData} margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
-              <YAxis tickFormatter={v => fmtS(v)} tick={{ fontSize: 10, fill: '#64748b' }} width={72} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--n-150)" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--n-500)' }} />
+              <YAxis tickFormatter={v => fmtS(v)} tick={{ fontSize: 10, fill: 'var(--n-500)' }} width={72} />
               <Tooltip content={<ChartTooltip />} />
               <Bar dataKey="monto" name="Monto período" fill="#c7d2fe" radius={[4, 4, 0, 0]} />
               <Line type="monotone" dataKey="acumulado" name="Acumulado" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 4, fill: '#4f46e5' }} />

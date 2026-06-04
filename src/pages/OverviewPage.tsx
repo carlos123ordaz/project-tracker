@@ -13,15 +13,15 @@ import { getProjectColor } from '../lib/helpers'
 import type { SemKind } from '../hooks/useConfigData'
 
 const SEM_PALETTES: Record<SemKind, { bg: string; edge: string; text: string }> = {
-  green: { bg: '#ECFDF5', edge: '#A7F3D0', text: '#065F46' },
-  amber: { bg: '#FFFBEB', edge: '#FDE68A', text: '#92400E' },
-  red:   { bg: '#FEF2F2', edge: '#FECACA', text: '#991B1B' },
-  gray:  { bg: '#F7F8FA', edge: '#E1E4EA', text: '#3B414C' },
+  green: { bg: 'var(--green-50)', edge: '#A7F3D0', text: '#065F46' },
+  amber: { bg: 'var(--amber-50)', edge: '#FDE68A', text: '#92400E' },
+  red:   { bg: 'var(--red-50)',   edge: '#FECACA', text: '#991B1B' },
+  gray:  { bg: 'var(--n-50)',     edge: '#E1E4EA', text: '#3B414C' },
 }
 const SEM_LABELS:  Record<SemKind, string> = { green: 'En curso',    amber: 'En riesgo', red: 'Crítico',                      gray: 'Sin planificar' }
 const SEM_SUBS:   Record<SemKind, string> = { green: 'Sin retrasos', amber: 'Vencen ≤7 días o retrasos puntuales', red: '>30% retrasadas o fecha vencida', gray: 'Sin tareas o fechas' }
 const SEM_ORDER:  Record<SemKind, number> = { red: 0, amber: 1, gray: 2, green: 3 }
-const SEM_COLORS: Record<SemKind, string> = { green: '#10B981', amber: '#F59E0B', red: '#EF4444', gray: '#A8AEBA' }
+const SEM_COLORS: Record<SemKind, string> = { green: '#10B981', amber: '#F59E0B', red: '#EF4444', gray: 'var(--n-400)' }
 
 const TH: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap' }
 const TD: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }

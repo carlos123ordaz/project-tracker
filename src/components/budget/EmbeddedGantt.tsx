@@ -17,9 +17,9 @@ function KPILine({ label, value, sub, accent = 'brand' }: {
 }) {
   const colors: Record<string, string> = {
     brand: 'var(--brand-700)',
-    green: '#15803D',
+    green: 'var(--green-700)',
     amber: '#B45309',
-    red:   '#B91C1C',
+    red:   'var(--red-700)',
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -148,7 +148,7 @@ function GanttBarDrag({
         <div style={{
           position: 'absolute', top: 0, bottom: 0, left: 0, width: fillW,
           background: isComplete
-            ? 'linear-gradient(90deg, #10B981, #059669)'
+            ? 'linear-gradient(90deg, var(--green-500), #059669)'
             : `linear-gradient(90deg, ${color}, ${color}cc)`,
           opacity: 0.95,
         }} />
@@ -394,7 +394,7 @@ function ScheduleItemModalProto({
               <div style={{ height: 8, background: 'var(--n-100)', borderRadius: 999, overflow: 'hidden' }}>
                 <div style={{
                   width: `${progress * 100}%`, height: '100%',
-                  background: progress >= 1 ? '#10B981' : 'var(--brand-500)',
+                  background: progress >= 1 ? 'var(--green-500)' : 'var(--brand-500)',
                   borderRadius: 999, transition: 'width .3s',
                 }} />
               </div>
@@ -420,10 +420,10 @@ function ScheduleItemModalProto({
           <label style={LBL}>Costo ganado (real)</label>
           <div style={{
             padding: '8px 12px', borderRadius: 8,
-            background: earned > 0 ? '#F0FDF4' : 'var(--n-25)',
-            border: `1px solid ${earned > 0 ? '#DCFCE7' : 'var(--n-150)'}`,
+            background: earned > 0 ? 'var(--green-50)' : 'var(--n-25)',
+            border: `1px solid ${earned > 0 ? 'var(--green-100)' : 'var(--n-150)'}`,
           }}>
-            <span className="mono tnum" style={{ fontSize: 13.5, fontWeight: 600, color: earned > 0 ? '#15803D' : 'var(--n-400)' }}>
+            <span className="mono tnum" style={{ fontSize: 13.5, fontWeight: 600, color: earned > 0 ? 'var(--green-700)' : 'var(--n-400)' }}>
               {fmtCurrency(earned, currency)}
             </span>
           </div>
@@ -569,8 +569,8 @@ export function EmbeddedGantt({
         {hasTask && actPct > 0 && (
           <span className="mono tnum" style={{
             fontSize: 10.5, fontWeight: 700, padding: '2px 5px', borderRadius: 4,
-            color:      actPct >= 1 ? '#15803D' : 'var(--brand-700)',
-            background: actPct >= 1 ? '#F0FDF4' : 'var(--brand-50)',
+            color:      actPct >= 1 ? 'var(--green-700)' : 'var(--brand-700)',
+            background: actPct >= 1 ? 'var(--green-50)' : 'var(--brand-50)',
           }}>
             {Math.round(actPct * 100)}%
           </span>
@@ -723,16 +723,16 @@ export function EmbeddedGantt({
                       borderRight: '1px solid var(--n-100)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       position: 'relative',
-                      background: isToday ? '#FEF2F2' : isWeekend ? 'var(--n-75, #f7f7f7)' : 'transparent',
+                      background: isToday ? 'var(--red-50)' : isWeekend ? 'var(--n-75, #f7f7f7)' : 'transparent',
                     }}>
                       <span className="mono tnum" style={{
                         fontSize: 10.5, fontWeight: isToday ? 700 : 500,
-                        color: isToday ? '#B91C1C' : isWeekend ? 'var(--n-400)' : 'var(--n-700)',
+                        color: isToday ? 'var(--red-700)' : isWeekend ? 'var(--n-400)' : 'var(--n-700)',
                       }}>{dayNum}</span>
                       {isToday && (
                         <span style={{
                           position: 'absolute', bottom: 1,
-                          width: 4, height: 4, borderRadius: 999, background: '#EF4444',
+                          width: 4, height: 4, borderRadius: 999, background: 'var(--red-500)',
                         }} />
                       )}
                     </div>
@@ -763,10 +763,10 @@ export function EmbeddedGantt({
               {todayIdx >= 0 && (
                 <div style={{
                   position: 'absolute', top: 0, bottom: 0, left: todayLeft - 1, width: 2,
-                  background: '#EF4444', zIndex: 2, pointerEvents: 'none',
+                  background: 'var(--red-500)', zIndex: 2, pointerEvents: 'none',
                   boxShadow: '0 0 0 1px rgba(239,68,68,0.18)',
                 }}>
-                  <div style={{ position: 'absolute', top: -1, left: -3, width: 8, height: 8, borderRadius: 999, background: '#EF4444' }} />
+                  <div style={{ position: 'absolute', top: -1, left: -3, width: 8, height: 8, borderRadius: 999, background: 'var(--red-500)' }} />
                 </div>
               )}
 

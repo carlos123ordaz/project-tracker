@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, Check, X, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTeamMembers, type TeamMember } from '../../hooks/useConfig'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button, IconButton } from '../../components/ui/Button'
@@ -19,11 +19,16 @@ export default function EquipoPage() {
   const { items, loading, create, update, remove } = useTeamMembers()
   const isMobile = useIsMobile()
 
+  const [query,    setQuery]    = useState('')
+  const [page,     setPage]     = useState(0)
+  const [pageSize, setPageSize] = useState(15)
   const [adding,   setAdding]   = useState(false)
   const [editing,  setEditing]  = useState<string | null>(null)
   const [form,     setForm]     = useState({ name: '', role: '', email: '' })
   const [editForm, setEditForm] = useState({ name: '', role: '', email: '' })
   const [busy,     setBusy]     = useState(false)
+
+  useEffect(() => { setPage(0) }, [query, pageSize])
 
   const handleAdd = async () => {
     if (!form.name.trim()) return
@@ -54,10 +59,17 @@ export default function EquipoPage() {
     <div style={{ padding: 32, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando...</div>
   )
 
+  const q = query.toLowerCase()
+  const filtered = items.filter(m =>
+    !q || m.name.toLowerCase().includes(q) || m.role?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q)
+  )
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1
+  const paginated  = filtered.slice(page * pageSize, (page + 1) * pageSize)
+
   const pad = isMobile ? '16px 16px 24px' : '20px 28px 28px'
 
   return (
-    <div style={{ padding: pad, maxWidth: isMobile ? '100%' : 900 }}>
+    <div style={{ padding: pad }}>
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 600, color: 'var(--n-900)' }}>Equipo</h1>
         <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginTop: 2 }}>
@@ -65,14 +77,22 @@ export default function EquipoPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>
-          Miembros del equipo
-          <span style={{ marginLeft: 8, fontSize: 11.5, color: 'var(--n-400)', fontWeight: 400 }}>
-            {items.length} colaboradores
-          </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+          <Search size={14} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)', pointerEvents: 'none' }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Buscar por nombre, rol o email…"
+            style={{ ...INPUT, paddingLeft: 30, width: '100%' }}
+          />
         </div>
-        <Button icon={Plus} variant="primary" onClick={() => setAdding(true)}>Agregar</Button>
+        <div style={{ fontSize: 13, color: 'var(--n-500)', flexShrink: 0 }}>
+          {filtered.length} colaborador{filtered.length !== 1 ? 'es' : ''}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <Button icon={Plus} variant="primary" onClick={() => setAdding(true)}>Agregar</Button>
+        </div>
       </div>
 
       {/* Formulario de nuevo miembro */}
@@ -122,10 +142,14 @@ export default function EquipoPage() {
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>
             Sin miembros. Agrega el equipo.
           </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>
+            Sin resultados para "{query}"
+          </div>
         ) : isMobile ? (
           /* ── Tarjetas móvil ── */
-          items.map((m, i) => (
-            <div key={m.id} style={{ padding: '14px 16px', borderBottom: i < items.length - 1 ? '1px solid var(--n-100)' : 'none' }}>
+          paginated.map((m, i) => (
+            <div key={m.id} style={{ padding: '14px 16px', borderBottom: i < paginated.length - 1 ? '1px solid var(--n-100)' : 'none' }}>
               {editing === m.id ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div>
@@ -178,7 +202,7 @@ export default function EquipoPage() {
           ))
         ) : (
           /* ── Tabla escritorio ── */
-          items.map((m, i) => (
+          paginated.map((m, i) => (
             <div
               key={m.id}
               style={{
@@ -221,6 +245,25 @@ export default function EquipoPage() {
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 12 }}>
+          <span style={{ fontSize: 12, color: 'var(--n-400)' }}>Filas:</span>
+          <select
+            value={pageSize}
+            onChange={e => setPageSize(Number(e.target.value))}
+            style={{ height: 30, padding: '0 8px', fontSize: 12.5, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}
+          >
+            {[15, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <div style={{ width: 1, height: 16, background: 'var(--n-200)', margin: '0 4px' }} />
+          <span style={{ fontSize: 12.5, color: 'var(--n-500)' }}>
+            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, filtered.length)} de {filtered.length}
+          </span>
+          <IconButton icon={ChevronLeft} onClick={() => setPage(p => p - 1)} disabled={page === 0} size={28} title="Anterior" />
+          <IconButton icon={ChevronRight} onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1} size={28} title="Siguiente" />
+        </div>
+      )}
     </div>
   )
 }
