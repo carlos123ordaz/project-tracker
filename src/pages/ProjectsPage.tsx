@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Download } from 'lucide-react'
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 import { useConfigData } from '../hooks/useConfigData'
@@ -27,6 +27,7 @@ export default function ProjectsPage() {
   const [editing, setEditing]           = useState<Project | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Project | null>(null)
   const [sort, setSort]                 = useState({ key: 'name', dir: 'asc' as 'asc' | 'desc' })
+  const [exporting, setExporting]       = useState(false)
 
   const enriched = useMemo(() => projects.map(p => {
     const m   = projectMetrics(p, tasks)
@@ -69,6 +70,28 @@ export default function ProjectsPage() {
     if (!confirmDelete) return; await deleteProject(confirmDelete.id); setConfirmDelete(null)
   }
 
+  const exportCSV = () => {
+    setExporting(true)
+    try {
+      const BOM = '﻿'
+      const q = (s: string | number | null) => `"${String(s ?? '').replace(/"/g, '""')}"`
+      const headers = ['Nombre', 'Área', 'Iniciativa', 'Líder', 'Salud', 'Avance %', 'Tareas', 'Completadas', 'Retrasadas', 'Presupuesto', 'Costo real', 'Inicio', 'Vencimiento']
+      const rows = sorted.map(p => [
+        q(p.name), q(p.focus_area), q(p.initiative),
+        q(p._lead?.name ?? p.leader ?? ''),
+        q(p._sem.label),
+        Math.round(p._m.progress * 100),
+        p._m.total, p._m.completed, p._m.late,
+        p._m.totalBudget, p._m.totalCost,
+        q(p.start_date ?? ''), q(p.end_date ?? ''),
+      ])
+      const csv = BOM + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n')
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+      const a = document.createElement('a'); a.href = url; a.download = 'proyectos.csv'; a.click()
+      URL.revokeObjectURL(url)
+    } finally { setExporting(false) }
+  }
+
   return (
     <div className="page-content" style={{ paddingBottom: 28 }}>
       {/* Toolbar */}
@@ -84,6 +107,7 @@ export default function ProjectsPage() {
         <div style={{ flex: 1 }} />
         <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-500)' }}>{filtered.length} de {projects.length}</span>
         <ViewToggle value={view} onChange={setView} />
+        <Button icon={Download} onClick={exportCSV} disabled={exporting}>{exporting ? 'Exportando…' : 'Exportar CSV'}</Button>
         <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nuevo proyecto</Button>
       </div>
 

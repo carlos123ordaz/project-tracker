@@ -10,7 +10,7 @@ import { ProjectTag } from '../components/ui/Chips'
 import Modal from '../components/ui/Modal'
 import TaskForm from '../components/tasks/TaskForm'
 import TaskDrawer from '../components/ui/TaskDrawer'
-import { Plus, AlertTriangle } from 'lucide-react'
+import { Plus, AlertTriangle, Download } from 'lucide-react'
 import { PageLoader } from '../components/ui/Loader'
 import { fmtDate, getProjectColor } from '../lib/helpers'
 import type { Task } from '../lib/types'
@@ -26,6 +26,7 @@ export default function KanbanPage() {
   const { statuses, types, getMember, loading: configLoading }     = useConfigData()
 
   const [projectFilter, setProjectFilter] = useState('')
+  const [exporting, setExporting] = useState(false)
   const [dragId,      setDragId]      = useState<string | null>(null)
   const [overCol,     setOverCol]     = useState<string | null>(null)
   const [dropTarget,  setDropTarget]  = useState<DropTarget | null>(null)
@@ -143,6 +144,30 @@ export default function KanbanPage() {
     setSelectedTask(t)
   }
 
+  const exportCSV = () => {
+    setExporting(true)
+    try {
+      const BOM = '﻿'
+      const q = (s: string | number | null) => `"${String(s ?? '').replace(/"/g, '""')}"`
+      const headers = ['#', 'Nombre', 'Proyecto', 'Estado', 'Prioridad', 'Tipo', 'Asignado a', 'Avance %', 'Presupuesto', 'Costo real', 'Inicio', 'Vencimiento']
+      const rows = visibleTasks.map(t => {
+        const proj = projects.find(p => p.id === t.project_id)
+        return [
+          t.number, q(t.name), q(proj?.name ?? ''),
+          q(t.status), q(t.priority), q(t.type),
+          q(t.assigned_to ?? ''),
+          t.progress,
+          t.budget, t.actual_cost,
+          q(t.start_date ?? ''), q(t.end_date ?? ''),
+        ]
+      })
+      const csv = BOM + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n')
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+      const a = document.createElement('a'); a.href = url; a.download = 'tareas-kanban.csv'; a.click()
+      URL.revokeObjectURL(url)
+    } finally { setExporting(false) }
+  }
+
   // ── Render ──────────────────────────────────────────────────
 
   return (
@@ -159,6 +184,7 @@ export default function KanbanPage() {
         </select>
         <div style={{ flex: 1 }} />
         <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-500)' }}>{visibleTasks.length} tareas</span>
+        <Button icon={Download} onClick={exportCSV} disabled={exporting}>{exporting ? 'Exportando…' : 'Exportar CSV'}</Button>
         <Button icon={Plus} variant="primary" onClick={() => { setModalStatus(''); setModalOpen(true) }}>Nueva tarea</Button>
       </div>
 

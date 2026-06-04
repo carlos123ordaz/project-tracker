@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(cat)",
+      "Bash(bash /tmp/check_imports.sh)",
+      "Bash(bash /tmp/final_check.sh)",
+      "Bash(bash /tmp/detailed_check.sh)",
+      "Bash(bash /tmp/validate_all.sh)",
+      "Bash(bash /tmp/strict_check.sh)",
+      "Bash(npm run *)"
+    ]
+  }
+}

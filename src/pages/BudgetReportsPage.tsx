@@ -6,7 +6,7 @@ import { useBudgetResources } from '../hooks/useBudgetResources'
 import { PageLoader } from '../components/ui/Loader'
 import { StatCard } from '../components/ui/StatCard'
 import { computeBudgetTotals, buildResourceMap, getItemUnitPrice, fmtCurrency, fmtNumber } from '../lib/budgetHelpers'
-import { DollarSign, TrendingUp, CheckCircle, AlertTriangle, Database } from 'lucide-react'
+import { DollarSign, TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine,
@@ -207,8 +207,7 @@ export default function BudgetReportsPage() {
   )
 
   const RAIL = [
-    { id: 'prices',  label: 'Base de precios', Icon: Database,   path: '/budgets/resources', active: false },
-    { id: 'reports', label: 'Reportes',        Icon: TrendingUp, path: '/budgets/reports',   active: true  },
+    { id: 'reports', label: 'Reportes', Icon: TrendingUp, path: '/budgets/reports', active: true },
   ]
 
   return (
