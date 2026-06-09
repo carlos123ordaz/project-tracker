@@ -41,7 +41,7 @@ export default function ComparativoEditorPage() {
 
   const { suppliers } = useSuppliers()
   const { projects } = useProjects()
-  const { items: budgetItems, loading: loadingInsumos } = useBudgetItemsByProject(comparison?.project_id ?? null)
+  const { items: budgetItems, loading: loadingInsumos, isGlobal } = useBudgetItemsByProject(comparison?.project_id ?? null)
 
   const projectName = useMemo(
     () => projects.find(p => p.id === comparison?.project_id)?.name,
@@ -188,7 +188,7 @@ export default function ComparativoEditorPage() {
         unit: itemForm.unit,
         quantity: qty,
         notes: itemForm.notes || undefined,
-        budget_item_id: selectedBudgetItemId || undefined,
+        budget_item_id: (!isGlobal && selectedBudgetItemId) ? selectedBudgetItemId : undefined,
       }
       if (editingItemId) await updateItem(editingItemId, payload)
       else await addItem(payload)
@@ -342,29 +342,37 @@ export default function ComparativoEditorPage() {
         {items.length === 0 && compSuppliers.length === 0 ? (
           <EmptyHint onAddItem={openAddItem} hasProject={!!comparison.project_id} />
         ) : (
-          <div style={{ minWidth: 'max-content' }}>
-            <table style={{ borderCollapse: 'collapse', background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--n-150)' }}>
+          <div style={{ width: '100%' }}>
+            <table style={{ borderCollapse: 'collapse', background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--n-150)', width: '100%' }}>
               <thead>
                 <tr style={{ background: 'var(--n-25)', borderBottom: '2px solid var(--n-150)' }}>
                   <TH width={36}>#</TH>
                   <TH width={280} align="left">Insumo / Descripción</TH>
                   <TH width={60}>Und</TH>
                   <TH width={80}>Cantidad</TH>
-                  {compSuppliers.map(cs => (
-                    <TH key={cs.id} width={140}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--n-800)' }}>{cs.supplier_name}</span>
-                        <button
-                          onClick={() => setConfirmDeleteSupplier(cs.id)}
-                          style={{ padding: '1px 4px', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-300)', borderRadius: 4 }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--red-500)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--n-300)'}
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    </TH>
-                  ))}
+                  {compSuppliers.map(cs => {
+                    const colTotal = getSupplierTotal(cs.id)
+                    return (
+                      <TH key={cs.id} width={140}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--n-800)' }}>{cs.supplier_name}</span>
+                          {colTotal > 0 && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand-700)' }}>
+                              {fmt(colTotal, currency)}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => setConfirmDeleteSupplier(cs.id)}
+                            style={{ padding: '1px 4px', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-300)', borderRadius: 4 }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--red-500)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--n-300)'}
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      </TH>
+                    )
+                  })}
                   <TH width={120} align="left">Seleccionado</TH>
                   <TH width={110} align="right">P. Unit.</TH>
                   <TH width={110} align="right">Total ítem</TH>
@@ -428,9 +436,16 @@ export default function ComparativoEditorPage() {
                             ) : (
                               <div onClick={() => startEdit(item.id, cs.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 5, minHeight: 28 }}>
                                 {isLowest && price > 0 && <TrendingDown size={12} style={{ color: 'var(--green-600)', flexShrink: 0 }} />}
-                                <span style={{ fontSize: 13, fontWeight: price > 0 ? 600 : 400, color: isLowest ? 'var(--green-700)' : price > 0 ? 'var(--n-800)' : 'var(--n-300)' }}>
-                                  {price > 0 ? fmtNum(price) : '—'}
-                                </span>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: 13, fontWeight: price > 0 ? 600 : 400, color: isLowest ? 'var(--green-700)' : price > 0 ? 'var(--n-800)' : 'var(--n-300)' }}>
+                                    {price > 0 ? fmtNum(price) : '—'}
+                                  </div>
+                                  {price > 0 && (
+                                    <div style={{ fontSize: 10.5, color: isLowest ? 'var(--green-600)' : 'var(--n-400)', marginTop: 1 }}>
+                                      {fmtNum(price * item.quantity)}
+                                    </div>
+                                  )}
+                                </div>
                                 {price > 0 && !isSelected && (
                                   <button
                                     onClick={e => { e.stopPropagation(); selectQuote(item.id, cs.id) }}
@@ -542,9 +557,7 @@ export default function ComparativoEditorPage() {
               {/* Insumo picker from budget */}
               <div style={{ marginBottom: 16 }}>
                 <FL>
-                  {comparison.project_id
-                    ? 'Seleccionar insumo del presupuesto'
-                    : 'Insumos del presupuesto (sin proyecto asignado)'}
+                  {isGlobal ? 'Todos los insumos' : 'Insumos del presupuesto del proyecto'}
                 </FL>
                 <div style={{ position: 'relative', marginBottom: 8 }}>
                   <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)' }} />
@@ -580,7 +593,7 @@ export default function ComparativoEditorPage() {
                             {bi.name}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 1 }}>
-                            {[bi.code && `#${bi.code}`, bi.description].filter(Boolean).join(' · ') || ' '}
+                            {[bi.code && `#${bi.code}`, bi.subtitle].filter(Boolean).join(' · ') || ' '}
                           </div>
                         </div>
                         <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 6px', borderRadius: 5, marginLeft: 8, flexShrink: 0 }}>
@@ -591,14 +604,9 @@ export default function ComparativoEditorPage() {
                     ))}
                   </div>
                 )}
-                {!loadingInsumos && !comparison.project_id && (
-                  <div style={{ fontSize: 12, color: 'var(--amber-700)', padding: '8px 12px', background: 'var(--amber-50)', borderRadius: 8, textAlign: 'center' }}>
-                    Este comparativo no tiene proyecto asignado — no hay insumos disponibles
-                  </div>
-                )}
-                {!loadingInsumos && comparison.project_id && filteredInsumos.length === 0 && !insumoSearch && (
+                {!loadingInsumos && filteredInsumos.length === 0 && !insumoSearch && (
                   <div style={{ fontSize: 12, color: 'var(--n-400)', padding: '8px 12px', background: 'var(--n-25)', borderRadius: 8, textAlign: 'center' }}>
-                    El proyecto no tiene insumos en el presupuesto — completa los campos manualmente
+                    No hay insumos disponibles — completa los campos manualmente
                   </div>
                 )}
                 {insumoSearch && filteredInsumos.length === 0 && (

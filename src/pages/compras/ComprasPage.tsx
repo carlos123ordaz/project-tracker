@@ -84,7 +84,7 @@ export default function ComprasPage() {
   const projectMap = new Map(projects.map(p => [p.id, p.name]))
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1100 }}>
+    <div style={{ padding: '24px 28px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
@@ -116,7 +116,7 @@ export default function ComprasPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', width: '100%' }}>
         <StatCard label="Total" value={comparisons.length} color="var(--n-700)" />
         {COMPARISON_STATUSES.map(s => (
           <StatCard
@@ -155,7 +155,7 @@ export default function ComprasPage() {
       ) : filtered.length === 0 ? (
         <EmptyState hasFilter={!!search || filterStatus !== 'Todos'} onNew={openNew} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
           {filtered.map(c => (
             <ComparisonCard
               key={c.id}
@@ -256,7 +256,7 @@ function StatCard({ label, value, color, active, onClick }: { label: string; val
   return (
     <button
       onClick={onClick}
-      style={{ background: active ? 'var(--brand-50)' : '#fff', border: active ? '1.5px solid var(--brand-300)' : '1px solid var(--n-150)', borderRadius: 10, padding: '10px 16px', cursor: onClick ? 'pointer' : 'default', textAlign: 'left', transition: 'all .15s' }}
+      style={{ background: active ? 'var(--brand-50)' : '#fff', border: active ? '1.5px solid var(--brand-300)' : '1px solid var(--n-150)', borderRadius: 10, padding: '10px 16px', cursor: onClick ? 'pointer' : 'default', textAlign: 'left', transition: 'all .15s', flex: 1 }}
     >
       <div style={{ fontSize: 20, fontWeight: 700, color }}>{value}</div>
       <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1, whiteSpace: 'nowrap' }}>{label}</div>

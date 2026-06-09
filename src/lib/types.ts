@@ -107,6 +107,14 @@ export interface BudgetResource {
   created_at: string
 }
 
+export interface PickableItem {
+  id: string
+  name: string
+  unit: string
+  code?: string | null
+  subtitle?: string | null
+}
+
 export interface ApuLine {
   id: string
   item_id: string

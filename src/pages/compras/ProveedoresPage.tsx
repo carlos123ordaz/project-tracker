@@ -71,7 +71,7 @@ export default function ProveedoresPage() {
     setForm(prev => ({ ...prev, [k]: v }))
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1100 }}>
+    <div style={{ padding: '24px 28px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
@@ -110,7 +110,7 @@ export default function ProveedoresPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, width: '100%' }}>
         {[
           { label: 'Total', value: suppliers.length, color: 'var(--n-700)' },
           { label: 'Activos', value: suppliers.filter(s => s.is_active).length, color: 'var(--green-700)' },
@@ -118,7 +118,7 @@ export default function ProveedoresPage() {
         ].map(stat => (
           <div key={stat.label} style={{
             background: '#fff', border: '1px solid var(--n-150)',
-            borderRadius: 10, padding: '10px 18px',
+            borderRadius: 10, padding: '10px 18px', flex: 1,
           }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: stat.color }}>{stat.value}</div>
             <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{stat.label}</div>
