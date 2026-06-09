@@ -6,7 +6,7 @@ export const DAYS_ES     = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
 
 export const TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d })()
 
-export const parseISO = (s: string): Date => new Date(s + 'T00:00:00')
+export const parseISO = (s: string): Date => s.includes('T') ? new Date(s) : new Date(s + 'T00:00:00')
 
 export const addDays = (d: Date, n: number): Date => {
   const x = new Date(d); x.setDate(x.getDate() + n); return x

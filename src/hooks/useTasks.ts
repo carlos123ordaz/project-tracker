@@ -48,7 +48,7 @@ export function useTasks(projectId?: string) {
   }
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
-    const { project: _, created_at: __, updated_at: ___, sort_order: ____, ...safeUpdates } = updates as Task & { sort_order?: number }
+    const { project: _, created_at: __, updated_at: ___, ...safeUpdates } = updates as Task & { sort_order?: number }
     const { data, error: err } = await supabase
       .from('tasks')
       .update(safeUpdates)

@@ -8,7 +8,21 @@
       "Bash(bash /tmp/detailed_check.sh)",
       "Bash(bash /tmp/validate_all.sh)",
       "Bash(bash /tmp/strict_check.sh)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(grep -E \"\\\\.\\(xlsx|xlsb|sql\\)$\")",
+      "Read(//tmp/**)",
+      "WebSearch",
+      "Bash(pip install *)",
+      "Bash(uv --version)",
+      "Bash(py --list)",
+      "Bash(py *)",
+      "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" install *)",
+      "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" .)",
+      "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" . --backend none)",
+      "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" --help)",
+      "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" update *)",
+      "PowerShell(py *)",
+      "PowerShell(Get-Content graphify-out\\\\.graphify_uncached.txt | Where-Object { $_ -match '\\\\.\\(md|html|svg|png\\)$' })"
     ]
   }
 }

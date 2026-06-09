@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & build
 node_modules
 dist
 dist-ssr
@@ -26,3 +27,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code local settings (no compartir entre equipos)
+.claude/settings.local.json
+.claude/settings.json
+
+# Graphify — grafo generado automáticamente
+graphify-out/
+
+# Test coverage
+coverage/

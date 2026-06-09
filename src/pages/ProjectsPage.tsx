@@ -22,7 +22,7 @@ export default function ProjectsPage() {
   const navigate   = useNavigate()
 
   const [query, setQuery]               = useState('')
-  const [view,  setView]                = useState<'grid' | 'list'>('grid')
+  const [view,  setView]                = useState<'grid' | 'list'>('list')
   const [modalOpen, setModalOpen]       = useState(false)
   const [editing, setEditing]           = useState<Project | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Project | null>(null)
@@ -51,6 +51,7 @@ export default function ProjectsPage() {
       if (sort.key === 'health')   { av = { red: 0, amber: 1, gray: 2, green: 3 }[a._sem.kind]; bv = { red: 0, amber: 1, gray: 2, green: 3 }[b._sem.kind] }
       if (sort.key === 'progress') { av = a._m.progress; bv = b._m.progress }
       if (sort.key === 'late')     { av = a._m.late; bv = b._m.late }
+      if (sort.key === 'created')  { av = a.created_at; bv = b.created_at }
       if (av < bv) return -1 * dir
       if (av > bv) return  1 * dir
       return 0
@@ -270,20 +271,23 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
   )
   return (
     <div className="card" style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
-      <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 12.5 }}>
+      <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse', fontSize: 12.5 }}>
         <thead>
           <tr style={{ background: 'var(--n-25)' }}>
+            <th style={{ width: 44, padding: '10px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', textAlign: 'center' }}>#</th>
             <th style={{ width: 8, padding: 0 }} />
             <Th k="name">Proyecto</Th>
-            <Th k="health" width={140}>Salud</Th>
-            <Th k="progress" width={200}>Avance</Th>
-            <Th k="late" width={110}>Retrasadas</Th>
-            <th style={{ width: 120, padding: '10px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)' }}>Vence</th>
+            <Th k="health" width={130}>Salud</Th>
+            <Th k="progress" width={180}>Avance</Th>
+            <Th k="late" width={100}>Retrasadas</Th>
+            <Th k="created" width={130}>Creado</Th>
+            <th style={{ width: 130, padding: '10px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)' }}>Creado por</th>
+            <th style={{ width: 100, padding: '10px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)' }}>Vence</th>
             <th style={{ width: 80, padding: '10px 12px', borderBottom: '1px solid var(--n-150)' }} />
           </tr>
         </thead>
         <tbody className="stagger">
-          {rows.map((p: any) => {
+          {rows.map((p: any, idx: number) => {
             const color = getProjectColor(p.color)
             return (
               <tr key={p.id} className="show-actions" onClick={() => navigate(`/projects/${p.id}`)}
@@ -291,6 +295,9 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
+                <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                  <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-400)', fontWeight: 600 }}>{idx + 1}</span>
+                </td>
                 <td style={{ padding: 0, width: 8, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, background: color, borderRadius: 2 }} />
                 </td>
@@ -300,10 +307,21 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
                 </td>
                 <td style={{ padding: '10px 12px' }}><Semaforo kind={p._sem.kind} label={p._sem.label} /></td>
                 <td style={{ padding: '10px 12px' }}><ProgressBar value={p._m.progress} showLabel projectColor={color} /></td>
-                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                   {p._m.late > 0
                     ? <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--red-700)', fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: 'var(--red-50)' }}>{p._m.late}</span>
                     : <span className="mono tnum" style={{ color: 'var(--n-400)' }}>—</span>}
+                </td>
+                <td style={{ padding: '10px 12px' }}>
+                  <span className="mono tnum" style={{ fontSize: 11, color: 'var(--n-600)' }}>{fmtDate(p.created_at)}</span>
+                </td>
+                <td style={{ padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Avatar member={p._lead} size={20} />
+                    <span style={{ fontSize: 12, color: 'var(--n-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>
+                      {p._lead?.name?.split(' ')[0] || p.leader || '—'}
+                    </span>
+                  </div>
                 </td>
                 <td style={{ padding: '10px 12px' }}>
                   <span className="mono tnum" style={{ fontSize: 11, color: 'var(--n-600)' }}>{fmtDate(p.end_date)}</span>

@@ -23,6 +23,10 @@ import AttendancePage from './pages/rrhh/AttendancePage'
 import HHDashboardPage from './pages/rrhh/HHDashboardPage'
 import ValuationsPage from './pages/valuations/ValuationsPage'
 import ValuationEditorPage from './pages/valuations/ValuationEditorPage'
+import ComprasPage from './pages/compras/ComprasPage'
+import ComparativoEditorPage from './pages/compras/ComparativoEditorPage'
+import ProveedoresPage from './pages/compras/ProveedoresPage'
+import ArticulosPage from './pages/compras/ArticulosPage'
 
 function AuthenticatedApp() {
   const { user, loading, accountDisabled, signOut } = useAuth()
@@ -78,6 +82,11 @@ function AuthenticatedApp() {
           <Route path="/budgets/:id"       element={<BudgetEditorPage />} />
           <Route path="/schedule"          element={<SchedulesPage />} />
           <Route path="/schedule/:id"      element={<ScheduleEditorPage />} />
+          {/* Compras */}
+          <Route path="/compras"              element={<ComprasPage />} />
+          <Route path="/compras/articulos"    element={<ArticulosPage />} />
+          <Route path="/compras/proveedores"  element={<ProveedoresPage />} />
+          <Route path="/compras/:id"          element={<ComparativoEditorPage />} />
           {/* RRHH */}
           <Route path="/rrhh/equipo"     element={<EquipoPage />} />
           <Route path="/rrhh/usuarios"   element={<UsersPage />} />

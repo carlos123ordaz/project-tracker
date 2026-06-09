@@ -1,5 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, sortableKeyboardCoordinates,
+  verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 import ProjectForm from '../components/projects/ProjectForm'
@@ -16,10 +25,85 @@ import { Button, IconButton } from '../components/ui/Button'
 import { StatCard } from '../components/ui/StatCard'
 import type { Task } from '../lib/types'
 import { fmtDate, fmtDateFull, fmtMoney, fmtMoneyCompact, getProjectColor } from '../lib/helpers'
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, AlertTriangle, List, TrendingUp, DollarSign, Receipt } from 'lucide-react'
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, AlertTriangle, List, TrendingUp, DollarSign, Receipt, GripVertical, Copy } from 'lucide-react'
 
 const TH_STYLE: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap' }
 const TD_STYLE: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
+
+function SortableTaskRow({
+  task, canDrag, onOpen, onEdit, onDelete, onDuplicate,
+}: {
+  task: Task; canDrag: boolean
+  onOpen: (t: Task) => void
+  onEdit: (t: Task) => void
+  onDelete: (t: Task) => void
+  onDuplicate: (t: Task) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
+
+  const isLate = task.status === 'Retrasado'
+  const isDone = task.status === 'Completado'
+
+  return (
+    <tr
+      ref={setNodeRef}
+      className="show-actions"
+      onClick={() => onOpen(task)}
+      style={{
+        borderTop: '1px solid var(--n-150)',
+        background: isDragging ? 'var(--brand-50)' : isLate ? 'var(--red-50)' : 'transparent',
+        transition: transition ?? 'background .12s',
+        cursor: 'pointer',
+        transform: CSS.Transform.toString(transform),
+        opacity: isDragging ? 0.6 : 1,
+      }}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = isLate ? 'var(--red-100)' : 'var(--n-25)' }}
+      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = isLate ? 'var(--red-50)' : 'transparent' }}
+    >
+      <td style={{ ...TD_STYLE, textAlign: 'right', width: 44 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+          {canDrag && (
+            <span
+              {...listeners}
+              {...attributes}
+              onClick={e => e.stopPropagation()}
+              style={{ cursor: 'grab', color: 'var(--n-300)', padding: '2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+              title="Arrastrar para reordenar"
+            >
+              <GripVertical size={12} />
+            </span>
+          )}
+          <span className="mono tnum" style={{ color: 'var(--n-400)' }}>{task.number}</span>
+        </div>
+      </td>
+      <td style={TD_STYLE}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {isLate && <AlertTriangle size={13} style={{ color: 'var(--red-500)', flexShrink: 0 }} />}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 550, color: 'var(--n-900)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.6 : 1 }}>{task.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{task.type}</div>
+          </div>
+        </div>
+      </td>
+      <td style={TD_STYLE}><StatusBadge status={task.status} size="sm" /></td>
+      <td style={TD_STYLE}><PriorityBadge priority={task.priority} size="sm" /></td>
+      <td style={TD_STYLE} className="mono tnum"><span style={{ color: 'var(--n-600)' }}>{fmtDate(task.start_date)}</span></td>
+      <td style={TD_STYLE} className="mono tnum"><span style={{ color: isLate ? 'var(--red-700)' : 'var(--n-600)', fontWeight: isLate ? 600 : 400 }}>{fmtDate(task.end_date)}</span></td>
+      <td style={TD_STYLE}><ProgressBar value={task.progress} showLabel /></td>
+      <td style={{ ...TD_STYLE, textAlign: 'right' }} className="mono tnum">
+        <div style={{ color: 'var(--n-800)' }}>{fmtMoney(task.budget)}</div>
+        <div style={{ fontSize: 10.5, color: task.actual_cost > task.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(task.actual_cost)}</div>
+      </td>
+      <td style={{ ...TD_STYLE, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+        <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }}>
+          <IconButton icon={Copy} title="Duplicar tarea" size={26} onClick={() => onDuplicate(task)} />
+          <IconButton icon={Pencil} title="Editar" size={26} onClick={() => onEdit(task)} />
+          <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => onDelete(task)} />
+        </div>
+      </td>
+    </tr>
+  )
+}
 
 export default function ProjectDetailPage() {
   const { id }       = useParams<{ id: string }>()
@@ -35,15 +119,25 @@ export default function ProjectDetailPage() {
   const [showEditProject, setShowEditProject] = useState(false)
   const [confirmDelProj,  setConfirmDelProj]  = useState(false)
   const [deletingProj,    setDeletingProj]    = useState(false)
+  const [duplicating,     setDuplicating]     = useState(false)
+
+  // Local ordered copy for drag-and-drop
+  const [localTasks, setLocalTasks] = useState<Task[]>([])
+  useEffect(() => { setLocalTasks(tasks) }, [tasks])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const project = projects.find(p => p.id === id)
-
   const color  = getProjectColor(project?.color)
   const m      = project ? projectMetrics(project, tasks) : { total: 0, completed: 0, late: 0, pending: 0, progress: 0, totalBudget: 0, totalCost: 0 }
   const sem    = project ? semaphoreFor(project, tasks) : { kind: 'gray' as const, label: 'Sin planificar' }
   const lead   = getMember(project?.leader || '')
 
-  const filtered = statusFilter ? tasks.filter(t => t.status === statusFilter) : tasks
+  const displayTasks = statusFilter ? localTasks.filter(t => t.status === statusFilter) : localTasks
+  const canDrag = !statusFilter
 
   const statusCounts = useMemo(() =>
     statuses.reduce((acc, s) => { acc[s.name] = tasks.filter(t => t.status === s.name).length; return acc }, {} as Record<string, number>)
@@ -58,11 +152,58 @@ export default function ProjectDetailPage() {
   const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>) => {
     await createTask(data); setModalOpen(false)
   }
+
   const handleDrawerSave = async (taskId: string, changes: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>>) => {
     await updateTask(taskId, changes as any)
   }
+
   const handleDelete = async () => {
     if (!confirmDelete) return; await deleteTask(confirmDelete.id); setConfirmDelete(null)
+  }
+
+  async function handleDuplicate(task: Task) {
+    if (duplicating) return
+    setDuplicating(true)
+    try {
+      const copy = await createTask({
+        project_id: task.project_id,
+        number: tasks.length + 1,
+        type: task.type,
+        name: `Copia de ${task.name}`,
+        status: task.status,
+        priority: task.priority,
+        start_date: task.start_date,
+        end_date: task.end_date,
+        assigned_to: task.assigned_to,
+        budget: task.budget,
+        actual_cost: 0,
+        progress: 0,
+        label: task.label,
+        notes: task.notes,
+        sort_order: tasks.length,
+      } as any)
+      if (copy) setDrawerTask(copy as unknown as Task)
+    } finally {
+      setDuplicating(false)
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = localTasks.findIndex(t => t.id === active.id)
+    const newIndex = localTasks.findIndex(t => t.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(localTasks, oldIndex, newIndex)
+    setLocalTasks(reordered)
+
+    await Promise.all(
+      reordered.map((t, i) =>
+        (t.sort_order ?? i) !== i ? updateTask(t.id, { sort_order: i } as any) : Promise.resolve()
+      )
+    )
   }
 
   return (
@@ -132,6 +273,11 @@ export default function ProjectDetailPage() {
             </button>
           )
         })}
+        {canDrag && (
+          <span style={{ fontSize: 11, color: 'var(--n-400)', marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <GripVertical size={11} /> Arrastra para reordenar
+          </span>
+        )}
       </div>
 
       {/* Task table */}
@@ -141,63 +287,40 @@ export default function ProjectDetailPage() {
             <div style={{ width: 32, height: 32, borderRadius: 999, border: '2px solid var(--brand-500)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
           </div>
         ) : (
-          <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse', fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ background: 'var(--n-25)' }}>
-                <th style={{ ...TH_STYLE, width: 44, textAlign: 'right' }}>#</th>
-                <th style={{ ...TH_STYLE, minWidth: 240 }}>Tarea</th>
-                <th style={{ ...TH_STYLE, width: 120 }}>Estado</th>
-                <th style={{ ...TH_STYLE, width: 80 }}>Prioridad</th>
-                <th style={{ ...TH_STYLE, width: 90 }}>Inicio</th>
-                <th style={{ ...TH_STYLE, width: 90 }}>Fin</th>
-                <th style={{ ...TH_STYLE, width: 140 }}>Avance</th>
-                <th style={{ ...TH_STYLE, width: 110, textAlign: 'right' }}>Presupuesto</th>
-                <th style={{ ...TH_STYLE, width: 76, textAlign: 'right' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(t => {
-                const isLate = t.status === 'Retrasado'
-                const isDone = t.status === 'Completado'
-                return (
-                  <tr key={t.id} className="show-actions"
-                    onClick={() => setDrawerTask(t)}
-                    style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'var(--red-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = isLate ? 'var(--red-100)' : 'var(--n-25)'}
-                    onMouseLeave={e => e.currentTarget.style.background = isLate ? 'var(--red-50)' : 'transparent'}
-                  >
-                    <td style={{ ...TD_STYLE, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{t.number}</td>
-                    <td style={TD_STYLE}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isLate && <AlertTriangle size={13} style={{ color: 'var(--red-500)', flexShrink: 0 }} />}
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 550, color: 'var(--n-900)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.6 : 1 }}>{t.name}</div>
-                          <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{t.type}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={TD_STYLE}><StatusBadge status={t.status} size="sm" /></td>
-                    <td style={TD_STYLE}><PriorityBadge priority={t.priority} size="sm" /></td>
-                    <td style={TD_STYLE} className="mono tnum"><span style={{ color: 'var(--n-600)' }}>{fmtDate(t.start_date)}</span></td>
-                    <td style={TD_STYLE} className="mono tnum"><span style={{ color: isLate ? 'var(--red-700)' : 'var(--n-600)', fontWeight: isLate ? 600 : 400 }}>{fmtDate(t.end_date)}</span></td>
-                    <td style={TD_STYLE}><ProgressBar value={t.progress} showLabel /></td>
-                    <td style={{ ...TD_STYLE, textAlign: 'right' }} className="mono tnum">
-                      <div style={{ color: 'var(--n-800)' }}>{fmtMoney(t.budget)}</div>
-                      <div style={{ fontSize: 10.5, color: t.actual_cost > t.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(t.actual_cost)}</div>
-                    </td>
-                    <td style={{ ...TD_STYLE, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                      <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }}>
-                        <IconButton icon={Pencil} title="Editar" size={26} onClick={() => setDrawerTask(t)} />
-                        <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDelete(t)} />
-                      </div>
-                    </td>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse', fontSize: 12.5 }}>
+                <thead>
+                  <tr style={{ background: 'var(--n-25)' }}>
+                    <th style={{ ...TH_STYLE, width: 44, textAlign: 'right' }}>#</th>
+                    <th style={{ ...TH_STYLE, minWidth: 240 }}>Tarea</th>
+                    <th style={{ ...TH_STYLE, width: 120 }}>Estado</th>
+                    <th style={{ ...TH_STYLE, width: 80 }}>Prioridad</th>
+                    <th style={{ ...TH_STYLE, width: 90 }}>Inicio</th>
+                    <th style={{ ...TH_STYLE, width: 90 }}>Fin</th>
+                    <th style={{ ...TH_STYLE, width: 140 }}>Avance</th>
+                    <th style={{ ...TH_STYLE, width: 110, textAlign: 'right' }}>Presupuesto</th>
+                    <th style={{ ...TH_STYLE, width: 96, textAlign: 'right' }}>Acciones</th>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {displayTasks.map(t => (
+                    <SortableTaskRow
+                      key={t.id}
+                      task={t}
+                      canDrag={canDrag}
+                      onOpen={setDrawerTask}
+                      onEdit={setDrawerTask}
+                      onDelete={setConfirmDelete}
+                      onDuplicate={handleDuplicate}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </SortableContext>
+          </DndContext>
         )}
-        {!loading && filtered.length === 0 && (
+        {!loading && displayTasks.length === 0 && (
           <EmptyState title="Sin tareas" description="Cambia el filtro o agrega una tarea nueva."
             action={<Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nueva tarea</Button>} />
         )}

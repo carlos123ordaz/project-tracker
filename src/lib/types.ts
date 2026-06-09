@@ -229,9 +229,92 @@ export const MODULES_LIST = [
   { key: 'ingenieria',    label: 'Ingeniería' },
   { key: 'presupuestos',  label: 'Presupuestos' },
   { key: 'cronogramas',   label: 'Cronogramas' },
+  { key: 'compras',       label: 'Compras' },
   { key: 'rrhh',          label: 'RRHH' },
   { key: 'configuracion', label: 'Configuración' },
 ] as const
+
+// ── Compras ───────────────────────────────────────────────────
+
+export type ComparisonStatus = 'Borrador' | 'En Evaluación' | 'Aprobado' | 'Cerrado'
+export const COMPARISON_STATUSES: ComparisonStatus[] = ['Borrador', 'En Evaluación', 'Aprobado', 'Cerrado']
+
+export interface Article {
+  id: string
+  code: string | null
+  name: string
+  description: string | null
+  unit: string
+  category: string | null
+  notes: string | null
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Supplier {
+  id: string
+  name: string
+  ruc: string | null
+  contact: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  notes: string | null
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PurchaseComparison {
+  id: string
+  number: number
+  title: string
+  status: ComparisonStatus
+  currency: string
+  notes: string | null
+  project_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ComparisonItem {
+  id: string
+  comparison_id: string
+  article_id: string | null
+  budget_item_id: string | null
+  description: string
+  unit: string
+  quantity: number
+  notes: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ComparisonSupplier {
+  id: string
+  comparison_id: string
+  supplier_id: string | null
+  supplier_name: string
+  sort_order: number
+  created_at: string
+}
+
+export interface ComparisonQuote {
+  id: string
+  comparison_id: string
+  item_id: string
+  comparison_supplier_id: string
+  unit_price: number
+  delivery_days: number | null
+  notes: string | null
+  is_selected: boolean
+  created_at: string
+  updated_at: string
+}
 
 export interface UserProfile {
   id: string
