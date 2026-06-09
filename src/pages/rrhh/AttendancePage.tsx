@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   LogIn, LogOut, Clock, CheckCircle, AlertCircle,
-  Search, Calendar, ChevronDown, ChevronUp, X,
+  Search, Calendar, ChevronDown, ChevronUp, X, MapPin, MapPinOff,
 } from 'lucide-react'
 import { useAttendance } from '../../hooks/useAttendance'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -15,6 +15,7 @@ import {
   type AttendanceMotive,
   type Shift,
   type AttendanceRecord,
+  type GpsCoords,
 } from '../../lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -67,6 +68,7 @@ const LABEL: React.CSSProperties = {
 type CheckInConfirmParams = {
   condition: AttendanceCondition; motive: AttendanceMotive; observations: string
   shift: Shift; project_id: string | null; project_name: string | null; project_type: string | null
+  coords: GpsCoords | null
 }
 
 const PROJECT_TYPES = [
@@ -91,8 +93,43 @@ function CheckInModal({ onClose, onConfirm }: {
   const [busy,         setBusy]         = useState(false)
   const [err,          setErr]          = useState<string | null>(null)
 
+  const [gpsStatus,  setGpsStatus]  = useState<'loading' | 'ok' | 'error'>('loading')
+  const [coords,     setCoords]     = useState<GpsCoords | null>(null)
+  const [gpsError,   setGpsError]   = useState<string>('')
+  const [permDenied, setPermDenied] = useState(false)
+
+  const requestGps = () => {
+    setGpsStatus('loading')
+    setGpsError('')
+    setPermDenied(false)
+    if (!navigator.geolocation) {
+      setGpsStatus('error')
+      setGpsError('Este dispositivo no soporta GPS')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy })
+        setGpsStatus('ok')
+      },
+      err => {
+        setGpsStatus('error')
+        if (err.code === 1) {
+          setPermDenied(true)
+          setGpsError('Permiso de ubicación denegado')
+        } else {
+          setGpsError('No se pudo obtener la ubicación GPS')
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    )
+  }
+
+  useEffect(() => { requestGps() }, [])
+
   const handleConfirm = async () => {
     if (condition !== 'Asistencia' && motive === 'Ninguno') return setErr('Selecciona un motivo')
+    if (gpsStatus !== 'ok') return setErr('Se requiere GPS activo para marcar asistencia')
     setBusy(true); setErr(null)
     try {
       await onConfirm({
@@ -100,6 +137,7 @@ function CheckInModal({ onClose, onConfirm }: {
         project_id:   null,
         project_name: projectName.trim() || null,
         project_type: projectType || null,
+        coords,
       })
       onClose()
     } catch (e: any) { setErr(e.message) }
@@ -191,6 +229,48 @@ function CheckInModal({ onClose, onConfirm }: {
             </span>
           </div>
         )}
+
+        {/* GPS status */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+          borderRadius: 8,
+          background: gpsStatus === 'ok' ? 'var(--green-50)' : gpsStatus === 'error' ? 'var(--red-50)' : 'var(--n-50)',
+          border: `1px solid ${gpsStatus === 'ok' ? 'var(--green-200)' : gpsStatus === 'error' ? 'var(--red-200)' : 'var(--n-150)'}`,
+        }}>
+          {gpsStatus === 'loading' && (
+            <>
+              <MapPin size={15} style={{ color: 'var(--n-400)', flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: 'var(--n-500)' }}>Obteniendo ubicación GPS…</span>
+            </>
+          )}
+          {gpsStatus === 'ok' && coords && (
+            <>
+              <MapPin size={15} style={{ color: 'var(--green-600)', flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: 'var(--green-700)' }}>
+                Ubicación obtenida · precisión ~{Math.round(coords.accuracy)} m
+              </span>
+            </>
+          )}
+          {gpsStatus === 'error' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MapPinOff size={15} style={{ color: 'var(--red-600)', flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--red-700)', fontWeight: 600 }}>{gpsError}</span>
+                <button
+                  onClick={requestGps}
+                  style={{ fontSize: 12, fontWeight: 600, color: 'var(--red-600)', background: 'none', border: '1px solid var(--red-300)', borderRadius: 6, cursor: 'pointer', padding: '3px 10px', flexShrink: 0 }}
+                >
+                  Reintentar
+                </button>
+              </div>
+              {permDenied && (
+                <div style={{ fontSize: 12, color: 'var(--red-600)', paddingLeft: 23, lineHeight: 1.5 }}>
+                  Para activarlo: haz clic en el ícono <strong>🔒</strong> o <strong>ⓘ</strong> en la barra del navegador → <strong>Permisos del sitio</strong> → <strong>Ubicación</strong> → <strong>Permitir</strong>, luego presiona Reintentar.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </Modal>
   )
@@ -199,14 +279,37 @@ function CheckInModal({ onClose, onConfirm }: {
 // ── Modal de marcar salida ────────────────────────────────────
 
 function CheckOutModal({ record, onClose, onConfirm }: {
-  record: AttendanceRecord; onClose: () => void; onConfirm: () => Promise<void>
+  record: AttendanceRecord; onClose: () => void; onConfirm: (coords: GpsCoords | null) => Promise<void>
 }) {
-  const [busy, setBusy] = useState(false)
+  const [busy,       setBusy]       = useState(false)
+  const [gpsStatus,  setGpsStatus]  = useState<'loading' | 'ok' | 'error'>('loading')
+  const [coords,     setCoords]     = useState<GpsCoords | null>(null)
+  const [gpsError,   setGpsError]   = useState<string>('')
+  const [permDenied, setPermDenied] = useState(false)
   const now = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
 
+  const requestGps = () => {
+    setGpsStatus('loading')
+    setGpsError('')
+    setPermDenied(false)
+    if (!navigator.geolocation) { setGpsStatus('error'); setGpsError('Este dispositivo no soporta GPS'); return }
+    navigator.geolocation.getCurrentPosition(
+      pos => { setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }); setGpsStatus('ok') },
+      err => {
+        setGpsStatus('error')
+        if (err.code === 1) { setPermDenied(true); setGpsError('Permiso de ubicación denegado') }
+        else { setGpsError('No se pudo obtener la ubicación GPS') }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    )
+  }
+
+  useEffect(() => { requestGps() }, [])
+
   const handleConfirm = async () => {
+    if (gpsStatus !== 'ok') { alert('Se requiere GPS activo para marcar salida'); return }
     setBusy(true)
-    try { await onConfirm(); onClose() }
+    try { await onConfirm(coords); onClose() }
     catch (e: any) { alert(e.message) }
     finally { setBusy(false) }
   }
@@ -216,7 +319,7 @@ function CheckOutModal({ record, onClose, onConfirm }: {
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" onClick={handleConfirm} disabled={busy} icon={LogOut}>
+          <Button variant="primary" onClick={handleConfirm} disabled={busy || gpsStatus !== 'ok'} icon={LogOut}>
             {busy ? 'Registrando...' : 'Confirmar salida'}
           </Button>
         </>
@@ -231,6 +334,28 @@ function CheckOutModal({ record, onClose, onConfirm }: {
         </div>
         <div style={{ fontSize: 13, color: 'var(--n-600)' }}>
           Ingresaste a las <strong>{fmtTime(record.check_in_time)}</strong>. Las horas reales y extras se calcularán automáticamente.
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8,
+          background: gpsStatus === 'ok' ? 'var(--green-50)' : gpsStatus === 'error' ? 'var(--red-50)' : 'var(--n-50)',
+          border: `1px solid ${gpsStatus === 'ok' ? 'var(--green-200)' : gpsStatus === 'error' ? 'var(--red-200)' : 'var(--n-150)'}`,
+        }}>
+          {gpsStatus === 'loading' && <><MapPin size={15} style={{ color: 'var(--n-400)', flexShrink: 0 }} /><span style={{ fontSize: 12.5, color: 'var(--n-500)' }}>Obteniendo ubicación GPS…</span></>}
+          {gpsStatus === 'ok' && coords && <><MapPin size={15} style={{ color: 'var(--green-600)', flexShrink: 0 }} /><span style={{ fontSize: 12.5, color: 'var(--green-700)' }}>Ubicación obtenida · precisión ~{Math.round(coords.accuracy)} m</span></>}
+          {gpsStatus === 'error' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MapPinOff size={15} style={{ color: 'var(--red-600)', flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--red-700)', fontWeight: 600 }}>{gpsError}</span>
+                <button onClick={requestGps} style={{ fontSize: 12, fontWeight: 600, color: 'var(--red-600)', background: 'none', border: '1px solid var(--red-300)', borderRadius: 6, cursor: 'pointer', padding: '3px 10px', flexShrink: 0 }}>Reintentar</button>
+              </div>
+              {permDenied && (
+                <div style={{ fontSize: 12, color: 'var(--red-600)', paddingLeft: 23, lineHeight: 1.5 }}>
+                  Para activarlo: haz clic en el ícono <strong>🔒</strong> o <strong>ⓘ</strong> en la barra del navegador → <strong>Permisos del sitio</strong> → <strong>Ubicación</strong> → <strong>Permitir</strong>, luego presiona Reintentar.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Modal>
@@ -394,7 +519,7 @@ function DesktopTable({ records, showCollaborator }: { records: AttendanceRecord
               ...(showCollaborator ? ['Colaborador'] : []),
               'Proyecto','Tipo','Turno',
               'Ingreso','Salida','H. Prog.','H. Real','H. Extra',
-              'Condición','Motivo','Observaciones',
+              'Condición','Motivo','Observaciones','Ubic.',
             ].map(h => <th key={h} style={TH}>{h}</th>)}
           </tr>
         </thead>
@@ -438,6 +563,32 @@ function DesktopTable({ records, showCollaborator }: { records: AttendanceRecord
                 <td style={{ ...TD, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {r.observations || '—'}
                 </td>
+                <td style={{ ...TD, whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {r.check_in_lat && r.check_in_lng
+                      ? <a
+                          href={`https://www.google.com/maps?q=${r.check_in_lat},${r.check_in_lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Ubicación de ingreso"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--green-700)', textDecoration: 'none', padding: '3px 7px', borderRadius: 6, border: '1px solid var(--green-200)', background: 'var(--green-50)' }}
+                        >
+                          <MapPin size={10} /> In
+                        </a>
+                      : <span style={{ fontSize: 11, color: 'var(--n-300)' }}>—</span>}
+                    {r.check_out_lat && r.check_out_lng
+                      ? <a
+                          href={`https://www.google.com/maps?q=${r.check_out_lat},${r.check_out_lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Ubicación de salida"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--brand-600)', textDecoration: 'none', padding: '3px 7px', borderRadius: 6, border: '1px solid var(--brand-200)', background: 'var(--brand-50)' }}
+                        >
+                          <MapPin size={10} /> Out
+                        </a>
+                      : <span style={{ fontSize: 11, color: 'var(--n-300)' }}>—</span>}
+                  </div>
+                </td>
               </tr>
             )
           })}
@@ -472,13 +623,13 @@ export default function AttendancePage() {
 
   const handleCheckIn = async (params: CheckInConfirmParams) => {
     if (!profile) throw new Error('No hay perfil cargado')
-    await checkIn({ ...params, profile })
+    await checkIn({ ...params, profile, coords: params.coords })
     await refetch()
   }
 
-  const handleCheckOut = async () => {
+  const handleCheckOut = async (coords: GpsCoords | null) => {
     if (!todayRec) throw new Error('No hay registro de ingreso')
-    await checkOut(todayRec.id)
+    await checkOut(todayRec.id, coords)
     await refetch()
   }
 

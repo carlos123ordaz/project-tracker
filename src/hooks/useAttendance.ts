@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { AttendanceRecord, AttendanceCondition, AttendanceMotive, Shift, UserProfile } from '../lib/types'
+import type { AttendanceRecord, AttendanceCondition, AttendanceMotive, Shift, UserProfile, GpsCoords } from '../lib/types'
 // UserProfile used in checkIn params
 
 function calcScheduledHours(checkIn: string | null, checkOut: string | null): number {
@@ -68,6 +68,7 @@ export function useAttendance(userId?: string, dateFilter?: string) {
     project_id?: string | null
     project_name?: string | null
     project_type?: string | null
+    coords?: GpsCoords | null
   }) => {
     const now   = new Date()
     const today = now.toISOString().split('T')[0]
@@ -89,9 +90,12 @@ export function useAttendance(userId?: string, dateFilter?: string) {
         scheduled_hours:  scheduled,
         real_hours:       0,
         extra_hours:      0,
-        condition:        params.condition,
-        motive:           params.motive,
-        observations:     params.observations,
+        condition:          params.condition,
+        motive:             params.motive,
+        observations:       params.observations,
+        check_in_lat:       params.coords?.lat      ?? null,
+        check_in_lng:       params.coords?.lng      ?? null,
+        check_in_accuracy:  params.coords?.accuracy ?? null,
       })
       .select()
       .single()
@@ -102,7 +106,7 @@ export function useAttendance(userId?: string, dateFilter?: string) {
     return record
   }
 
-  const checkOut = async (recordId: string) => {
+  const checkOut = async (recordId: string, coords?: GpsCoords | null) => {
     const now     = new Date()
     const record  = records.find(r => r.id === recordId)
     if (!record) throw new Error('Registro no encontrado')
@@ -113,9 +117,12 @@ export function useAttendance(userId?: string, dateFilter?: string) {
     const { data, error } = await supabase
       .from('attendance_records')
       .update({
-        check_out_time: now.toISOString(),
-        real_hours:  parseFloat(real.toFixed(2)),
-        extra_hours: parseFloat(extra.toFixed(2)),
+        check_out_time:      now.toISOString(),
+        real_hours:          parseFloat(real.toFixed(2)),
+        extra_hours:         parseFloat(extra.toFixed(2)),
+        check_out_lat:       coords?.lat      ?? null,
+        check_out_lng:       coords?.lng      ?? null,
+        check_out_accuracy:  coords?.accuracy ?? null,
       })
       .eq('id', recordId)
       .select()

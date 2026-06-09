@@ -368,6 +368,18 @@ export interface AttendanceRecord {
   condition: AttendanceCondition
   motive: AttendanceMotive
   observations: string
+  check_in_lat: number | null
+  check_in_lng: number | null
+  check_in_accuracy: number | null
+  check_out_lat: number | null
+  check_out_lng: number | null
+  check_out_accuracy: number | null
   created_at: string
   updated_at: string
+}
+
+export interface GpsCoords {
+  lat: number
+  lng: number
+  accuracy: number
 }
