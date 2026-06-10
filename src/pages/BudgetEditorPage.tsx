@@ -22,6 +22,7 @@ import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List, La
 import { supabase } from '../lib/supabase'
 import Modal from '../components/ui/Modal'
 import GastosGeneralesTab from './GastosGeneralesTab'
+import PieDePresupuestoTab from './PieDePresupuestoTab'
 import { StatCard } from '../components/ui/StatCard'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
@@ -443,7 +444,7 @@ const TD: React.CSSProperties = { padding: '6px 12px', verticalAlign: 'middle', 
 // ── Budget header ─────────────────────────────────────────────────────────────
 function BudgetHeaderSection({ budget, view, onUpdate, navigate, onAddItem, onDelete }: {
   budget: Budget
-  view: 'items' | 'schedule' | 'gastos' | 'prices' | 'reports'
+  view: 'items' | 'schedule' | 'gastos' | 'prices' | 'reports' | 'pie'
   onUpdate: (u: Partial<Budget>) => Promise<void>
   navigate: (path: string) => void
   onAddItem: () => void
@@ -911,7 +912,7 @@ export default function BudgetEditorPage() {
   const budgetSchedule = schedules.find(s => s.budget_id === id)
   const { tasks, actuals, upsertTask, deleteTask, replaceItemActuals } = useScheduleEditor(budgetSchedule?.id ?? '')
 
-  const [view, setView] = useState<'items' | 'schedule' | 'gastos' | 'prices' | 'reports'>('items')
+  const [view, setView] = useState<'items' | 'schedule' | 'gastos' | 'pie' | 'prices' | 'reports'>('items')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [apuItem, setApuItem] = useState<BudgetItem | null>(null)
   const [editItem, setEditItem] = useState<BudgetItem | null>(null)
@@ -1059,9 +1060,10 @@ export default function BudgetEditorPage() {
 
   // ── View tabs ──────────────────────────────────────────────────────────────
   const VIEW_TABS = [
-    { id: 'items', label: 'Partidas', Icon: List },
-    { id: 'schedule', label: 'Programar', Icon: CalendarDays },
-    { id: 'gastos', label: 'Gastos generales', Icon: Layers },
+    { id: 'items',    label: 'Partidas',           Icon: List },
+    { id: 'schedule', label: 'Programar',           Icon: CalendarDays },
+    { id: 'gastos',   label: 'Gastos generales',    Icon: Layers },
+    { id: 'pie',      label: 'Pie de presupuesto',  Icon: DollarSign },
   ] as const
 
   const MODULE_TABS = [
@@ -1097,7 +1099,7 @@ export default function BudgetEditorPage() {
               const on = view === tid
               return (
                 <button key={tid}
-                  onClick={() => setView(tid as 'items' | 'gastos' | 'schedule')}
+                  onClick={() => setView(tid as 'items' | 'gastos' | 'schedule' | 'pie')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 9, width: '100%',
                     padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
@@ -1158,6 +1160,16 @@ export default function BudgetEditorPage() {
               onCreateItem={createGGItem}
               onUpdateItem={updateGGItem}
               onDeleteItem={deleteGGItem}
+            />
+          )}
+
+          {/* ── Pie de Presupuesto tab ── */}
+          {view === 'pie' && (
+            <PieDePresupuestoTab
+              budget={budget}
+              directCost={ggDirectCost}
+              ggTotal={ggTotal}
+              onUpdate={async p => { await updateBudget(p) }}
             />
           )}
 

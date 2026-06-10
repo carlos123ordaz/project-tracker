@@ -5,7 +5,7 @@ import {
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
   FileSpreadsheet, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
-  ShoppingCart, Building2, TrendingDown,
+  ShoppingCart, Building2, TrendingDown, Receipt,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -61,14 +61,21 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Proyectos',
       icon: FolderOpen,
       items: [
-        { to: '/',             label: 'Dashboard',    icon: LayoutDashboard, end: true },
+        { to: '/',             label: 'Dashboard',   icon: LayoutDashboard, end: true },
         { to: '/projects',     label: 'Catálogo',    icon: FolderOpen },
         { to: '/kanban',       label: 'Kanban',       icon: Kanban },
         { to: '/timeline',     label: 'Timeline',     icon: CalendarRange },
         { to: '/consolidated', label: 'Consolidado',  icon: List },
         { to: '/calendar',     label: 'Calendario',   icon: Calendar },
         { to: '/overview',     label: 'Overview',     icon: Gauge },
-        { to: '/budgets',      label: 'Presupuestos', icon: FileSpreadsheet },
+      ],
+    },
+    {
+      key: 'ventas',
+      label: 'Ventas',
+      icon: Receipt,
+      items: [
+        { to: '/budgets', label: 'Presupuestos', icon: FileSpreadsheet },
       ],
     },
     {

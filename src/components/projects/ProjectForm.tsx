@@ -50,7 +50,7 @@ export default function ProjectForm({ initial, onSubmit, onCancel }: ProjectForm
     if (!form.name.trim()) { setError('El nombre es requerido'); return }
     setSaving(true)
     try {
-      await onSubmit({ ...form, start_date: form.start_date || null, end_date: form.end_date || null })
+      await onSubmit({ ...form, start_date: form.start_date || null, end_date: form.end_date || null, created_by: null })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar')
       setSaving(false)

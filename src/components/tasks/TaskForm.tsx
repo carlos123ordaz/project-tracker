@@ -78,6 +78,7 @@ export default function TaskForm({ projectId, projects, nextNumber, initial, onS
         budget:      Number(form.budget),
         actual_cost: Number(form.actual_cost),
         progress:    Number(form.progress),
+        created_by:  null,
       })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar')

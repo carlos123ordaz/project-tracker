@@ -22,7 +22,11 @@
       "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" --help)",
       "Bash(\"D:/BOOT/user/CORDAZ/AppData/Local/Programs/Python/Python311/Scripts/graphify.exe\" update *)",
       "PowerShell(py *)",
-      "PowerShell(Get-Content graphify-out\\\\.graphify_uncached.txt | Where-Object { $_ -match '\\\\.\\(md|html|svg|png\\)$' })"
+      "PowerShell(Get-Content graphify-out\\\\.graphify_uncached.txt | Where-Object { $_ -match '\\\\.\\(md|html|svg|png\\)$' })",
+      "Read(//d/BOOT/user/CORDAZ/Downloads/**)",
+      "Read(//d/BOOT/user/CORDAZ/Downloads//**)",
+      "Bash(graphify query *)",
+      "WebFetch(domain:presupuestos.pe)"
     ]
   }
 }
