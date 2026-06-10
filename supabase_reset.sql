@@ -88,6 +88,7 @@ CREATE TABLE projects (
   start_date DATE,
   end_date   DATE,
   color      TEXT NOT NULL DEFAULT 'Dodger Blue',
+  created_by TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -111,6 +112,7 @@ CREATE TABLE tasks (
   label       TEXT,
   notes       TEXT,
   sort_order  INTEGER DEFAULT 0,
+  created_by  TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );

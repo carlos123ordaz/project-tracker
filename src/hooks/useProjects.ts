@@ -27,10 +27,16 @@ export function useProjects() {
     fetchProjects()
   }, [fetchProjects])
 
-  const createProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => {
+  const createProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    let created_by: string | null = null
+    if (user) {
+      const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', user.id).maybeSingle()
+      created_by = profile?.full_name || user.email || null
+    }
     const { data, error: err } = await supabase
       .from('projects')
-      .insert(project)
+      .insert({ ...project, created_by })
       .select()
       .single()
     if (err) throw new Error(err.message)

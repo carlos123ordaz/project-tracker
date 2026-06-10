@@ -26,16 +26,17 @@ export default function ProjectsPage() {
   const [modalOpen, setModalOpen]       = useState(false)
   const [editing, setEditing]           = useState<Project | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Project | null>(null)
-  const [sort, setSort]                 = useState({ key: 'name', dir: 'asc' as 'asc' | 'desc' })
+  const [sort, setSort]                 = useState({ key: 'created', dir: 'desc' as 'asc' | 'desc' })
   const [exporting, setExporting]       = useState(false)
 
   const enriched = useMemo(() => projects.map(p => {
     const m   = projectMetrics(p, tasks)
     const sem = semaphoreFor(p, tasks)
-    const lead  = getMember(p.leader || '')
+    const lead    = getMember(p.leader || '')
+    const creator = getMember(p.created_by || '')
     const memberNames = Array.from(new Set(tasks.filter(t => t.project_id === p.id).map(t => t.assigned_to).filter(Boolean)))
     const teamMembers = memberNames.map(n => getMember(n!)).filter(Boolean) as ReturnType<typeof getMember>[]
-    return { ...p, _m: m, _sem: sem, _lead: lead, _team: teamMembers }
+    return { ...p, _m: m, _sem: sem, _lead: lead, _creator: creator, _team: teamMembers }
   }), [projects, tasks, projectMetrics, semaphoreFor, getMember])
 
   const filtered = useMemo(() =>
@@ -317,9 +318,9 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
                 </td>
                 <td style={{ padding: '10px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Avatar member={p._lead} size={20} />
+                    <Avatar member={p._creator} size={20} />
                     <span style={{ fontSize: 12, color: 'var(--n-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>
-                      {p._lead?.name?.split(' ')[0] || p.leader || '—'}
+                      {p._creator?.name?.split(' ')[0] || p.created_by?.split(' ')[0] || '—'}
                     </span>
                   </div>
                 </td>

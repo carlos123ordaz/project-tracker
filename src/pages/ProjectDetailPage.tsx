@@ -13,6 +13,7 @@ import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 import ProjectForm from '../components/projects/ProjectForm'
 import { useConfigData } from '../hooks/useConfigData'
+import type { MemberObj } from '../hooks/useConfigData'
 import Modal from '../components/ui/Modal'
 import TaskForm from '../components/tasks/TaskForm'
 import TaskDrawer from '../components/ui/TaskDrawer'
@@ -31,13 +32,14 @@ const TH_STYLE: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', 
 const TD_STYLE: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'middle', color: 'var(--n-700)', whiteSpace: 'nowrap' }
 
 function SortableTaskRow({
-  task, canDrag, onOpen, onEdit, onDelete, onDuplicate,
+  task, canDrag, onOpen, onEdit, onDelete, onDuplicate, getMember,
 }: {
   task: Task; canDrag: boolean
   onOpen: (t: Task) => void
   onEdit: (t: Task) => void
   onDelete: (t: Task) => void
   onDuplicate: (t: Task) => void
+  getMember: (name: string) => MemberObj | undefined
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
 
@@ -93,6 +95,18 @@ function SortableTaskRow({
       <td style={{ ...TD_STYLE, textAlign: 'right' }} className="mono tnum">
         <div style={{ color: 'var(--n-800)' }}>{fmtMoney(task.budget)}</div>
         <div style={{ fontSize: 10.5, color: task.actual_cost > task.budget ? 'var(--red-600)' : 'var(--n-500)' }}>{fmtMoney(task.actual_cost)}</div>
+      </td>
+      <td style={TD_STYLE}>
+        {task.created_by ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Avatar member={getMember(task.created_by)} size={20} />
+            <span style={{ fontSize: 12, color: 'var(--n-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 }}>
+              {getMember(task.created_by)?.name?.split(' ')[0] ?? task.created_by.split(' ')[0]}
+            </span>
+          </div>
+        ) : (
+          <span style={{ color: 'var(--n-400)' }}>—</span>
+        )}
       </td>
       <td style={{ ...TD_STYLE, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
         <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }}>
@@ -300,6 +314,7 @@ export default function ProjectDetailPage() {
                     <th style={{ ...TH_STYLE, width: 90 }}>Fin</th>
                     <th style={{ ...TH_STYLE, width: 140 }}>Avance</th>
                     <th style={{ ...TH_STYLE, width: 110, textAlign: 'right' }}>Presupuesto</th>
+                    <th style={{ ...TH_STYLE, width: 120 }}>Creado por</th>
                     <th style={{ ...TH_STYLE, width: 96, textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -313,6 +328,7 @@ export default function ProjectDetailPage() {
                       onEdit={setDrawerTask}
                       onDelete={setConfirmDelete}
                       onDuplicate={handleDuplicate}
+                      getMember={getMember}
                     />
                   ))}
                 </tbody>

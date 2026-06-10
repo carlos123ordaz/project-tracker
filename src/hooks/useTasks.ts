@@ -31,10 +31,16 @@ export function useTasks(projectId?: string) {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
 
-  const createTask = async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>) => {
+  const createTask = async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project' | 'created_by'>) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    let created_by: string | null = null
+    if (user) {
+      const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', user.id).maybeSingle()
+      created_by = profile?.full_name || user.email || null
+    }
     const sameStatus = tasks.filter(t => t.status === task.status)
     const maxOrder   = sameStatus.reduce((m, t) => Math.max(m, t.sort_order ?? 0), 0)
-    const taskWithOrder = { ...task, sort_order: maxOrder + 1000 }
+    const taskWithOrder = { ...task, sort_order: maxOrder + 1000, created_by }
 
     const { data, error: err } = await supabase
       .from('tasks')

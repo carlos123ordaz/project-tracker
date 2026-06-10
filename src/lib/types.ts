@@ -11,6 +11,7 @@ export interface Project {
   start_date: string | null
   end_date: string | null
   color: string
+  created_by: string | null
   created_at: string
   updated_at: string
 }
@@ -32,6 +33,7 @@ export interface Task {
   label: string | null
   notes: string | null
   sort_order?: number
+  created_by: string | null
   created_at: string
   updated_at: string
   project?: Project
