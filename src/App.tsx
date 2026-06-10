@@ -77,9 +77,10 @@ function AuthenticatedApp() {
           <Route path="/calendar"    element={<CalendarPage />} />
           <Route path="/overview"    element={<OverviewPage />} />
           <Route path="/settings"    element={<SettingsPage />} />
-          <Route path="/budgets"           element={<BudgetsPage />} />
-          <Route path="/budgets/reports"   element={<BudgetReportsPage />} />
-          <Route path="/budgets/:id"       element={<BudgetEditorPage />} />
+          <Route path="/budgets"                    element={<BudgetsPage />} />
+          <Route path="/budgets/reports"            element={<BudgetReportsPage />} />
+          <Route path="/budgets/:id"                element={<BudgetEditorPage />} />
+          <Route path="/budgets/:id/:section"       element={<BudgetEditorPage />} />
           <Route path="/schedule"          element={<SchedulesPage />} />
           <Route path="/schedule/:id"      element={<ScheduleEditorPage />} />
           {/* Compras */}

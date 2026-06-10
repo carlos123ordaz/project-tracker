@@ -85,6 +85,38 @@ export function computeBudgetTotals(
   return { direct, indirect, utility, subtotal, igv, total: subtotal + igv }
 }
 
+export function evalFormula(formula: string, vars: Record<string, number>): number | null {
+  if (!formula.trim()) return null
+  let expr = formula.trim().toUpperCase()
+  for (const k of Object.keys(vars).sort((a, b) => b.length - a.length)) {
+    if (!isFinite(vars[k])) continue
+    expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(vars[k]))
+  }
+  if (!/^[\s\d+\-*/.()]+$/.test(expr)) return null
+  try {
+    // eslint-disable-next-line no-new-func
+    const result = Function(`"use strict";return(${expr})`)() as number
+    return isFinite(result) ? result : null
+  } catch { return null }
+}
+
+export interface PieRowConfig { variable: string; formula: string }
+
+export function evalPieRows(
+  directCost: number,
+  rows: PieRowConfig[],
+  ggTotal?: number,
+): Record<string, number> {
+  const vars: Record<string, number> = { CD: directCost }
+  if (ggTotal != null && ggTotal > 0) vars['GG'] = ggTotal
+  for (const row of rows) {
+    const key = row.variable.toUpperCase().trim()
+    if (!key || key in vars) continue
+    vars[key] = evalFormula(row.formula, vars) ?? 0
+  }
+  return vars
+}
+
 export function fmtCurrency(n: number, currency = 'USD'): string {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency', currency,

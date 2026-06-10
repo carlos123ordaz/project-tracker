@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Plus, Trash2, Save, ChevronUp, ChevronDown, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Budget } from '../lib/types'
-import { fmtCurrency } from '../lib/budgetHelpers'
+import { fmtCurrency, evalFormula } from '../lib/budgetHelpers'
 import { Button, IconButton } from '../components/ui/Button'
 
 // ── Types ────────────────────────────────────────────────────
@@ -17,26 +17,6 @@ interface PieRow {
 }
 
 type EditCell = { rowId: string; field: 'variable' | 'description' | 'formula' }
-
-// ── Formula evaluator ────────────────────────────────────────
-// Replaces known variables with their values, then evaluates
-// only if the resulting expression is pure arithmetic (safe).
-function evalFormula(formula: string, vars: Record<string, number>): number | null {
-  if (!formula.trim()) return null
-  let expr = formula.trim().toUpperCase()
-  // Substitute variables, longest names first to avoid partial matches
-  for (const k of Object.keys(vars).sort((a, b) => b.length - a.length)) {
-    if (!isFinite(vars[k])) continue
-    expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(vars[k]))
-  }
-  // Only allow digits, arithmetic operators, parens, dots, spaces
-  if (!/^[\s\d+\-*/.()]+$/.test(expr)) return null
-  try {
-    // eslint-disable-next-line no-new-func
-    const result = Function(`"use strict";return(${expr})`)() as number
-    return isFinite(result) ? result : null
-  } catch { return null }
-}
 
 // ── Props ────────────────────────────────────────────────────
 interface Props {

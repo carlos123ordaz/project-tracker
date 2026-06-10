@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useBudget } from '../hooks/useBudgets'
+import { useBudget, useBudgets } from '../hooks/useBudgets'
 import { useBudgetItems } from '../hooks/useBudgetItems'
 import { useBudgetResources, usePaginatedResources } from '../hooks/useBudgetResources'
 import { useSchedules } from '../hooks/useSchedules'
@@ -13,12 +13,13 @@ import { EmbeddedGantt } from '../components/budget/EmbeddedGantt'
 import {
   getStatusMeta, BUDGET_STATUSES,
   getItemUnitPrice, computeBudgetTotals, buildResourceMap,
-  fmtCurrency, fmtNumber,
+  fmtCurrency, fmtNumber, evalPieRows,
+  type PieRowConfig,
 } from '../lib/budgetHelpers'
 import { ggTotals } from '../lib/ggHelpers'
 import { generatePeriods } from '../lib/scheduleHelpers'
 import type { Budget, BudgetItem, BudgetResource, BudgetStatus, ApuLine } from '../lib/types'
-import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List, Layers, Database, TrendingUp, DollarSign, CheckCircle, AlertTriangle, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List, Layers, Database, TrendingUp, DollarSign, CheckCircle, AlertTriangle, Download, ChevronLeft, ChevronRight, Printer, FileDown, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import Modal from '../components/ui/Modal'
 import GastosGeneralesTab from './GastosGeneralesTab'
@@ -61,15 +62,29 @@ function EditableCell({ value, onChange, decimals = 2 }: { value: number; onChan
 }
 
 // ── Summary panel ─────────────────────────────────────────────────────────────
-function SummaryPanel({ budget, items, apuLines, resources, ggTotal }: {
+function SummaryPanel({ budget, items, apuLines, resources, ggTotal, pieRows }: {
   budget: Budget; items: BudgetItem[]; apuLines: ApuLine[]; resources: BudgetResource[]
   ggTotal?: number
+  pieRows?: PieRowConfig[]
 }) {
   const rMap = useMemo(() => buildResourceMap(resources), [resources])
   const t = computeBudgetTotals(budget, items, apuLines, rMap, ggTotal)
   const cur = budget.currency
   const itemCount = items.filter(i => i.type === 'item').length
   const hasGG = ggTotal != null && ggTotal > 0
+
+  const pieVars = useMemo(() => {
+    if (!pieRows?.length) return null
+    return evalPieRows(t.direct, pieRows, ggTotal)
+  }, [pieRows, t.direct, ggTotal])
+
+  const indirect = pieVars?.['GG']    ?? t.indirect
+  const utility  = pieVars?.['UTI']   ?? t.utility
+  const subtotal = pieVars?.['ST']    ?? (t.direct + indirect + utility)
+  const igv      = pieVars?.['IGV']   ?? t.igv
+  const total    = pieVars?.['TOTAL'] ?? (subtotal + igv)
+
+  const pct = (num: number, den: number) => den > 0 ? `${(num / den * 100).toFixed(0)}%` : undefined
 
   const SumRow = ({ label, sub, value, bold = false, large = false }: { label: string; sub?: string; value: number; bold?: boolean; large?: boolean }) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
@@ -83,15 +98,13 @@ function SummaryPanel({ budget, items, apuLines, resources, ggTotal }: {
     </div>
   )
 
-  const total = t.direct + t.indirect + t.utility + t.igv
-
   return (
     <div style={{ padding: 18 }}>
       <div style={{ fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 6 }}>Resumen</div>
       <h2 style={{ fontSize: 15, marginBottom: 14, color: 'var(--n-900)' }}>Total del presupuesto</h2>
 
       <div className="mono tnum" style={{ fontSize: 30, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: 4 }}>
-        {fmtCurrency(t.total, cur)}
+        {fmtCurrency(total, cur)}
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginBottom: 18 }}>
         {cur} · {itemCount} partida{itemCount !== 1 ? 's' : ''}
@@ -101,14 +114,22 @@ function SummaryPanel({ budget, items, apuLines, resources, ggTotal }: {
         <SumRow label="Costo directo" value={t.direct} />
         <SumRow
           label={hasGG ? 'Gastos generales' : 'Costos indirectos'}
-          sub={hasGG ? undefined : `${(budget.indirect_pct * 100).toFixed(0)}%`}
-          value={t.indirect}
+          sub={hasGG ? undefined : (pieVars ? pct(indirect, t.direct) : `${(budget.indirect_pct * 100).toFixed(0)}%`)}
+          value={indirect}
         />
-        <SumRow label="Utilidad" sub={`${(budget.utility_pct * 100).toFixed(0)}%`} value={t.utility} />
-        <SumRow label="Subtotal" value={t.subtotal} bold />
-        <SumRow label="IGV" sub={`${(budget.igv_pct * 100).toFixed(0)}%`} value={t.igv} />
+        <SumRow
+          label="Utilidad"
+          sub={pieVars ? pct(utility, t.direct) : `${(budget.utility_pct * 100).toFixed(0)}%`}
+          value={utility}
+        />
+        <SumRow label="Subtotal" value={subtotal} bold />
+        <SumRow
+          label="IGV"
+          sub={pieVars ? pct(igv, subtotal) : `${(budget.igv_pct * 100).toFixed(0)}%`}
+          value={igv}
+        />
         <div style={{ height: 1, background: 'var(--n-200)', margin: '8px 0' }} />
-        <SumRow label="Total" value={t.total} bold large />
+        <SumRow label="Total" value={total} bold large />
       </div>
 
       <div style={{ marginTop: 18 }}>
@@ -116,9 +137,9 @@ function SummaryPanel({ budget, items, apuLines, resources, ggTotal }: {
         <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden', background: 'var(--n-100)' }}>
           {total > 0 && <>
             <div title="Costo directo" style={{ flex: t.direct, background: 'var(--brand-500)' }} />
-            <div title="Indirectos" style={{ flex: t.indirect, background: '#A78BFA' }} />
-            <div title="Utilidad" style={{ flex: t.utility, background: '#10B981' }} />
-            <div title="IGV" style={{ flex: t.igv, background: 'var(--n-300)' }} />
+            <div title="Indirectos" style={{ flex: indirect, background: '#A78BFA' }} />
+            <div title="Utilidad" style={{ flex: utility, background: '#10B981' }} />
+            <div title="IGV" style={{ flex: igv, background: 'var(--n-300)' }} />
           </>}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8, fontSize: 10.5, color: 'var(--n-600)' }}>
@@ -155,8 +176,10 @@ function ResourcePicker({ value, onChange, options }: {
 }) {
   const [open,   setOpen]   = useState(false)
   const [search, setSearch] = useState('')
-  const inputRef     = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [dropPos, setDropPos] = useState({ bottom: 0, left: 0, width: 0 })
+  const inputRef   = useRef<HTMLInputElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const dropRef    = useRef<HTMLDivElement>(null)
 
   const selected = value ? options.find(r => r.id === value) : null
 
@@ -168,19 +191,28 @@ function ResourcePicker({ value, onChange, options }: {
   useEffect(() => {
     if (!open) return
     const close = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false); setSearch('')
-      }
+      const t = e.target as Node
+      if (
+        triggerRef.current && !triggerRef.current.contains(t) &&
+        dropRef.current    && !dropRef.current.contains(t)
+      ) { setOpen(false); setSearch('') }
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [open])
 
-  const handleOpen = () => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0) }
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect()
+      setDropPos({ bottom: window.innerHeight - r.top + 4, left: r.left, width: r.width })
+    }
+    setOpen(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
   const handleSelect = (id: string) => { onChange(id); setOpen(false); setSearch('') }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={triggerRef} style={{ position: 'relative', width: '100%' }}>
       {/* trigger */}
       <div onClick={handleOpen} style={{
         height: 30, padding: '0 8px', fontSize: 12, borderRadius: 5, cursor: 'text',
@@ -198,10 +230,10 @@ function ResourcePicker({ value, onChange, options }: {
         }
       </div>
 
-      {/* dropdown */}
+      {/* dropdown — fixed positioning escapes overflow:hidden on parent panels */}
       {open && (
-        <div style={{
-          position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+        <div ref={dropRef} style={{
+          position: 'fixed', bottom: dropPos.bottom, left: dropPos.left, width: dropPos.width, zIndex: 9999,
           background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8,
           boxShadow: '0 8px 24px rgba(0,0,0,.13)', maxHeight: 280, overflowY: 'auto',
         }}>
@@ -433,6 +465,360 @@ function APURow({ line, rMap, onDeleteLine, onUpdate }: {
   )
 }
 
+// ── Open-budget tabs ──────────────────────────────────────────────────────────
+const OPEN_TABS_KEY = 'pt_budget_open_tabs'
+
+function ObrasTabs({ budgetId, budgets }: { budgetId: string; budgets: Budget[] }) {
+  const nav = useNavigate()
+  const [tabs, setTabs] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(OPEN_TABS_KEY) ?? '[]') } catch { return [] }
+  })
+
+  useEffect(() => {
+    setTabs(prev => {
+      const next = prev.includes(budgetId) ? prev : [...prev, budgetId]
+      localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [budgetId])
+
+  const close = (id: string) => setTabs(prev => {
+    const next = prev.filter(t => t !== id)
+    localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(next))
+    return next
+  })
+
+  const list = tabs.map(id => budgets.find(b => b.id === id)).filter(Boolean) as Budget[]
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'stretch', gap: 0,
+      background: 'var(--n-100)', borderBottom: '1px solid var(--n-200)',
+      padding: '6px 10px 0', flexShrink: 0, minHeight: 38,
+    }}>
+      {list.map(b => {
+        const active = b.id === budgetId
+        const short = b.name.length > 26 ? b.name.slice(0, 24) + '…' : b.name
+        return (
+          <div key={b.id} onClick={() => nav(`/budgets/${b.id}`)} title={b.name}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '0 10px 0 13px', height: 32, cursor: 'pointer',
+              background: active ? 'var(--n-0)' : 'transparent',
+              border: `1px solid ${active ? 'var(--n-200)' : 'transparent'}`,
+              borderBottom: `1px solid ${active ? 'var(--n-0)' : 'transparent'}`,
+              borderRadius: '8px 8px 0 0', marginBottom: -1,
+              fontSize: 12, fontWeight: active ? 600 : 500,
+              color: active ? 'var(--n-900)' : 'var(--n-600)',
+              maxWidth: 220, transition: 'background .12s, color .12s', userSelect: 'none',
+            }}
+          >
+            <span style={{ width: 7, height: 7, borderRadius: 2, background: active ? 'var(--brand-500)' : 'var(--n-400)', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</span>
+            {list.length > 1 && (
+              <button onClick={e => {
+                e.stopPropagation()
+                const remaining = list.filter(x => x.id !== b.id)
+                close(b.id)
+                if (active) nav(remaining.length ? `/budgets/${remaining[remaining.length - 1].id}` : '/budgets')
+              }} style={{ display: 'inline-flex', padding: 2, borderRadius: 4, color: 'var(--n-400)', cursor: 'pointer', border: 'none', background: 'transparent' }}>
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        )
+      })}
+      <button onClick={() => nav('/budgets')} title="Abrir presupuesto"
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 32, color: 'var(--n-500)', cursor: 'pointer', borderRadius: 6, border: 'none', background: 'transparent' }}>
+        <Plus size={15} />
+      </button>
+    </div>
+  )
+}
+
+// ── Editor toolbar ─────────────────────────────────────────────────────────────
+function TBtn({ icon: Icon, label, title, onClick, danger = false, disabled = false, accent = false }: {
+  icon?: React.ComponentType<{ size?: number }>; label?: string; title?: string
+  onClick?: () => void; danger?: boolean; disabled?: boolean; accent?: boolean
+}) {
+  return (
+    <button onClick={disabled ? undefined : onClick} title={title ?? label} disabled={disabled} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6, height: 28,
+      padding: label ? '0 10px' : '0 7px', borderRadius: 6,
+      color: disabled ? 'var(--n-300)' : danger ? 'var(--red-600)' : accent ? 'var(--brand-700)' : 'var(--n-700)',
+      fontSize: 12, fontWeight: 550, cursor: disabled ? 'default' : 'pointer',
+      border: 'none', background: 'transparent', transition: 'background .12s',
+    }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = danger ? 'var(--red-50)' : 'var(--n-100)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {Icon && <Icon size={15} />}
+      {label && <span>{label}</span>}
+    </button>
+  )
+}
+const TSep = () => <span style={{ width: 1, height: 20, background: 'var(--n-200)', margin: '0 4px', flexShrink: 0 }} />
+
+function EditorToolbar({ budget, allBudgets, selectedItem, directCost, onAddGroup, onAddItem, onEditItem, onDeleteItem, onNavigate }: {
+  budget: Budget; allBudgets: Budget[]; selectedItem: BudgetItem | null; directCost: number
+  onAddGroup: () => void; onAddItem: () => void; onEditItem: () => void; onDeleteItem: () => void
+  onNavigate: (dir: -1 | 1) => void
+}) {
+  const hasSel = !!selectedItem
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2, padding: '6px 12px',
+      borderBottom: '1px solid var(--n-200)', background: 'var(--n-0)',
+      flexShrink: 0, overflowX: 'auto', minHeight: 44,
+    }}>
+      <TBtn icon={Save} label="Guardar" onClick={() => {}} />
+      <TSep />
+      <TBtn icon={Plus} label="Título" title="Agregar capítulo / título" onClick={onAddGroup} />
+      <TBtn icon={Plus} label="Partida" accent title="Agregar partida" onClick={onAddItem} />
+      <TBtn icon={Pencil} title="Editar selección" disabled={!hasSel} onClick={onEditItem} />
+      <TBtn icon={Trash2} danger title="Eliminar selección" disabled={!hasSel} onClick={onDeleteItem} />
+      <TSep />
+      <TBtn icon={Printer} title="Imprimir" onClick={() => window.print()} />
+      <TBtn icon={FileDown} title="Exportar a Excel" onClick={() => alert('Exportar a Excel (próximamente)')} />
+      <TSep />
+      <TBtn icon={ChevronLeft} title="Presupuesto anterior" onClick={() => onNavigate(-1)} disabled={allBudgets.length <= 1} />
+      <TBtn icon={ChevronRight} title="Presupuesto siguiente" onClick={() => onNavigate(1)} disabled={allBudgets.length <= 1} />
+      <div style={{ flex: 1 }} />
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 6px' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--n-500)' }}>CD:</span>
+        <span className="mono tnum" style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-700)' }}>{fmtNumber(directCost)}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Cost category colors ───────────────────────────────────────────────────────
+const CAT_COLORS = {
+  labor:       { short: 'MO', label: 'Mano de Obra', fg: '#B45309', bg: '#FEF3C7' },
+  material:    { short: 'MT', label: 'Materiales',   fg: '#1D4ED8', bg: '#EFF6FF' },
+  equipment:   { short: 'EQ', label: 'Equipos',      fg: '#4338CA', bg: '#E0E7FF' },
+  subcontrato: { short: 'SC', label: 'Subcontratos', fg: '#6D28D9', bg: '#EDE9FE' },
+} as const
+
+function CostBadge({ short, label, fg, bg, value }: { short: string; label: string; fg: string; bg: string; value: number }) {
+  return (
+    <div title={label} style={{ display: 'inline-flex', alignItems: 'stretch', borderRadius: 6, overflow: 'hidden', border: `1px solid ${fg}33`, flexShrink: 0 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px', fontSize: 10.5, fontWeight: 800, letterSpacing: '0.03em', background: bg, color: fg }}>{short}</span>
+      <span className="mono tnum" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontSize: 12, fontWeight: 700, color: 'var(--n-900)' }}>{fmtNumber(value)}</span>
+    </div>
+  )
+}
+
+// ── Bottom analysis panel ──────────────────────────────────────────────────────
+function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine, onUpdateItem, onClose }: {
+  item: BudgetItem; apuLines: ApuLine[]; resources: BudgetResource[]
+  onUpsert: (itemId: string, resourceId: string, qty: number) => Promise<void>
+  onDeleteLine: (id: string) => Promise<void>
+  onUpdateItem: (id: string, updates: Partial<BudgetItem>) => Promise<void>
+  onClose: () => void
+}) {
+  const rMap = useMemo(() => buildResourceMap(resources), [resources])
+  const myLines = apuLines.filter(l => l.item_id === item.id)
+  const [selResource, setSelResource] = useState('')
+  const [qty, setQty] = useState('1')
+  const [adding, setAdding] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [panelHeight, setPanelHeight] = useState(280)
+  const dragStartY = useRef(0)
+  const dragStartH = useRef(0)
+  const isDragging = useRef(false)
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isDragging.current) return
+      if (e.buttons === 0) { isDragging.current = false; document.body.style.cursor = ''; return }
+      const delta = dragStartY.current - e.clientY
+      setPanelHeight(Math.max(10, dragStartH.current + delta))
+    }
+    const onUp = () => { isDragging.current = false; document.body.style.cursor = '' }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
+  }, [])
+
+  const usedIds = useMemo(() => new Set(myLines.map(l => l.resource_id)), [myLines])
+  const available = useMemo(() => resources.filter(r => !usedIds.has(r.id)), [resources, usedIds])
+
+  const unitBd = useMemo(() => {
+    const bd = { mo: 0, mt: 0, eq: 0, sc: 0 }
+    myLines.forEach(l => {
+      const r = rMap.get(l.resource_id)
+      if (!r) return
+      const v = l.qty * r.price
+      if (r.kind === 'labor') bd.mo += v
+      else if (r.kind === 'material') bd.mt += v
+      else if (r.kind === 'equipment') bd.eq += v
+      else if (r.kind === 'subcontrato') bd.sc += v
+    })
+    return bd
+  }, [myLines, rMap])
+
+  const cu = unitBd.mo + unitBd.mt + unitBd.eq + unitBd.sc
+
+  const grouped = useMemo(() => {
+    const g: Record<string, ApuLine[]> = { labor: [], material: [], equipment: [], subcontrato: [] }
+    myLines.forEach(l => {
+      const r = rMap.get(l.resource_id)
+      if (r && g[r.kind]) g[r.kind].push(l)
+    })
+    return g
+  }, [myLines, rMap])
+
+  const handleAdd = async () => {
+    if (!selResource) return
+    setAdding(true)
+    try { await onUpsert(item.id, selResource, parseFloat(qty) || 1) }
+    finally { setAdding(false); setSelResource(''); setQty('1'); setShowAddForm(false) }
+  }
+
+  const INP: React.CSSProperties = { height: 30, padding: '0 8px', fontSize: 12, border: '1px solid var(--n-200)', borderRadius: 5, background: 'var(--n-0)', outline: 'none', color: 'var(--n-900)' }
+
+  return (
+    <div style={{ flexShrink: 0, height: panelHeight, background: 'var(--n-0)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Drag handle — two-line separator */}
+      <div
+        onMouseDown={e => { isDragging.current = true; dragStartY.current = e.clientY; dragStartH.current = panelHeight; document.body.style.cursor = 'n-resize' }}
+        style={{ height: 10, flexShrink: 0, cursor: 'n-resize', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, padding: '0', background: 'var(--n-75)', userSelect: 'none' }}
+      >
+        <div style={{ height: 1, background: 'var(--n-300)' }} />
+        <div style={{ height: 1, background: 'var(--n-300)' }} />
+      </div>
+      {/* Rendimiento strip */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)', flexShrink: 0, overflowX: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', whiteSpace: 'nowrap' }}>Rendimiento</span>
+          <input
+            className="mono"
+            defaultValue={item.rendimiento ?? ''}
+            onBlur={e => onUpdateItem(item.id, { rendimiento: e.target.value.trim() })}
+            placeholder="ej. 8 m²/día"
+            style={{ width: 110, height: 26, padding: '0 7px', fontSize: 12, border: '1px solid var(--n-200)', borderRadius: 5, background: 'var(--n-0)', outline: 'none', color: 'var(--n-800)' }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 auto' }}>
+          {item.code && <span className="mono" style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--brand-700)', background: 'var(--brand-50)', border: '1px solid var(--brand-200)', borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>{item.code}</span>}
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+        </div>
+        <div style={{ flex: '1 1 auto', minWidth: 8 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {(Object.entries(CAT_COLORS) as [keyof typeof CAT_COLORS, typeof CAT_COLORS[keyof typeof CAT_COLORS]][]).map(([k, c]) => (
+            <CostBadge key={k} {...c} value={unitBd[k === 'labor' ? 'mo' : k === 'material' ? 'mt' : k === 'equipment' ? 'eq' : 'sc']} />
+          ))}
+          <div style={{ display: 'inline-flex', alignItems: 'stretch', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--brand-600)', flexShrink: 0 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px', fontSize: 10.5, fontWeight: 800, background: 'var(--brand-700)', color: '#fff' }}>CU</span>
+            <span className="mono tnum" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontSize: 12, fontWeight: 700, color: 'var(--n-900)', background: 'var(--brand-50)' }}>{fmtNumber(cu)}</span>
+          </div>
+        </div>
+        <IconButton icon={X} onClick={onClose} size={26} title="Cerrar análisis" />
+      </div>
+
+      {/* Insumos table */}
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        {myLines.length === 0 && !showAddForm ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, padding: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--n-500)', maxWidth: 400 }}>
+              Precio unitario directo: <strong className="mono">{fmtNumber(item.unit_price)}</strong>. Agrega insumos para construir el APU.
+            </div>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+              <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
+                <th style={{ width: 26 }} />
+                <th style={{ padding: '5px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 220 }}>Insumo</th>
+                <th style={{ padding: '5px 12px', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 60 }}>Unidad</th>
+                <th style={{ padding: '5px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 90 }}>Cantidad</th>
+                <th style={{ padding: '5px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 90 }}>P.U.</th>
+                <th style={{ padding: '5px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 100 }}>Parcial</th>
+                <th style={{ width: 44 }} />
+              </tr>
+            </thead>
+            <tbody>
+              {(Object.entries(CAT_COLORS) as [keyof typeof CAT_COLORS, typeof CAT_COLORS[keyof typeof CAT_COLORS]][]).map(([kind, meta]) => {
+                const lines = grouped[kind]
+                if (!lines?.length) return null
+                return (
+                  <Fragment key={kind}>
+                    <tr style={{ background: meta.bg + 'aa' }}>
+                      <td />
+                      <td colSpan={6} style={{ padding: '4px 12px', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.fg }}>{meta.label}</td>
+                    </tr>
+                    {lines.map(l => {
+                      const r = rMap.get(l.resource_id)
+                      const partial = l.qty * (r?.price ?? 0)
+                      return (
+                        <tr key={l.id} style={{ borderTop: '1px solid var(--n-150)', transition: 'background .1s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--n-25)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <td style={{ textAlign: 'center', paddingLeft: 8 }}>
+                            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.fg }} />
+                          </td>
+                          <td style={{ padding: '5px 12px', color: 'var(--n-800)' }}>{r?.name ?? '—'}</td>
+                          <td style={{ padding: '5px 12px', textAlign: 'center', color: 'var(--n-500)' }} className="mono">{r?.unit}</td>
+                          <td style={{ padding: '5px 12px', textAlign: 'right' }} className="mono tnum">
+                            <input type="number" step="any" min="0" defaultValue={l.qty}
+                              onBlur={e => { const v = parseFloat(e.target.value); if (v !== l.qty) onUpsert(item.id, l.resource_id, v) }}
+                              style={{ width: 58, padding: '1px 4px', border: '1px solid var(--n-200)', borderRadius: 4, outline: 'none', textAlign: 'right', fontSize: 11.5, fontFamily: 'inherit', background: 'var(--n-0)', color: 'var(--n-700)' }}
+                            />
+                          </td>
+                          <td style={{ padding: '5px 12px', textAlign: 'right', color: 'var(--n-600)' }} className="mono tnum">{fmtNumber(r?.price ?? 0)}</td>
+                          <td style={{ padding: '5px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--n-900)' }} className="mono tnum">{fmtNumber(partial)}</td>
+                          <td style={{ padding: '5px 8px', textAlign: 'right' }}>
+                            <button onClick={() => onDeleteLine(l.id)}
+                              style={{ width: 24, height: 24, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--n-400)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#DC2626' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-400)' }}
+                            ><X size={11} /></button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {showAddForm && available.length > 0 && (
+          <div style={{ padding: '10px 14px', borderTop: myLines.length > 0 ? '1px solid var(--n-150)' : 'none', background: 'var(--n-25)' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', marginBottom: 4 }}>Insumo</div>
+                <ResourcePicker value={selResource} onChange={setSelResource} options={available} />
+              </div>
+              <div style={{ width: 88 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', marginBottom: 4 }}>Cantidad</div>
+                <input type="number" step="any" min="0" value={qty} onChange={e => setQty(e.target.value)}
+                  style={{ ...INP, width: '100%', textAlign: 'right' }} />
+              </div>
+              <Button variant="primary" size="sm" icon={Plus} onClick={handleAdd} disabled={!selResource || adding}>
+                {adding ? '…' : 'Agregar'}
+              </Button>
+              <Button size="sm" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer actions */}
+      <div style={{ display: 'flex', borderTop: '1px solid var(--n-150)', background: 'var(--n-25)', flexShrink: 0 }}>
+        <button onClick={() => setShowAddForm(true)}
+          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 11, fontSize: 12.5, fontWeight: 600, color: 'var(--brand-700)', cursor: 'pointer', border: 'none', background: 'transparent' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--brand-50)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        ><Plus size={15} /> Agregar Insumo</button>
+      </div>
+    </div>
+  )
+}
+
 // ── Table helpers ─────────────────────────────────────────────────────────────
 const TH: React.CSSProperties = {
   padding: '8px 12px', fontWeight: 600, fontSize: 10.5,
@@ -525,90 +911,172 @@ function BudgetMetaModal({ budget, onSave, onClose }: {
 }
 
 // ── Add item modal ────────────────────────────────────────────────────────────
-function AddItemModal({ budgetId, groups, defaultGroupId, onAdd, onClose }: {
+function AddItemModal({ budgetId, groups, defaultGroupId, type, onAdd, onUpsertApuLine, resources = [], onClose }: {
   budgetId: string; groups: BudgetItem[]; defaultGroupId?: string
-  onAdd: (payload: Omit<BudgetItem, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+  type: 'group' | 'item'
+  onAdd: (payload: Omit<BudgetItem, 'id' | 'created_at' | 'updated_at'>) => Promise<BudgetItem>
+  onUpsertApuLine?: (itemId: string, resourceId: string, qty: number) => Promise<void>
+  resources?: BudgetResource[]
   onClose: () => void
 }) {
-  const [type, setType] = useState<'item' | 'group'>('item')
-  const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('m2')
   const [qty, setQty] = useState('1')
   const [gid, setGid] = useState(defaultGroupId ?? '')
   const [saving, setSaving] = useState(false)
 
+  // Step 2 — insumos (only for items)
+  const [createdItem, setCreatedItem] = useState<BudgetItem | null>(null)
+  const [apuAdded, setApuAdded] = useState<Array<{ resourceId: string; qty: number }>>([])
+  const [selRes, setSelRes] = useState('')
+  const [selQty, setSelQty] = useState('1')
+  const [addingApu, setAddingApu] = useState(false)
+
+  const usedIds = new Set(apuAdded.map(a => a.resourceId))
+  const available = resources.filter(r => !usedIds.has(r.id))
+
   const INP: React.CSSProperties = { height: 32, padding: '0 10px', fontSize: 12.5, width: '100%', border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', outline: 'none', boxSizing: 'border-box', color: 'var(--n-900)' }
   const LBL: React.CSSProperties = { fontSize: 11.5, fontWeight: 600, color: 'var(--n-700)', marginBottom: 4, display: 'block' }
 
-  const handle = async (e: React.FormEvent) => {
-    e.preventDefault(); setSaving(true)
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
     try {
-      await onAdd({
-        budget_id: budgetId, type,
+      const item = await onAdd({
+        budget_id: budgetId,
+        type,
         parent_id: type === 'item' ? (gid || null) : null,
-        code: code.trim(), name: name.trim(),
+        code: '', name: name.trim(),
         unit: type === 'group' ? '' : unit.trim() || 'm2',
         qty: parseFloat(qty) || 1,
         unit_price: 0,
         description: '', rendimiento: '',
         sort_order: 0,
       })
-      onClose()
+      if (type === 'group') { onClose(); return }
+      setCreatedItem(item)
     } finally { setSaving(false) }
   }
 
-  return (
-    <Modal open onClose={onClose} title={type === 'group' ? 'Nuevo capítulo' : 'Nueva partida'}>
-      <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', gap: 8, padding: 3, background: 'var(--n-100)', borderRadius: 8 }}>
-          {(['item', 'group'] as const).map(t => (
-            <button key={t} type="button" onClick={() => setType(t)} style={{
-              flex: 1, padding: '6px 0', fontSize: 12, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: 'none',
-              background: type === t ? 'var(--n-0)' : 'transparent',
-              color: type === t ? 'var(--n-900)' : 'var(--n-600)',
-              boxShadow: type === t ? 'var(--shadow-xs)' : 'none',
-            }}>
-              {t === 'group' ? 'Capítulo / Grupo' : 'Partida'}
-            </button>
-          ))}
-        </div>
+  const handleAddApu = async () => {
+    if (!selRes || !createdItem || !onUpsertApuLine) return
+    setAddingApu(true)
+    try {
+      await onUpsertApuLine(createdItem.id, selRes, parseFloat(selQty) || 1)
+      setApuAdded(prev => [...prev, { resourceId: selRes, qty: parseFloat(selQty) || 1 }])
+      setSelRes(''); setSelQty('1')
+    } finally { setAddingApu(false) }
+  }
 
-        <div className="form-grid">
-          <div>
-            <label style={LBL}>Código</label>
-            <input style={INP} value={code} onChange={e => setCode(e.target.value)} placeholder="01.01" />
+  const resMap = useMemo(() => {
+    const m = new Map<string, BudgetResource>()
+    resources.forEach(r => m.set(r.id, r))
+    return m
+  }, [resources])
+
+  // ── Step 2: insumos ──
+  if (createdItem) {
+    return (
+      <Modal open onClose={onClose} title="Insumos de la partida" size="md">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Created item header */}
+          <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--brand-50)', border: '1px solid var(--brand-100)' }}>
+            <div style={{ fontSize: 10.5, color: 'var(--brand-700)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Partida creada</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>{createdItem.name}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>{createdItem.qty} {createdItem.unit}</div>
           </div>
-          {type === 'item' && (
-            <div>
-              <label style={LBL}>Unidad</label>
-              <input style={INP} value={unit} onChange={e => setUnit(e.target.value)} placeholder="m2, kg…" />
+
+          {/* Insumos list */}
+          {apuAdded.length > 0 && (
+            <div style={{ border: '1px solid var(--n-200)', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '7px 12px', background: 'var(--n-25)', borderBottom: '1px solid var(--n-200)' }}>Insumos agregados</div>
+              {apuAdded.map(a => {
+                const r = resMap.get(a.resourceId)
+                const kindColors: Record<string, string> = { labor: '#B45309', material: '#1D4ED8', equipment: '#4338CA', subcontrato: '#6D28D9' }
+                const fg = kindColors[r?.kind ?? 'material'] ?? '#1D4ED8'
+                return (
+                  <div key={a.resourceId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderBottom: '1px solid var(--n-150)', fontSize: 12.5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 2, background: fg, flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: 'var(--n-800)' }}>{r?.name ?? a.resourceId}</span>
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--n-500)' }}>{r?.unit}</span>
+                    <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-700)', minWidth: 40, textAlign: 'right' }}>{a.qty}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={LBL}>Descripción *</label>
-            <input style={INP} value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la partida o capítulo" required />
+
+          {/* Add insumo form */}
+          {available.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-700)' }}>Agregar insumo (opcional)</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <ResourcePicker value={selRes} onChange={setSelRes} options={available} />
+                </div>
+                <div style={{ width: 80 }}>
+                  <input type="number" step="any" min="0" value={selQty} onChange={e => setSelQty(e.target.value)}
+                    placeholder="Cant." style={{ ...INP, textAlign: 'right' }} />
+                </div>
+                <Button variant="primary" size="sm" icon={Plus} onClick={handleAddApu} disabled={!selRes || addingApu}>
+                  {addingApu ? '…' : 'Agregar'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button variant="primary" onClick={onClose}>Listo</Button>
           </div>
-          {type === 'item' && <>
+        </div>
+      </Modal>
+    )
+  }
+
+  // ── Step 1: form ──
+  return (
+    <Modal open onClose={onClose} title={type === 'group' ? 'Nuevo título / capítulo' : 'Nueva partida'}>
+      <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {type === 'group' ? (
+          <div>
+            <label style={LBL}>Descripción *</label>
+            <input autoFocus style={INP} value={name} onChange={e => setName(e.target.value)}
+              placeholder="Nombre del capítulo o título" required />
+          </div>
+        ) : (
+          <>
             <div>
-              <label style={LBL}>Metrado</label>
-              <input type="number" step="any" min="0" style={INP} value={qty} onChange={e => setQty(e.target.value)} />
+              <label style={LBL}>Descripción *</label>
+              <input autoFocus style={INP} value={name} onChange={e => setName(e.target.value)}
+                placeholder="Nombre de la partida" required />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={LBL}>Unidad</label>
+                <input style={INP} value={unit} onChange={e => setUnit(e.target.value)} placeholder="m2, kg, glb…" />
+              </div>
+              <div>
+                <label style={LBL}>Metrado</label>
+                <input type="number" step="any" min="0" style={INP} value={qty} onChange={e => setQty(e.target.value)} />
+              </div>
             </div>
             {groups.length > 0 && (
-              <div style={{ gridColumn: '1 / -1' }}>
+              <div>
                 <label style={LBL}>Capítulo (opcional)</label>
                 <select style={{ ...INP, cursor: 'pointer' }} value={gid} onChange={e => setGid(e.target.value)}>
                   <option value="">— Sin capítulo —</option>
-                  {groups.map(g => <option key={g.id} value={g.id}>{g.code ? `${g.code} ` : ''}{g.name}</option>)}
+                  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>
             )}
-          </>}
-        </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button onClick={onClose} type="button">Cancelar</Button>
-          <Button variant="primary" type="submit" disabled={saving}>{saving ? 'Creando…' : 'Agregar'}</Button>
+          <Button variant="primary" type="submit" disabled={saving}>
+            {saving ? 'Creando…' : type === 'group' ? 'Crear título' : 'Crear partida'}
+          </Button>
         </div>
       </form>
     </Modal>
@@ -622,12 +1090,9 @@ function ItemEditModal({ item, hasApu, onSave, onClose }: {
   onSave: (updates: Partial<BudgetItem>) => Promise<void>
   onClose: () => void
 }) {
-  const [code, setCode] = useState(item.code)
   const [name, setName] = useState(item.name)
   const [unit, setUnit] = useState(item.unit)
   const [qty, setQty] = useState(String(item.qty))
-  const [unitPrice, setUnitPrice] = useState(String(item.unit_price))
-  const [description, setDescription] = useState(item.description ?? '')
   const [rendimiento, setRendimiento] = useState(item.rendimiento ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -642,12 +1107,9 @@ function ItemEditModal({ item, hasApu, onSave, onClose }: {
     e.preventDefault(); setSaving(true)
     try {
       await onSave({
-        code: code.trim(),
         name: name.trim(),
         unit: unit.trim() || 'm2',
         qty: parseFloat(qty) || 1,
-        unit_price: hasApu ? item.unit_price : (parseFloat(unitPrice) || 0),
-        description: description.trim(),
         rendimiento: rendimiento.trim(),
       })
       onClose()
@@ -657,54 +1119,30 @@ function ItemEditModal({ item, hasApu, onSave, onClose }: {
   return (
     <Modal open onClose={onClose} title="Editar partida">
       <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <label style={LBL}>Código</label>
-            <input style={INP} value={code} onChange={e => setCode(e.target.value)} placeholder="01.01" />
-          </div>
-          <div>
-            <label style={LBL}>Unidad</label>
-            <input style={INP} value={unit} onChange={e => setUnit(e.target.value)} placeholder="m2, kg, glb…" />
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={LBL}>Nombre *</label>
+            <label style={LBL}>Descripción *</label>
             <input style={INP} value={name} onChange={e => setName(e.target.value)} required />
           </div>
-          <div>
-            <label style={LBL}>Metrado</label>
-            <input type="number" step="any" min="0" style={INP} value={qty} onChange={e => setQty(e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={LBL}>Unidad</label>
+              <input style={INP} value={unit} onChange={e => setUnit(e.target.value)} placeholder="m2, kg, glb…" />
+            </div>
+            <div>
+              <label style={LBL}>Metrado</label>
+              <input type="number" step="any" min="0" style={INP} value={qty} onChange={e => setQty(e.target.value)} />
+            </div>
           </div>
-          {!hasApu && (
-            <div>
-              <label style={LBL}>Precio unit.</label>
-              <input type="number" step="any" min="0" style={INP} value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
-            </div>
-          )}
-          {hasApu && (
-            <div>
-              <label style={LBL}>Precio unit.</label>
-              <div style={{ ...INP, display: 'flex', alignItems: 'center', background: 'var(--n-50)', color: 'var(--n-500)', fontSize: 11.5 }}>
-                Calculado desde APU
-              </div>
-            </div>
-          )}
           <div>
             <label style={LBL}>Rendimiento</label>
             <input style={INP} value={rendimiento} onChange={e => setRendimiento(e.target.value)} placeholder="ej. 8 m²/día" />
           </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={LBL}>Descripción / Notas</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Especificaciones técnicas, notas adicionales…"
-              style={{
-                ...INP, height: 'auto', padding: '8px 10px', resize: 'vertical',
-                fontFamily: 'inherit', lineHeight: 1.5,
-              }}
-            />
-          </div>
+          {hasApu && (
+            <div style={{ padding: '8px 10px', background: 'var(--brand-50)', borderRadius: 6, border: '1px solid var(--brand-200)', fontSize: 12, color: 'var(--brand-700)' }}>
+              El precio unitario se calcula automáticamente desde el APU.
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button type="button" onClick={onClose}>Cancelar</Button>
@@ -899,8 +1337,21 @@ function SCurve({ total }: { total: number }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BudgetEditorPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id, section } = useParams<{ id: string; section?: string }>()
   const navigate = useNavigate()
+  const { budgets: allBudgets } = useBudgets()
+
+  type ViewSection = 'items' | 'schedule' | 'gastos' | 'pie' | 'prices' | 'reports'
+  const VALID_SECTIONS: ViewSection[] = ['items', 'schedule', 'gastos', 'pie', 'prices', 'reports']
+  const view: ViewSection = VALID_SECTIONS.includes(section as ViewSection) ? (section as ViewSection) : 'items'
+  const setView = (v: ViewSection) => navigate(`/budgets/${id}/${v}`)
+
+  const handleNavigate = (dir: -1 | 1) => {
+    const idx = allBudgets.findIndex(b => b.id === id)
+    if (idx === -1) return
+    const next = allBudgets[(idx + dir + allBudgets.length) % allBudgets.length]
+    if (next) navigate(`/budgets/${next.id}/${view}`)
+  }
 
   const { budget, loading: bLoad, updateBudget, deleteBudget } = useBudget(id)
   const { items, apuLines, loading: iLoad, createItem, updateItem, deleteItem, upsertApuLine, deleteApuLine } = useBudgetItems(id)
@@ -912,15 +1363,17 @@ export default function BudgetEditorPage() {
   const budgetSchedule = schedules.find(s => s.budget_id === id)
   const { tasks, actuals, upsertTask, deleteTask, replaceItemActuals } = useScheduleEditor(budgetSchedule?.id ?? '')
 
-  const [view, setView] = useState<'items' | 'schedule' | 'gastos' | 'pie' | 'prices' | 'reports'>('items')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [apuItem, setApuItem] = useState<BudgetItem | null>(null)
+  useEffect(() => { setApuItem(null) }, [id])
   const [editItem, setEditItem] = useState<BudgetItem | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [addGroupId, setAddGroupId] = useState<string | undefined>(undefined)
+  const [addItemType, setAddItemType] = useState<'group' | 'item'>('item')
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [confirmDelBudget, setConfirmDelBudget] = useState(false)
   const [deletingBudget, setDeletingBudget] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const [resourceQuery, setResourceQuery] = useState('')
   const [resourceDebQuery, setResourceDebQuery] = useState('')
@@ -931,6 +1384,12 @@ export default function BudgetEditorPage() {
   const [editingResource, setEditingResource] = useState<BudgetResource | null>(null)
   const [confirmDelResource, setConfirmDelResource] = useState<BudgetResource | null>(null)
   const [deletingResource, setDeletingResource] = useState(false)
+
+  const [pieRows, setPieRows] = useState<PieRowConfig[]>([])
+  useEffect(() => {
+    supabase.from('budget_pie_rows').select('variable,formula').order('sort_order')
+      .then(({ data }) => { if (data) setPieRows(data) })
+  }, [])
 
   // debounce resource search
   useEffect(() => {
@@ -1029,6 +1488,47 @@ export default function BudgetEditorPage() {
     budget ? computeBudgetTotals(budget, items, apuLines, resourceMap, ggTotal) : null,
     [budget, items, apuLines, resourceMap, ggTotal],
   )
+
+  // Per-item cost-category breakdowns (total, not unit)
+  const itemBreakdowns = useMemo(() => {
+    const m = new Map<string, { mo: number; mt: number; eq: number; sc: number }>()
+    items.filter(it => it.type === 'item').forEach(it => {
+      const lines = apuLines.filter(l => l.item_id === it.id)
+      const bd = { mo: 0, mt: 0, eq: 0, sc: 0 }
+      lines.forEach(l => {
+        const r = resourceMap.get(l.resource_id)
+        if (!r) return
+        const v = l.qty * r.price * it.qty
+        if (r.kind === 'labor') bd.mo += v
+        else if (r.kind === 'material') bd.mt += v
+        else if (r.kind === 'equipment') bd.eq += v
+        else if (r.kind === 'subcontrato') bd.sc += v
+      })
+      m.set(it.id, bd)
+    })
+    return m
+  }, [items, apuLines, resourceMap])
+
+  const groupBreakdowns = useMemo(() => {
+    const m: Record<string, { mo: number; mt: number; eq: number; sc: number }> = {}
+    items.filter(it => it.type === 'item' && it.parent_id).forEach(it => {
+      const bd = itemBreakdowns.get(it.id) || { mo: 0, mt: 0, eq: 0, sc: 0 }
+      const g = m[it.parent_id!] || { mo: 0, mt: 0, eq: 0, sc: 0 }
+      g.mo += bd.mo; g.mt += bd.mt; g.eq += bd.eq; g.sc += bd.sc
+      m[it.parent_id!] = g
+    })
+    return m
+  }, [items, itemBreakdowns])
+
+  const colTotals = useMemo(() => {
+    const t = { mo: 0, mt: 0, eq: 0, sc: 0, total: 0 }
+    items.filter(it => it.type === 'item').forEach(it => {
+      const bd = itemBreakdowns.get(it.id) || { mo: 0, mt: 0, eq: 0, sc: 0 }
+      t.mo += bd.mo; t.mt += bd.mt; t.eq += bd.eq; t.sc += bd.sc
+      t.total += it.qty * getItemUnitPrice(it, apuLines, resourceMap)
+    })
+    return t
+  }, [items, itemBreakdowns, apuLines, resourceMap])
   const reportPlanned = useMemo(() => {
     const v = totals?.total ?? 0
     return Array.from({ length: 12 }, (_, i) => (1 / (1 + Math.exp(-10 * (i / 11 - 0.5)))) * v)
@@ -1040,9 +1540,9 @@ export default function BudgetEditorPage() {
   const reportAdvancePct = (totals?.total ?? 0) > 0 ? (reportActual[7] ?? 0) / (totals?.total ?? 1) : 0
   const reportVariance = (reportActual[7] ?? 0) - (reportPlanned[7] ?? 0)
 
-  if (bLoad || iLoad || rLoad || ggLoad) return (
+  // Solo mostrar loader completo en carga inicial (sin datos previos)
+  if ((bLoad || iLoad) && !budget) return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PageLoader /></div>
     </div>
   )
@@ -1055,8 +1555,6 @@ export default function BudgetEditorPage() {
       </div>
     </div>
   )
-
-  let gCount = 0
 
   // ── View tabs ──────────────────────────────────────────────────────────────
   const VIEW_TABS = [
@@ -1074,14 +1572,7 @@ export default function BudgetEditorPage() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
-      <BudgetHeaderSection
-        budget={budget}
-        view={view}
-        onUpdate={async p => { await updateBudget(p) }}
-        navigate={navigate}
-        onAddItem={() => { setAddGroupId(undefined); setShowAdd(true) }}
-        onDelete={() => setConfirmDelBudget(true)}
-      />
+      <ObrasTabs budgetId={id!} budgets={allBudgets} />
 
       {/* Body: vertical section rail + content */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
@@ -1092,14 +1583,32 @@ export default function BudgetEditorPage() {
           borderRight: '1px solid var(--n-200)',
           background: 'var(--n-25)',
           display: 'flex', flexDirection: 'column',
-          overflowY: 'auto',
+          overflow: 'hidden',
         }}>
-          <nav style={{ flex: 1, padding: 8 }}>
+          {/* Rail header */}
+          <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--n-200)', flexShrink: 0 }}>
+            <button onClick={() => navigate('/budgets')} title="Volver a presupuestos"
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 8px 10px 12px', flex: 1, cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left', minWidth: 0 }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--n-100)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <ArrowLeft size={13} style={{ color: 'var(--n-500)', flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 9.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Presupuesto</div>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{budget.name}</div>
+              </div>
+            </button>
+            <div style={{ display: 'flex', gap: 1, paddingRight: 4, flexShrink: 0 }}>
+              <IconButton icon={Pencil} size={24} title="Editar metadatos" onClick={() => setShowEditModal(true)} />
+              <IconButton icon={Trash2} size={24} danger title="Eliminar presupuesto" onClick={() => setConfirmDelBudget(true)} />
+            </div>
+          </div>
+          <nav style={{ flex: 1, padding: 8, overflowY: 'auto' }}>
             {VIEW_TABS.map(({ id: tid, label, Icon }) => {
               const on = view === tid
               return (
                 <button key={tid}
-                  onClick={() => setView(tid as 'items' | 'gastos' | 'schedule' | 'pie')}
+                  onClick={() => setView(tid as ViewSection)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 9, width: '100%',
                     padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
@@ -1125,7 +1634,7 @@ export default function BudgetEditorPage() {
               const on = view === mv
               return (
                 <button key={id}
-                  onClick={() => setView(mv)}
+                  onClick={() => setView(mv as ViewSection)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 9, width: '100%',
                     padding: '0 10px', height: 33, borderRadius: 7, marginBottom: 1,
@@ -1149,6 +1658,21 @@ export default function BudgetEditorPage() {
 
         {/* Content column */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+
+          {/* Editor toolbar — only for partidas view */}
+          {view === 'items' && (
+            <EditorToolbar
+              budget={budget}
+              allBudgets={allBudgets}
+              selectedItem={apuItem}
+              directCost={ggDirectCost}
+              onAddGroup={() => { setAddGroupId(undefined); setAddItemType('group'); setShowAdd(true) }}
+              onAddItem={() => { setAddGroupId(apuItem?.parent_id ?? undefined); setAddItemType('item'); setShowAdd(true) }}
+              onEditItem={() => apuItem && setEditItem(apuItem)}
+              onDeleteItem={() => apuItem && setConfirmDel(apuItem.id)}
+              onNavigate={handleNavigate}
+            />
+          )}
 
           {/* ── Gastos Generales tab ── */}
           {view === 'gastos' && (
@@ -1195,111 +1719,113 @@ export default function BudgetEditorPage() {
             )
           )}
 
-          {/* ── Edición tab ── */}
+          {/* ── Partidas tab ── */}
           {view === 'items' && (
-            <div style={{ flex: 1, display: 'flex', minHeight: 0, background: 'var(--n-50)' }}>
-
-              {/* Table */}
-              <div style={{ flex: 1, overflow: 'auto', padding: '14px 14px 14px 24px' }}>
-                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div style={{ flex: 1, overflow: 'auto', background: 'var(--n-50)', padding: '12px 14px' }}>
+                <div className="card" style={{ padding: 0, overflow: 'hidden', minWidth: 860 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                      <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
-                        <th style={{ ...TH, width: 26, padding: '8px 4px 8px 12px' }}></th>
-                        <th style={{ ...TH, width: 80 }}>Código</th>
-                        <th style={{ ...TH, minWidth: 320 }}>Descripción</th>
+                      <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-200)' }}>
+                        <th style={{ ...TH, width: 52, textAlign: 'right' }}>Item</th>
+                        <th style={{ ...TH, minWidth: 260 }}>Partida</th>
                         <th style={{ ...TH, width: 56, textAlign: 'center' }}>Und</th>
-                        <th style={{ ...TH, width: 100, textAlign: 'right' }}>Metrado</th>
-                        <th style={{ ...TH, width: 120, textAlign: 'right' }}>P. Unit.</th>
-                        <th style={{ ...TH, width: 130, textAlign: 'right' }}>Parcial</th>
-                        <th style={{ ...TH, width: 60 }}></th>
+                        <th style={{ ...TH, width: 90, textAlign: 'right' }}>Metrado</th>
+                        <th style={{ ...TH, width: 90, textAlign: 'right' }}>CU</th>
+                        <th style={{ ...TH, width: 110, textAlign: 'right', verticalAlign: 'top' }}>
+                          <div>Parcial</div>
+                          <div className="mono tnum" style={{ fontSize: 10.5, color: 'var(--n-700)', fontWeight: 600 }}>{fmtNumber(colTotals.total)}</div>
+                        </th>
+                        <th style={{ ...TH, width: 100, textAlign: 'right', color: '#B45309', verticalAlign: 'top' }}>
+                          <div>Mano de Obra</div>
+                          <div className="mono tnum" style={{ fontSize: 10.5, fontWeight: 600 }}>{fmtNumber(colTotals.mo)}</div>
+                        </th>
+                        <th style={{ ...TH, width: 100, textAlign: 'right', color: '#1D4ED8', verticalAlign: 'top' }}>
+                          <div>Materiales</div>
+                          <div className="mono tnum" style={{ fontSize: 10.5, fontWeight: 600 }}>{fmtNumber(colTotals.mt)}</div>
+                        </th>
+                        <th style={{ ...TH, width: 90, textAlign: 'right', color: '#4338CA', verticalAlign: 'top' }}>
+                          <div>Equipos</div>
+                          <div className="mono tnum" style={{ fontSize: 10.5, fontWeight: 600 }}>{fmtNumber(colTotals.eq)}</div>
+                        </th>
+                        <th style={{ ...TH, width: 96, textAlign: 'right', color: '#6D28D9', verticalAlign: 'top' }}>
+                          <div>Subcontratos</div>
+                          <div className="mono tnum" style={{ fontSize: 10.5, fontWeight: 600 }}>{fmtNumber(colTotals.sc)}</div>
+                        </th>
+                        <th style={{ ...TH, width: 52 }} />
                       </tr>
                     </thead>
                     <tbody>
-                      {groups.map(group => {
-                        gCount++
+                      {groups.map((group, gi) => {
                         const isOpen = !expanded.has(group.id)
                         const children = childOf(group.id)
-                        let cCount = 0
+                        const gBd = groupBreakdowns[group.id] || { mo: 0, mt: 0, eq: 0, sc: 0 }
                         return [
-                          <tr key={group.id} style={{ background: 'var(--brand-50)', borderTop: '1px solid var(--brand-100)' }}>
-                            <td style={{ ...TD, padding: '8px 4px 8px 12px', cursor: 'pointer' }} onClick={() => toggleGroup(group.id)}>
-                              <ChevronDown size={14} style={{ color: 'var(--brand-700)', transform: isOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
-                            </td>
-                            <td style={TD} className="mono tnum">
-                              <span style={{ fontWeight: 700, color: 'var(--brand-700)' }}>{group.code}</span>
+                          <tr key={group.id}
+                            style={{ background: 'var(--brand-50)', borderTop: '1px solid var(--brand-100)', cursor: 'pointer' }}>
+                            <td style={{ ...TD, textAlign: 'right', paddingRight: 10 }} className="mono tnum">
+                              <span style={{ fontWeight: 700, color: 'var(--brand-700)' }}>{gi + 1}</span>
                             </td>
                             <td style={TD}>
-                              <span style={{ fontWeight: 600, color: 'var(--n-900)', letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 11.5 }}>
-                                {group.name}
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                <button onClick={() => toggleGroup(group.id)} style={{ display: 'inline-flex', cursor: 'pointer', color: 'var(--brand-700)', background: 'none', border: 'none', padding: 0 }}>
+                                  <ChevronDown size={14} style={{ transform: isOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+                                </button>
+                                {group.code && <span className="mono" style={{ fontWeight: 700, color: 'var(--brand-700)', fontSize: 11 }}>{group.code}</span>}
+                                <span style={{ fontWeight: 700, color: 'var(--n-900)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.03em' }}>{group.name}</span>
+                              </div>
                             </td>
-                            <td style={TD} /><td style={TD} /><td style={TD} />
-                            <td style={{ ...TD, textAlign: 'right' }} className="mono tnum">
-                              <span style={{ fontWeight: 600, color: 'var(--brand-700)' }}>{fmtNumber(groupTotals[group.id] ?? 0)}</span>
-                            </td>
+                            <td /><td /><td />
+                            <td style={{ ...TD, textAlign: 'right' }} className="mono tnum"><span style={{ fontWeight: 700, color: 'var(--brand-700)' }}>{fmtNumber(groupTotals[group.id] ?? 0)}</span></td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#B45309' }} className="mono tnum">{fmtNumber(gBd.mo)}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#1D4ED8' }} className="mono tnum">{fmtNumber(gBd.mt)}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#4338CA' }} className="mono tnum">{fmtNumber(gBd.eq)}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#6D28D9' }} className="mono tnum">{fmtNumber(gBd.sc)}</td>
                             <td style={{ ...TD, textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: 2 }}>
-                                <IconButton icon={Plus} title="Agregar partida en este capítulo" size={22}
-                                  onClick={() => { setAddGroupId(group.id); setShowAdd(true) }} />
-                                <IconButton icon={Trash2} title="Eliminar capítulo" size={22} danger
-                                  onClick={() => setConfirmDel(group.id)} />
+                                <IconButton icon={Plus} title="Agregar partida" size={22} onClick={() => { setAddGroupId(group.id); setShowAdd(true) }} />
+                                <IconButton icon={Trash2} title="Eliminar capítulo" size={22} danger onClick={() => setConfirmDel(group.id)} />
                               </div>
                             </td>
                           </tr>,
-                          ...(isOpen ? children.map(it => {
-                            cCount++
+                          ...(isOpen ? children.map((it, ci) => {
                             const up = getItemUnitPrice(it, apuLines, resourceMap)
                             const subtotal = it.qty * up
                             const hasApu = apuLines.some(l => l.item_id === it.id)
                             const isSel = apuItem?.id === it.id
+                            const bd = itemBreakdowns.get(it.id) || { mo: 0, mt: 0, eq: 0, sc: 0 }
                             return (
                               <tr key={it.id}
-                                style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
                                 onClick={() => setApuItem(isSel ? null : it)}
-                                onMouseEnter={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'var(--n-25)' }}
-                                onMouseLeave={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'transparent' }}
+                                style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', cursor: 'pointer', transition: 'background .1s' }}
+                                onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'var(--n-25)' }}
+                                onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent' }}
                               >
-                                <td style={{ ...TD, padding: '6px 4px 6px 24px' }} />
-                                <td style={{ ...TD, padding: '6px 12px' }} className="mono tnum">
-                                  <span style={{ color: 'var(--n-500)', fontSize: 11 }}>{it.code}</span>
-                                </td>
-                                <td style={{ ...TD, padding: '6px 12px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: 'var(--n-900)' }}>{it.name}</span>
-                                    {it.rendimiento && (
-                                      <span style={{ fontSize: 10, color: 'var(--n-500)', fontStyle: 'italic' }}>{it.rendimiento}</span>
-                                    )}
-                                    {hasApu && (
-                                      <button onClick={e => { e.stopPropagation(); setApuItem(isSel ? null : it) }}
-                                        style={{
-                                          fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, cursor: 'pointer',
-                                          background: isSel ? 'var(--brand-600)' : 'var(--brand-50)',
-                                          color: isSel ? '#fff' : 'var(--brand-700)',
-                                          border: `1px solid ${isSel ? 'var(--brand-600)' : 'var(--brand-200)'}`,
-                                        }}>APU</button>
-                                    )}
+                                <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)', fontSize: 11, paddingRight: 10 }} className="mono tnum">{gi + 1}.{ci + 1}</td>
+                                <td style={TD}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 22 }}>
+                                    <span style={{ color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</span>
+                                    <span className="mono" style={{ fontSize: 9.5, fontWeight: 700, padding: '0 5px', borderRadius: 3, flexShrink: 0, background: hasApu ? 'var(--brand-50)' : 'var(--n-100)', color: hasApu ? 'var(--brand-700)' : 'var(--n-400)', border: `1px solid ${hasApu ? 'var(--brand-200)' : 'var(--n-200)'}` }}>{hasApu ? 'APU' : 'PU'}</span>
                                   </div>
                                 </td>
-                                <td style={{ ...TD, padding: '6px 12px', textAlign: 'center', color: 'var(--n-600)' }} className="mono">{it.unit}</td>
-                                <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
+                                <td style={{ ...TD, textAlign: 'center', color: 'var(--n-600)' }} className="mono">{it.unit}</td>
+                                <td style={{ ...TD, textAlign: 'right' }}>
                                   <EditableCell value={it.qty} onChange={v => updateItem(it.id, { qty: v })} decimals={2} />
                                 </td>
-                                <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
-                                  {it.unit_price > 0 ? (
-                                    <EditableCell value={it.unit_price} onChange={v => updateItem(it.id, { unit_price: v })} decimals={2} />
-                                  ) : (
-                                    <span className="mono tnum" style={{ color: 'var(--brand-700)', fontStyle: 'italic', fontSize: 11.5 }}>
-                                      {fmtNumber(up)}*
-                                    </span>
-                                  )}
+                                <td style={{ ...TD, textAlign: 'right' }}>
+                                  {hasApu
+                                    ? <span className="mono tnum" style={{ color: 'var(--brand-700)', fontStyle: 'italic' }}>{fmtNumber(up)}</span>
+                                    : <EditableCell value={it.unit_price || up} onChange={v => updateItem(it.id, { unit_price: v })} decimals={2} />
+                                  }
                                 </td>
-                                <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }} className="mono tnum">
-                                  <span style={{ fontWeight: 600, color: 'var(--n-900)' }}>{fmtNumber(subtotal)}</span>
-                                </td>
-                                <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
+                                <td style={{ ...TD, textAlign: 'right' }} className="mono tnum"><span style={{ fontWeight: 700, color: 'var(--n-900)' }}>{fmtNumber(subtotal)}</span></td>
+                                <td style={{ ...TD, textAlign: 'right', color: '#B45309' }} className="mono tnum">{bd.mo > 0 ? fmtNumber(bd.mo) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                                <td style={{ ...TD, textAlign: 'right', color: '#1D4ED8' }} className="mono tnum">{bd.mt > 0 ? fmtNumber(bd.mt) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                                <td style={{ ...TD, textAlign: 'right', color: '#4338CA' }} className="mono tnum">{bd.eq > 0 ? fmtNumber(bd.eq) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                                <td style={{ ...TD, textAlign: 'right', color: '#6D28D9' }} className="mono tnum">{bd.sc > 0 ? fmtNumber(bd.sc) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                                <td style={{ ...TD, textAlign: 'right' }}>
                                   <div style={{ display: 'inline-flex', gap: 2 }}>
-                                    <IconButton icon={Pencil} title="Editar partida" size={22} onClick={e => { e.stopPropagation(); setEditItem(it) }} />
+                                    <IconButton icon={Pencil} title="Editar" size={22} onClick={e => { e.stopPropagation(); setEditItem(it) }} />
                                     <IconButton icon={Trash2} title="Eliminar" size={22} danger onClick={e => { e.stopPropagation(); setConfirmDel(it.id) }} />
                                   </div>
                                 </td>
@@ -1309,53 +1835,44 @@ export default function BudgetEditorPage() {
                         ]
                       })}
 
-                      {orphans.map(it => {
+                      {orphans.map((it, idx) => {
                         const up = getItemUnitPrice(it, apuLines, resourceMap)
                         const subtotal = it.qty * up
                         const hasApu = apuLines.some(l => l.item_id === it.id)
                         const isSel = apuItem?.id === it.id
+                        const bd = itemBreakdowns.get(it.id) || { mo: 0, mt: 0, eq: 0, sc: 0 }
                         return (
                           <tr key={it.id}
-                            style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', transition: 'background .12s', cursor: 'pointer' }}
                             onClick={() => setApuItem(isSel ? null : it)}
-                            onMouseEnter={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'var(--n-25)' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = isSel ? 'var(--brand-50)' : 'transparent' }}
+                            style={{ borderTop: '1px solid var(--n-150)', background: isSel ? 'var(--brand-50)' : 'transparent', cursor: 'pointer', transition: 'background .1s' }}
+                            onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'var(--n-25)' }}
+                            onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent' }}
                           >
-                            <td style={{ ...TD, padding: '6px 4px 6px 12px' }} />
-                            <td style={{ ...TD, padding: '6px 12px' }} className="mono tnum">
-                              <span style={{ color: 'var(--n-500)', fontSize: 11 }}>{it.code}</span>
-                            </td>
-                            <td style={{ ...TD, padding: '6px 12px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ color: 'var(--n-900)' }}>{it.name}</span>
-                                {it.rendimiento && (
-                                  <span style={{ fontSize: 10, color: 'var(--n-500)', fontStyle: 'italic' }}>{it.rendimiento}</span>
-                                )}
-                                {hasApu && (
-                                  <button onClick={e => { e.stopPropagation(); setApuItem(isSel ? null : it) }}
-                                    style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, cursor: 'pointer', background: isSel ? 'var(--brand-600)' : 'var(--brand-50)', color: isSel ? '#fff' : 'var(--brand-700)', border: `1px solid ${isSel ? 'var(--brand-600)' : 'var(--brand-200)'}` }}>APU</button>
-                                )}
+                            <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)', fontSize: 11, paddingRight: 10 }} className="mono tnum">{idx + 1}</td>
+                            <td style={TD}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</span>
+                                <span className="mono" style={{ fontSize: 9.5, fontWeight: 700, padding: '0 5px', borderRadius: 3, flexShrink: 0, background: hasApu ? 'var(--brand-50)' : 'var(--n-100)', color: hasApu ? 'var(--brand-700)' : 'var(--n-400)', border: `1px solid ${hasApu ? 'var(--brand-200)' : 'var(--n-200)'}` }}>{hasApu ? 'APU' : 'PU'}</span>
                               </div>
                             </td>
-                            <td style={{ ...TD, padding: '6px 12px', textAlign: 'center', color: 'var(--n-600)' }} className="mono">{it.unit}</td>
-                            <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
+                            <td style={{ ...TD, textAlign: 'center', color: 'var(--n-600)' }} className="mono">{it.unit}</td>
+                            <td style={{ ...TD, textAlign: 'right' }}>
                               <EditableCell value={it.qty} onChange={v => updateItem(it.id, { qty: v })} decimals={2} />
                             </td>
-                            <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
-                              {it.unit_price > 0 ? (
-                                <EditableCell value={it.unit_price} onChange={v => updateItem(it.id, { unit_price: v })} decimals={2} />
-                              ) : (
-                                <span className="mono tnum" style={{ color: 'var(--brand-700)', fontStyle: 'italic', fontSize: 11.5 }}>
-                                  {fmtNumber(up)}*
-                                </span>
-                              )}
+                            <td style={{ ...TD, textAlign: 'right' }}>
+                              {hasApu
+                                ? <span className="mono tnum" style={{ color: 'var(--brand-700)', fontStyle: 'italic' }}>{fmtNumber(up)}</span>
+                                : <EditableCell value={it.unit_price || up} onChange={v => updateItem(it.id, { unit_price: v })} decimals={2} />
+                              }
                             </td>
-                            <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }} className="mono tnum">
-                              <span style={{ fontWeight: 600, color: 'var(--n-900)' }}>{fmtNumber(subtotal)}</span>
-                            </td>
-                            <td style={{ ...TD, padding: '6px 12px', textAlign: 'right' }}>
+                            <td style={{ ...TD, textAlign: 'right' }} className="mono tnum"><span style={{ fontWeight: 700, color: 'var(--n-900)' }}>{fmtNumber(subtotal)}</span></td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#B45309' }} className="mono tnum">{bd.mo > 0 ? fmtNumber(bd.mo) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#1D4ED8' }} className="mono tnum">{bd.mt > 0 ? fmtNumber(bd.mt) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#4338CA' }} className="mono tnum">{bd.eq > 0 ? fmtNumber(bd.eq) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                            <td style={{ ...TD, textAlign: 'right', color: '#6D28D9' }} className="mono tnum">{bd.sc > 0 ? fmtNumber(bd.sc) : <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
+                            <td style={{ ...TD, textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: 2 }}>
-                                <IconButton icon={Pencil} title="Editar partida" size={22} onClick={e => { e.stopPropagation(); setEditItem(it) }} />
+                                <IconButton icon={Pencil} title="Editar" size={22} onClick={e => { e.stopPropagation(); setEditItem(it) }} />
                                 <IconButton icon={Trash2} title="Eliminar" size={22} danger onClick={e => { e.stopPropagation(); setConfirmDel(it.id) }} />
                               </div>
                             </td>
@@ -1364,50 +1881,28 @@ export default function BudgetEditorPage() {
                       })}
 
                       {items.length === 0 && (
-                        <tr><td colSpan={8} style={{ padding: '48px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 13 }}>
+                        <tr><td colSpan={11} style={{ padding: '48px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 13 }}>
                           Agrega capítulos y partidas con el botón de arriba.
                         </td></tr>
                       )}
 
-                      {items.length > 0 && (
-                        <tr style={{ borderTop: '2px solid var(--n-300)', background: 'var(--n-25)' }}>
-                          <td colSpan={6} style={TD}>
-                            <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--n-700)', paddingLeft: 6 }}>COSTO DIRECTO</span>
-                          </td>
-                          <td style={{ ...TD, textAlign: 'right' }} className="mono tnum">
-                            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--n-900)' }}>{fmtNumber(ggDirectCost)}</span>
-                          </td>
-                          <td style={TD} />
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
-                {apuLines.some(l => items.find(it => it.id === l.item_id)?.unit_price === 0) && (
-                  <div style={{ fontSize: 11, color: 'var(--n-500)', padding: '8px 4px 0' }}>
-                    <em>*</em> Precio unitario derivado del análisis APU.
-                  </div>
-                )}
-
-                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                  <Button icon={Plus} variant="subtle" onClick={() => { setAddGroupId(undefined); setShowAdd(true) }}>
-                    Agregar partida
-                  </Button>
-                </div>
               </div>
 
-              {/* Right rail */}
-              <aside style={{ flex: '0 0 360px', borderLeft: '1px solid var(--n-150)', background: 'var(--n-0)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {apuItem ? (
-                  <APUPanel item={apuItem} apuLines={apuLines} resources={resources}
-                    onUpsert={upsertApuLine} onDeleteLine={deleteApuLine}
-                    onClose={() => setApuItem(null)} />
-                ) : (
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
-                    <SummaryPanel budget={budget} items={items} apuLines={apuLines} resources={resources} ggTotal={ggTotal} />
-                  </div>
-                )}
-              </aside>
+              {/* Bottom analysis panel */}
+              {apuItem && (
+                <BottomAnalysisPanel
+                  item={apuItem}
+                  apuLines={apuLines}
+                  resources={resources}
+                  onUpsert={upsertApuLine}
+                  onDeleteLine={deleteApuLine}
+                  onUpdateItem={updateItem}
+                  onClose={() => setApuItem(null)}
+                />
+              )}
             </div>
           )}
 
@@ -1594,10 +2089,27 @@ export default function BudgetEditorPage() {
         </div>{/* end content column */}
       </div>{/* end body row */}
 
+      {/* Edit budget metadata modal */}
+      {showEditModal && (
+        <BudgetMetaModal
+          budget={budget}
+          onSave={async data => { await updateBudget(data); setShowEditModal(false) }}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
+
       {/* Add item modal */}
       {showAdd && (
-        <AddItemModal budgetId={id!} groups={groups} defaultGroupId={addGroupId}
-          onAdd={async p => { await createItem(p) }} onClose={() => setShowAdd(false)} />
+        <AddItemModal
+          budgetId={id!}
+          groups={groups}
+          defaultGroupId={addGroupId}
+          type={addItemType}
+          onAdd={createItem}
+          onUpsertApuLine={upsertApuLine}
+          resources={resources}
+          onClose={() => setShowAdd(false)}
+        />
       )}
 
       {/* Edit item modal */}
