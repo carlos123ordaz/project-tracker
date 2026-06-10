@@ -83,7 +83,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Compras',
       icon: ShoppingCart,
       items: [
-        { to: '/compras',             label: 'Comparativos', icon: TrendingDown },
+        { to: '/compras',             label: 'Comparativos', icon: TrendingDown, end: true },
         { to: '/compras/proveedores', label: 'Proveedores',  icon: Building2 },
       ],
     },
