@@ -11,16 +11,15 @@ import { Button } from '../components/ui/Button'
 import { IconButton } from '../components/ui/Button'
 import { EmbeddedGantt } from '../components/budget/EmbeddedGantt'
 import {
-  getStatusMeta, BUDGET_STATUSES,
   getItemUnitPrice, computeBudgetTotals, buildResourceMap,
-  fmtCurrency, fmtNumber, evalPieRows,
-  type PieRowConfig,
+  fmtCurrency, fmtNumber,
 } from '../lib/budgetHelpers'
 import { ggTotals } from '../lib/ggHelpers'
 import { generatePeriods } from '../lib/scheduleHelpers'
-import type { Budget, BudgetItem, BudgetResource, BudgetStatus, ApuLine } from '../lib/types'
+import type { Budget, BudgetItem, BudgetResource, ApuLine } from '../lib/types'
 import { ArrowLeft, Plus, Trash2, Pencil, ChevronDown, X, CalendarDays, List, Layers, Database, TrendingUp, DollarSign, CheckCircle, AlertTriangle, Download, ChevronLeft, ChevronRight, Printer, FileDown, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { exportBudgetToExcel } from '../lib/exportBudgetExcel'
 import Modal from '../components/ui/Modal'
 import GastosGeneralesTab from './GastosGeneralesTab'
 import PieDePresupuestoTab from './PieDePresupuestoTab'
@@ -58,100 +57,6 @@ function EditableCell({ value, onChange, decimals = 2 }: { value: number; onChan
         background: 'var(--n-0)', boxShadow: '0 0 0 3px rgba(79,70,229,.12)',
       }}
     />
-  )
-}
-
-// ── Summary panel ─────────────────────────────────────────────────────────────
-function SummaryPanel({ budget, items, apuLines, resources, ggTotal, pieRows }: {
-  budget: Budget; items: BudgetItem[]; apuLines: ApuLine[]; resources: BudgetResource[]
-  ggTotal?: number
-  pieRows?: PieRowConfig[]
-}) {
-  const rMap = useMemo(() => buildResourceMap(resources), [resources])
-  const t = computeBudgetTotals(budget, items, apuLines, rMap, ggTotal)
-  const cur = budget.currency
-  const itemCount = items.filter(i => i.type === 'item').length
-  const hasGG = ggTotal != null && ggTotal > 0
-
-  const pieVars = useMemo(() => {
-    if (!pieRows?.length) return null
-    return evalPieRows(t.direct, pieRows, ggTotal)
-  }, [pieRows, t.direct, ggTotal])
-
-  const indirect = pieVars?.['GG']    ?? t.indirect
-  const utility  = pieVars?.['UTI']   ?? t.utility
-  const subtotal = pieVars?.['ST']    ?? (t.direct + indirect + utility)
-  const igv      = pieVars?.['IGV']   ?? t.igv
-  const total    = pieVars?.['TOTAL'] ?? (subtotal + igv)
-
-  const pct = (num: number, den: number) => den > 0 ? `${(num / den * 100).toFixed(0)}%` : undefined
-
-  const SumRow = ({ label, sub, value, bold = false, large = false }: { label: string; sub?: string; value: number; bold?: boolean; large?: boolean }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
-      <span style={{ fontSize: large ? 13 : 12, color: bold ? 'var(--n-900)' : 'var(--n-700)', fontWeight: bold ? 600 : 500 }}>
-        {label}
-        {sub && <span className="mono" style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--n-500)', fontWeight: 500 }}>{sub}</span>}
-      </span>
-      <span className="mono tnum" style={{ fontSize: large ? 15 : 12.5, fontWeight: bold ? 700 : 550, color: 'var(--n-900)' }}>
-        {fmtCurrency(value, cur)}
-      </span>
-    </div>
-  )
-
-  return (
-    <div style={{ padding: 18 }}>
-      <div style={{ fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 6 }}>Resumen</div>
-      <h2 style={{ fontSize: 15, marginBottom: 14, color: 'var(--n-900)' }}>Total del presupuesto</h2>
-
-      <div className="mono tnum" style={{ fontSize: 30, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: 4 }}>
-        {fmtCurrency(total, cur)}
-      </div>
-      <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginBottom: 18 }}>
-        {cur} · {itemCount} partida{itemCount !== 1 ? 's' : ''}
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        <SumRow label="Costo directo" value={t.direct} />
-        <SumRow
-          label={hasGG ? 'Gastos generales' : 'Costos indirectos'}
-          sub={hasGG ? undefined : (pieVars ? pct(indirect, t.direct) : `${(budget.indirect_pct * 100).toFixed(0)}%`)}
-          value={indirect}
-        />
-        <SumRow
-          label="Utilidad"
-          sub={pieVars ? pct(utility, t.direct) : `${(budget.utility_pct * 100).toFixed(0)}%`}
-          value={utility}
-        />
-        <SumRow label="Subtotal" value={subtotal} bold />
-        <SumRow
-          label="IGV"
-          sub={pieVars ? pct(igv, subtotal) : `${(budget.igv_pct * 100).toFixed(0)}%`}
-          value={igv}
-        />
-        <div style={{ height: 1, background: 'var(--n-200)', margin: '8px 0' }} />
-        <SumRow label="Total" value={total} bold large />
-      </div>
-
-      <div style={{ marginTop: 18 }}>
-        <div style={{ fontSize: 11, color: 'var(--n-500)', marginBottom: 6 }}>Distribución</div>
-        <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden', background: 'var(--n-100)' }}>
-          {total > 0 && <>
-            <div title="Costo directo" style={{ flex: t.direct, background: 'var(--brand-500)' }} />
-            <div title="Indirectos" style={{ flex: indirect, background: '#A78BFA' }} />
-            <div title="Utilidad" style={{ flex: utility, background: '#10B981' }} />
-            <div title="IGV" style={{ flex: igv, background: 'var(--n-300)' }} />
-          </>}
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8, fontSize: 10.5, color: 'var(--n-600)' }}>
-          {[['var(--brand-500)', 'Directo'], ['#A78BFA', 'Indir.'], ['#10B981', 'Utilidad'], ['var(--n-300)', 'IGV']].map(([color, label]) => (
-            <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 7, height: 7, borderRadius: 2, background: color }} />
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -274,196 +179,6 @@ function ResourcePicker({ value, onChange, options }: {
   )
 }
 
-// ── APU panel ─────────────────────────────────────────────────────────────────
-function APUPanel({
-  item, apuLines, resources, onUpsert, onDeleteLine, onClose,
-}: {
-  item: BudgetItem; apuLines: ApuLine[]; resources: BudgetResource[]
-  onUpsert: (itemId: string, resourceId: string, qty: number) => Promise<void>
-  onDeleteLine: (id: string) => Promise<void>
-  onClose: () => void
-}) {
-  const [tab, setTab] = useState<'all' | 'material' | 'labor' | 'equipment'>('all')
-  const [selResource, setSelResource] = useState('')
-  const [qty, setQty] = useState('1')
-  const [adding, setAdding] = useState(false)
-
-  const rMap = useMemo(() => buildResourceMap(resources), [resources])
-  const myLines = apuLines.filter(l => l.item_id === item.id)
-
-  const sections = useMemo(() => ({
-    material: myLines.filter(l => rMap.get(l.resource_id)?.kind === 'material'),
-    labor: myLines.filter(l => rMap.get(l.resource_id)?.kind === 'labor'),
-    equipment: myLines.filter(l => rMap.get(l.resource_id)?.kind === 'equipment'),
-  }), [myLines, rMap])
-
-  const sectionTotals = {
-    material: sections.material.reduce((s, l) => s + l.qty * (rMap.get(l.resource_id)?.price ?? 0), 0),
-    labor: sections.labor.reduce((s, l) => s + l.qty * (rMap.get(l.resource_id)?.price ?? 0), 0),
-    equipment: sections.equipment.reduce((s, l) => s + l.qty * (rMap.get(l.resource_id)?.price ?? 0), 0),
-  }
-  const total = sectionTotals.material + sectionTotals.labor + sectionTotals.equipment
-
-  const kindColors = {
-    material: { bg: '#EFF6FF', fg: '#1D4ED8' },
-    labor: { bg: '#FEF3C7', fg: '#B45309' },
-    equipment: { bg: '#E0E7FF', fg: '#4338CA' },
-  }
-
-  const tabs = [
-    { id: 'all', label: 'Todo' },
-    { id: 'material', label: 'Materiales' },
-    { id: 'labor', label: 'M. de obra' },
-    { id: 'equipment', label: 'Equipos' },
-  ] as const
-
-  const visibleRows = tab === 'all' ? myLines : myLines.filter(l => rMap.get(l.resource_id)?.kind === tab)
-  const usedIds = new Set(myLines.map(l => l.resource_id))
-  const available = resources.filter(r => !usedIds.has(r.id))
-
-  const handleAdd = async () => {
-    if (!selResource) return
-    setAdding(true)
-    try { await onUpsert(item.id, selResource, parseFloat(qty) || 1) }
-    finally { setAdding(false); setSelResource(''); setQty('1') }
-  }
-
-  const INP: React.CSSProperties = {
-    height: 30, padding: '0 8px', fontSize: 12, border: '1px solid var(--n-200)',
-    borderRadius: 5, background: 'var(--n-0)', outline: 'none', color: 'var(--n-900)',
-  }
-
-  return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ flex: '0 0 auto', padding: '18px 18px 0', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-              APU · {item.code || 'Sin código'}
-            </div>
-            <h2 style={{ fontSize: 14, marginTop: 2, color: 'var(--n-900)' }}>{item.name}</h2>
-            <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 4 }}>
-              Costo unitario por <strong className="mono" style={{ color: 'var(--n-900)' }}>{item.unit}</strong>
-            </div>
-          </div>
-          <IconButton icon={X} onClick={onClose} size={26} />
-        </div>
-
-        <div style={{
-          background: 'linear-gradient(135deg, var(--brand-50) 0%, transparent 70%)',
-          border: '1px solid var(--brand-100)', borderRadius: 10,
-          padding: '12px 14px', marginBottom: 14, marginTop: 8,
-        }}>
-          <div style={{ fontSize: 10.5, color: 'var(--brand-700)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-            Costo unitario
-          </div>
-          <div className="mono tnum" style={{ fontSize: 22, fontWeight: 600, color: 'var(--n-900)', letterSpacing: '-0.02em', marginTop: 2 }}>
-            {fmtNumber(total)}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 10 }}>
-            {(['material', 'labor', 'equipment'] as const).map(k => (
-              <div key={k} style={{ padding: '6px 8px', borderRadius: 6, background: kindColors[k].bg, color: kindColors[k].fg }}>
-                <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.9 }}>
-                  {k === 'material' ? 'Mat.' : k === 'labor' ? 'M.O.' : 'Equipo'}
-                </div>
-                <div className="mono tnum" style={{ fontSize: 11.5, fontWeight: 700, marginTop: 1 }}>
-                  {fmtNumber(sectionTotals[k])}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 4, marginBottom: 10, padding: 2, background: 'var(--n-100)', borderRadius: 7 }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              style={{
-                flex: 1, padding: '5px 8px', fontSize: 11, fontWeight: 600, borderRadius: 5,
-                background: tab === t.id ? 'var(--n-0)' : 'transparent',
-                color: tab === t.id ? 'var(--n-900)' : 'var(--n-600)',
-                boxShadow: tab === t.id ? 'var(--shadow-xs)' : 'none',
-                cursor: 'pointer', border: 'none', transition: 'all .15s',
-              }}
-            >{t.label}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0 18px' }}>
-        {tab === 'all'
-          ? (['material', 'labor', 'equipment'] as const).map(k =>
-            sections[k].length === 0 ? null : (
-              <div key={k}>
-                <div style={{ padding: '7px 8px 4px', fontSize: 10, fontWeight: 700, color: kindColors[k].fg, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {k === 'material' ? 'Materiales' : k === 'labor' ? 'Mano de obra' : 'Equipos'}
-                </div>
-                {sections[k].map(l => <APURow key={l.id} line={l} rMap={rMap} onDeleteLine={onDeleteLine} onUpdate={newQty => onUpsert(item.id, l.resource_id, newQty)} />)}
-              </div>
-            )
-          )
-          : visibleRows.map(l => <APURow key={l.id} line={l} rMap={rMap} onDeleteLine={onDeleteLine} onUpdate={newQty => onUpsert(item.id, l.resource_id, newQty)} />)}
-        {myLines.length === 0 && (
-          <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--n-400)', fontSize: 12 }}>
-            Sin recursos. Agrega uno abajo.
-          </div>
-        )}
-      </div>
-
-      {available.length > 0 && (
-        <div style={{ flex: '0 0 auto', padding: '10px 18px 16px', borderTop: '1px solid var(--n-150)', background: 'var(--n-0)' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', marginBottom: 6 }}>Agregar recurso</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <ResourcePicker value={selResource} onChange={setSelResource} options={available} />
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input type="number" step="any" min="0" value={qty} onChange={e => setQty(e.target.value)}
-                placeholder="Cantidad" style={{ ...INP, flex: 1, textAlign: 'right' }} />
-              <Button variant="primary" size="sm" onClick={handleAdd} disabled={!selResource || adding} icon={Plus}
-                style={{ flexShrink: 0 }}>
-                {adding ? 'Agregando…' : 'Agregar'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function APURow({ line, rMap, onDeleteLine, onUpdate }: {
-  line: ApuLine; rMap: Map<string, BudgetResource>
-  onDeleteLine: (id: string) => Promise<void>; onUpdate: (qty: number) => void
-}) {
-  const r = rMap.get(line.resource_id)
-  const partial = line.qty * (r?.price ?? 0)
-  return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '1fr 36px 50px 60px 32px',
-      gap: 6, alignItems: 'center', padding: '6px 8px', borderRadius: 5, transition: 'background .12s',
-    }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--n-50)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, color: 'var(--n-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r?.name ?? '—'}</div>
-      </div>
-      <div className="mono" style={{ fontSize: 10.5, color: 'var(--n-500)', textAlign: 'center' }}>{r?.unit}</div>
-      <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-700)', textAlign: 'right' }}>
-        <input type="number" step="any" min="0" defaultValue={line.qty}
-          onBlur={e => { const v = parseFloat(e.target.value); if (v !== line.qty) onUpdate(v) }}
-          style={{ width: 44, padding: '1px 4px', border: '1px solid var(--n-200)', borderRadius: 4, outline: 'none', textAlign: 'right', fontSize: 11.5, fontFamily: 'inherit', background: 'var(--n-0)' }}
-        />
-      </div>
-      <div className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-900)', textAlign: 'right', fontWeight: 600 }}>{fmtNumber(partial)}</div>
-      <button onClick={() => onDeleteLine(line.id)}
-        style={{ width: 24, height: 24, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--n-400)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-50)'; e.currentTarget.style.color = 'var(--red-600)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-400)' }}
-      >
-        <X size={11} />
-      </button>
-    </div>
-  )
-}
 
 // ── Open-budget tabs ──────────────────────────────────────────────────────────
 const OPEN_TABS_KEY = 'pt_budget_open_tabs'
@@ -559,10 +274,10 @@ function TBtn({ icon: Icon, label, title, onClick, danger = false, disabled = fa
 }
 const TSep = () => <span style={{ width: 1, height: 20, background: 'var(--n-200)', margin: '0 4px', flexShrink: 0 }} />
 
-function EditorToolbar({ budget, allBudgets, selectedItem, directCost, onAddGroup, onAddItem, onEditItem, onDeleteItem, onNavigate }: {
-  budget: Budget; allBudgets: Budget[]; selectedItem: BudgetItem | null; directCost: number
+function EditorToolbar({ allBudgets, selectedItem, directCost, onAddGroup, onAddItem, onEditItem, onDeleteItem, onNavigate, onExport }: {
+  allBudgets: Budget[]; selectedItem: BudgetItem | null; directCost: number
   onAddGroup: () => void; onAddItem: () => void; onEditItem: () => void; onDeleteItem: () => void
-  onNavigate: (dir: -1 | 1) => void
+  onNavigate: (dir: -1 | 1) => void; onExport: () => void
 }) {
   const hasSel = !!selectedItem
   return (
@@ -579,7 +294,7 @@ function EditorToolbar({ budget, allBudgets, selectedItem, directCost, onAddGrou
       <TBtn icon={Trash2} danger title="Eliminar selección" disabled={!hasSel} onClick={onDeleteItem} />
       <TSep />
       <TBtn icon={Printer} title="Imprimir" onClick={() => window.print()} />
-      <TBtn icon={FileDown} title="Exportar a Excel" onClick={() => alert('Exportar a Excel (próximamente)')} />
+      <TBtn icon={FileDown} title="Exportar a Excel" onClick={onExport} />
       <TSep />
       <TBtn icon={ChevronLeft} title="Presupuesto anterior" onClick={() => onNavigate(-1)} disabled={allBudgets.length <= 1} />
       <TBtn icon={ChevronRight} title="Presupuesto siguiente" onClick={() => onNavigate(1)} disabled={allBudgets.length <= 1} />
@@ -826,63 +541,6 @@ const TH: React.CSSProperties = {
   borderBottom: '1px solid var(--n-150)', whiteSpace: 'nowrap', textAlign: 'left',
 }
 const TD: React.CSSProperties = { padding: '6px 12px', verticalAlign: 'middle', fontSize: 12.5 }
-
-// ── Budget header ─────────────────────────────────────────────────────────────
-function BudgetHeaderSection({ budget, view, onUpdate, navigate, onAddItem, onDelete }: {
-  budget: Budget
-  view: 'items' | 'schedule' | 'gastos' | 'prices' | 'reports' | 'pie'
-  onUpdate: (u: Partial<Budget>) => Promise<void>
-  navigate: (path: string) => void
-  onAddItem: () => void
-  onDelete: () => void
-}) {
-  const meta = getStatusMeta(budget.status)
-  const [showEditModal, setShowEditModal] = useState(false)
-
-  return (
-    <>
-      <div style={{
-        padding: '14px 24px', borderBottom: '1px solid var(--n-150)',
-        background: 'var(--n-0)', display: 'flex', alignItems: 'flex-start',
-        justifyContent: 'space-between', gap: 16, flex: '0 0 auto',
-      }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, color: 'var(--n-500)', marginBottom: 4 }}>
-            <button onClick={() => navigate('/budgets')} style={{ cursor: 'pointer', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--n-500)', fontSize: 11.5 }}>
-              <ArrowLeft size={11} /> Presupuestos
-            </button>
-            <span style={{ color: 'var(--n-300)' }}>/</span>
-            <span>{budget.client || 'Sin cliente'}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1 style={{ fontSize: 18, color: 'var(--n-900)', margin: 0 }}>{budget.name}</h1>
-            <select value={budget.status} onChange={e => onUpdate({ status: e.target.value as BudgetStatus })}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '3px 9px', borderRadius: 6,
-                background: meta.bg, color: meta.color,
-                fontSize: 11.5, fontWeight: 550, cursor: 'pointer',
-                border: `1px solid ${meta.color}40`, outline: 'none',
-              }}>
-              {BUDGET_STATUSES.map(s => <option key={s.value} value={s.value}>{s.value}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <Button icon={Pencil} onClick={() => setShowEditModal(true)}>Editar metadatos</Button>
-          <Button icon={Trash2} variant="danger" onClick={onDelete}>Eliminar</Button>
-          {view === 'items' && (
-            <Button icon={Plus} variant="primary" onClick={onAddItem}>Agregar partida</Button>
-          )}
-        </div>
-      </div>
-
-      {showEditModal && (
-        <BudgetMetaModal budget={budget} onSave={async data => { await onUpdate(data); setShowEditModal(false) }} onClose={() => setShowEditModal(false)} />
-      )}
-    </>
-  )
-}
 
 function BudgetMetaModal({ budget, onSave, onClose }: {
   budget: Budget; onSave: (data: Partial<Budget>) => Promise<void>; onClose: () => void
@@ -1355,8 +1013,8 @@ export default function BudgetEditorPage() {
 
   const { budget, loading: bLoad, updateBudget, deleteBudget } = useBudget(id)
   const { items, apuLines, loading: iLoad, createItem, updateItem, deleteItem, upsertApuLine, deleteApuLine } = useBudgetItems(id)
-  const { resources, loading: rLoad, createResource, updateResource, deleteResource } = useBudgetResources()
-  const { items: ggItems, loading: ggLoad, createItem: createGGItem, updateItem: updateGGItem, deleteItem: deleteGGItem } = useGastosGenerales(id)
+  const { resources, createResource, updateResource, deleteResource } = useBudgetResources()
+  const { items: ggItems, createItem: createGGItem, updateItem: updateGGItem, deleteItem: deleteGGItem } = useGastosGenerales(id)
 
   // Schedule data for "Programar" tab
   const { schedules, loading: sLoad, createSchedule } = useSchedules()
@@ -1384,12 +1042,6 @@ export default function BudgetEditorPage() {
   const [editingResource, setEditingResource] = useState<BudgetResource | null>(null)
   const [confirmDelResource, setConfirmDelResource] = useState<BudgetResource | null>(null)
   const [deletingResource, setDeletingResource] = useState(false)
-
-  const [pieRows, setPieRows] = useState<PieRowConfig[]>([])
-  useEffect(() => {
-    supabase.from('budget_pie_rows').select('variable,formula').order('sort_order')
-      .then(({ data }) => { if (data) setPieRows(data) })
-  }, [])
 
   // debounce resource search
   useEffect(() => {
@@ -1662,7 +1314,6 @@ export default function BudgetEditorPage() {
           {/* Editor toolbar — only for partidas view */}
           {view === 'items' && (
             <EditorToolbar
-              budget={budget}
               allBudgets={allBudgets}
               selectedItem={apuItem}
               directCost={ggDirectCost}
@@ -1671,6 +1322,7 @@ export default function BudgetEditorPage() {
               onEditItem={() => apuItem && setEditItem(apuItem)}
               onDeleteItem={() => apuItem && setConfirmDel(apuItem.id)}
               onNavigate={handleNavigate}
+              onExport={() => exportBudgetToExcel(budget, items, apuLines, resources, ggTotal)}
             />
           )}
 
