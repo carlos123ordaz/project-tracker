@@ -71,59 +71,57 @@ export default function ProveedoresPage() {
     setForm(prev => ({ ...prev, [k]: v }))
 
   return (
-    <div style={{ padding: '24px 28px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Proveedores</h1>
-          <p style={{ fontSize: 12.5, color: 'var(--n-500)', marginTop: 3 }}>
-            Catálogo de proveedores para comparativos de precios
+    <div style={{ padding: '20px 24px' }}>
+      {/* Header row: title + search + button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <div style={{ flexShrink: 0 }}>
+          <h1 style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Proveedores</h1>
+          <p style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 1, margin: 0 }}>
+            Catálogo de proveedores
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8,
-            background: 'var(--brand-600)', color: '#fff',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
-          }}
-        >
-          <Plus size={15} /> Nuevo Proveedor
-        </button>
-      </div>
-
-      {/* Search */}
-      <div style={{ position: 'relative', maxWidth: 340, marginBottom: 20 }}>
-        <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)' }} />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por nombre, RUC o contacto…"
-          style={{
-            width: '100%', paddingLeft: 34, paddingRight: 12, height: 36,
-            border: '1px solid var(--n-200)', borderRadius: 8,
-            fontSize: 12.5, color: 'var(--n-800)', background: '#fff',
-            boxSizing: 'border-box',
-          }}
-        />
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, width: '100%' }}>
-        {[
-          { label: 'Total', value: suppliers.length, color: 'var(--n-700)' },
-          { label: 'Activos', value: suppliers.filter(s => s.is_active).length, color: 'var(--green-700)' },
-          { label: 'Inactivos', value: suppliers.filter(s => !s.is_active).length, color: 'var(--n-400)' },
-        ].map(stat => (
-          <div key={stat.label} style={{
-            background: '#fff', border: '1px solid var(--n-150)',
-            borderRadius: 10, padding: '10px 18px', flex: 1,
-          }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{stat.label}</div>
-          </div>
-        ))}
+        <div style={{ flex: 1, position: 'relative', maxWidth: 320 }}>
+          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por nombre, RUC o contacto…"
+            style={{
+              width: '100%', paddingLeft: 30, paddingRight: 10, height: 30,
+              border: '1px solid var(--n-200)', borderRadius: 7,
+              fontSize: 12, color: 'var(--n-800)', background: '#fff',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Inline stats */}
+          {[
+            { label: 'Total', value: suppliers.length, color: 'var(--n-700)' },
+            { label: 'Activos', value: suppliers.filter(s => s.is_active).length, color: 'var(--green-700)' },
+            { label: 'Inactivos', value: suppliers.filter(s => !s.is_active).length, color: 'var(--n-400)' },
+          ].map((stat, i) => (
+            <div key={stat.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {i > 0 && <div style={{ width: 1, height: 16, background: 'var(--n-200)' }} />}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 1 }}>{stat.label}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ width: 1, height: 16, background: 'var(--n-200)' }} />
+          <button
+            onClick={openCreate}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 11px', borderRadius: 7,
+              background: 'var(--brand-600)', color: '#fff',
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: 'none',
+            }}
+          >
+            <Plus size={13} /> Nuevo Proveedor
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -149,7 +147,7 @@ export default function ProveedoresPage() {
               <tr style={{ borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)' }}>
                 {['Proveedor', 'RUC', 'Contacto', 'Teléfono', 'Email', 'Estado', ''].map(h => (
                   <th key={h} style={{
-                    padding: '10px 14px', textAlign: 'left',
+                    padding: '8px 12px', textAlign: 'left',
                     fontSize: 11, fontWeight: 700, color: 'var(--n-500)',
                     letterSpacing: '0.05em', textTransform: 'uppercase',
                   }}>{h}</th>
@@ -167,18 +165,18 @@ export default function ProveedoresPage() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-25)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <td style={{ padding: '12px 14px' }}>
+                  <td style={{ padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                       <div style={{
-                        width: 32, height: 32, borderRadius: 8,
+                        width: 28, height: 28, borderRadius: 7,
                         background: 'var(--brand-50)', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0,
                       }}>
-                        <Building2 size={15} style={{ color: 'var(--brand-600)' }} />
+                        <Building2 size={13} style={{ color: 'var(--brand-600)' }} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)' }}>{s.name}</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-900)' }}>{s.name}</div>
                         {s.address && (
                           <div style={{ fontSize: 11, color: 'var(--n-400)', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
                             <MapPin size={10} />{s.address}
@@ -187,35 +185,35 @@ export default function ProveedoresPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '12px 14px', fontSize: 12.5, color: 'var(--n-600)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: 12, color: 'var(--n-600)' }}>
                     {s.ruc ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Hash size={11} style={{ color: 'var(--n-400)' }} />{s.ruc}
                       </span>
                     ) : <span style={{ color: 'var(--n-300)' }}>—</span>}
                   </td>
-                  <td style={{ padding: '12px 14px', fontSize: 12.5, color: 'var(--n-700)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: 12, color: 'var(--n-700)' }}>
                     {s.contact ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <User size={11} style={{ color: 'var(--n-400)' }} />{s.contact}
                       </span>
                     ) : <span style={{ color: 'var(--n-300)' }}>—</span>}
                   </td>
-                  <td style={{ padding: '12px 14px', fontSize: 12.5, color: 'var(--n-700)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: 12, color: 'var(--n-700)' }}>
                     {s.phone ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Phone size={11} style={{ color: 'var(--n-400)' }} />{s.phone}
                       </span>
                     ) : <span style={{ color: 'var(--n-300)' }}>—</span>}
                   </td>
-                  <td style={{ padding: '12px 14px', fontSize: 12.5, color: 'var(--n-700)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: 12, color: 'var(--n-700)' }}>
                     {s.email ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Mail size={11} style={{ color: 'var(--n-400)' }} />{s.email}
                       </span>
                     ) : <span style={{ color: 'var(--n-300)' }}>—</span>}
                   </td>
-                  <td style={{ padding: '12px 14px' }}>
+                  <td style={{ padding: '8px 12px' }}>
                     {s.is_active ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: 'var(--green-700)', background: 'var(--green-50)', padding: '2px 8px', borderRadius: 20 }}>
                         <CheckCircle2 size={11} /> Activo
@@ -226,7 +224,7 @@ export default function ProveedoresPage() {
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: '12px 14px' }}>
+                  <td style={{ padding: '8px 12px' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                       <button
                         onClick={() => openEdit(s)}
@@ -260,11 +258,11 @@ export default function ProveedoresPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
         >
           <div style={{
-            background: '#fff', borderRadius: 14, padding: '28px 28px 24px',
-            width: '100%', maxWidth: 540, boxShadow: 'var(--shadow-lg)',
+            background: '#fff', borderRadius: 12, padding: '20px 22px 18px',
+            width: '100%', maxWidth: 520, boxShadow: 'var(--shadow-lg)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>
                 {editing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
               </h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}>
@@ -272,7 +270,7 @@ export default function ProveedoresPage() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Label>Nombre del Proveedor *</Label>
                 <Input value={form.name} onChange={v => f('name', v)} placeholder="Ej: Ferretería Central SAC" autoFocus />
@@ -305,8 +303,8 @@ export default function ProveedoresPage() {
                   placeholder="Condiciones de pago, observaciones…"
                   rows={2}
                   style={{
-                    width: '100%', padding: '8px 11px', borderRadius: 8,
-                    border: '1px solid var(--n-200)', fontSize: 13, resize: 'vertical',
+                    width: '100%', padding: '6px 10px', borderRadius: 6,
+                    border: '1px solid var(--n-200)', fontSize: 12.5, resize: 'vertical',
                     color: 'var(--n-800)', boxSizing: 'border-box',
                   }}
                 />
@@ -319,7 +317,7 @@ export default function ProveedoresPage() {
                     onChange={e => f('is_active', e.target.checked)}
                     style={{ width: 15, height: 15, accentColor: 'var(--brand-600)' }}
                   />
-                  <span style={{ fontSize: 13, color: 'var(--n-700)' }}>Proveedor activo</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--n-700)' }}>Proveedor activo</span>
                 </label>
               </div>
             </div>
@@ -330,10 +328,10 @@ export default function ProveedoresPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 18 }}>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer', color: 'var(--n-700)' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}
               >
                 Cancelar
               </button>
@@ -341,9 +339,9 @@ export default function ProveedoresPage() {
                 onClick={handleSave}
                 disabled={saving}
                 style={{
-                  padding: '8px 18px', borderRadius: 8, border: 'none',
+                  padding: '6px 16px', borderRadius: 7, border: 'none',
                   background: saving ? 'var(--brand-300)' : 'var(--brand-600)',
-                  color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
+                  color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
                 }}
               >
                 {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear proveedor'}
@@ -363,22 +361,22 @@ export default function ProveedoresPage() {
             background: '#fff', borderRadius: 14, padding: 28,
             width: 360, boxShadow: 'var(--shadow-lg)',
           }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-900)', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>
               ¿Eliminar proveedor?
             </div>
-            <div style={{ fontSize: 13, color: 'var(--n-500)', marginBottom: 22 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>
               Esta acción no se puede deshacer. El proveedor será eliminado del catálogo.
             </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmDelete(null)}
-                style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
-                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
               >
                 Eliminar
               </button>
@@ -411,8 +409,8 @@ function Input({ value, onChange, placeholder, autoFocus }: {
       placeholder={placeholder}
       autoFocus={autoFocus}
       style={{
-        width: '100%', padding: '8px 11px', borderRadius: 8,
-        border: '1px solid var(--n-200)', fontSize: 13,
+        width: '100%', height: 32, padding: '0 10px', borderRadius: 6,
+        border: '1px solid var(--n-200)', fontSize: 12.5,
         color: 'var(--n-800)', boxSizing: 'border-box',
       }}
     />

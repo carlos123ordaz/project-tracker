@@ -250,50 +250,81 @@ export default function ComparativoEditorPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
-      {/* ── Header ── */}
-      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--n-150)', background: '#fff', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: 54 }}>
+      {/* ── Header (single unified bar) ── */}
+      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--n-150)', background: '#fff', padding: '0 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 46 }}>
+          {/* Breadcrumb + title */}
           <button
             onClick={() => navigate('/compras')}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--n-500)', fontSize: 12.5, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 6 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--n-500)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', padding: '3px 6px', borderRadius: 5, flexShrink: 0 }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--n-100)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <ArrowLeft size={14} /> Compras
+            <ArrowLeft size={13} /> Compras
           </button>
-          <span style={{ color: 'var(--n-300)' }}>/</span>
-
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--n-400)', letterSpacing: '0.06em', flexShrink: 0 }}>
-              PC-{String(comparison.number).padStart(3, '0')}
+          <span style={{ color: 'var(--n-300)', fontSize: 12 }}>/</span>
+          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--n-400)', letterSpacing: '0.06em', flexShrink: 0 }}>
+            PC-{String(comparison.number).padStart(3, '0')}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>
+            {comparison.title}
+          </span>
+          {projectName && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>
+              <FolderOpen size={10} />{projectName}
             </span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {comparison.title}
-            </span>
-            {projectName && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
-                <FolderOpen size={11} />{projectName}
-              </span>
-            )}
-          </div>
+          )}
 
-          {/* Status */}
+          <div style={{ flex: 1 }} />
+
+          {/* Inline stats */}
+          {[
+            { label: 'Ítems', value: String(items.length) },
+            { label: 'Proveedores', value: String(compSuppliers.length) },
+            { label: 'Selección', value: `${completedItems}/${items.length}` },
+            { label: 'Total', value: fmt(selectedTotal, currency), highlight: true },
+          ].map((s, i) => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {i > 0 && <div style={{ width: 1, height: 14, background: 'var(--n-200)' }} />}
+              <div style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: s.highlight ? 'var(--brand-700)' : 'var(--n-800)', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 1 }}>{s.label}</div>
+              </div>
+            </div>
+          ))}
+
+          <div style={{ width: 1, height: 16, background: 'var(--n-200)', flexShrink: 0 }} />
+
+          {/* Action buttons */}
+          <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-700)', flexShrink: 0 }}>
+            <PackagePlus size={12} /> Ítem
+          </button>
+          <button
+            onClick={() => { setSupplierInput(''); setSelectedSupplierId(''); setShowAddSupplier(true) }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--brand-200)', background: 'var(--brand-50)', fontSize: 12, cursor: 'pointer', color: 'var(--brand-700)', flexShrink: 0 }}
+          >
+            <Building2 size={12} /> Proveedor
+          </button>
+
+          <div style={{ width: 1, height: 16, background: 'var(--n-200)', flexShrink: 0 }} />
+
+          {/* Status dropdown */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               onClick={() => setShowStatusMenu(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, cursor: 'pointer', border: 'none', background: st.bg, color: st.color, fontSize: 12, fontWeight: 600 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 20, cursor: 'pointer', border: 'none', background: st.bg, color: st.color, fontSize: 11.5, fontWeight: 600 }}
             >
-              {comparison.status} <ChevronDown size={11} />
+              {comparison.status} <ChevronDown size={10} />
             </button>
             {showStatusMenu && (
               <>
                 <div style={{ position: 'fixed', inset: 0, zIndex: 39 }} onClick={() => setShowStatusMenu(false)} />
-                <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 40, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 160 }}>
+                <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 40, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 8, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 160 }}>
                   {COMPARISON_STATUSES.map(s => {
                     const ss = STATUS_STYLE[s]
                     return (
-                      <button key={s} onClick={() => handleChangeStatus(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', border: 'none', cursor: 'pointer', background: comparison.status === s ? 'var(--n-50)' : '#fff', fontSize: 13, color: ss.color, textAlign: 'left' }}>
-                        {comparison.status === s ? <Check size={12} /> : <span style={{ width: 12 }} />}
+                      <button key={s} onClick={() => handleChangeStatus(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', border: 'none', cursor: 'pointer', background: comparison.status === s ? 'var(--n-50)' : '#fff', fontSize: 12.5, color: ss.color, textAlign: 'left' }}>
+                        {comparison.status === s ? <Check size={11} /> : <span style={{ width: 11 }} />}
                         {s}
                       </button>
                     )
@@ -303,38 +334,10 @@ export default function ComparativoEditorPage() {
             )}
           </div>
 
-          <button onClick={openEditMeta} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)', flexShrink: 0 }}>
-            <Pencil size={13} /> Editar
+          <button onClick={openEditMeta} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-600)', flexShrink: 0 }}>
+            <Pencil size={12} /> Editar
           </button>
         </div>
-      </div>
-
-      {/* ── Stats bar ── */}
-      <div style={{ flexShrink: 0, background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)', display: 'flex', alignItems: 'center', padding: '0 24px', height: 44, gap: 0, overflowX: 'auto' }}>
-        {[
-          { label: 'Ítems', value: items.length },
-          { label: 'Proveedores', value: compSuppliers.length },
-          { label: 'Con selección', value: `${completedItems} / ${items.length}` },
-          { label: 'Total seleccionado', value: fmt(selectedTotal, currency), highlight: true },
-        ].map((s, i) => (
-          <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
-            {i > 0 && <div style={{ width: 1, height: 20, background: 'var(--n-200)', margin: '0 16px' }} />}
-            <div style={{ whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 11, color: 'var(--n-500)', marginRight: 6 }}>{s.label}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: s.highlight ? 'var(--brand-700)' : 'var(--n-900)' }}>{s.value}</span>
-            </div>
-          </div>
-        ))}
-        <div style={{ flex: 1 }} />
-        <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-700)', marginRight: 8, flexShrink: 0 }}>
-          <PackagePlus size={13} /> Agregar ítem
-        </button>
-        <button
-          onClick={() => { setSupplierInput(''); setSelectedSupplierId(''); setShowAddSupplier(true) }}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--brand-200)', background: 'var(--brand-50)', fontSize: 12, cursor: 'pointer', color: 'var(--brand-700)', flexShrink: 0 }}
-        >
-          <Building2 size={13} /> Agregar proveedor
-        </button>
       </div>
 
       {/* ── Table ── */}
@@ -688,7 +691,7 @@ export default function ComparativoEditorPage() {
             </div>
             <div>
               <FL>Notas</FL>
-              <textarea value={metaForm.notes} onChange={e => setMetaForm(p => ({ ...p, notes: e.target.value }))} rows={2} style={{ ...iStyle, resize: 'vertical' as const }} />
+              <textarea value={metaForm.notes} onChange={e => setMetaForm(p => ({ ...p, notes: e.target.value }))} rows={2} style={{ ...iStyle, height: 'auto', padding: '6px 10px', resize: 'vertical' as const }} />
             </div>
           </div>
           <ModalFooter onCancel={() => setShowEditMeta(false)} onSave={handleSaveMeta} saving={savingMeta} label="Guardar" />
@@ -722,15 +725,15 @@ function tdS({ center, right }: { center?: boolean; right?: boolean }): React.CS
 function EmptyHint({ onAddItem, hasProject }: { onAddItem: () => void; hasProject: boolean }) {
   return (
     <div style={{ padding: '52px 24px', textAlign: 'center', background: '#fff', border: '1.5px dashed var(--n-200)', borderRadius: 14 }}>
-      <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-700)', marginBottom: 8 }}>Comparativo vacío</div>
-      <div style={{ fontSize: 13, color: 'var(--n-400)', maxWidth: 400, margin: '0 auto 24px' }}>
+      <PackagePlus size={28} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-700)', marginBottom: 6 }}>Comparativo vacío</div>
+      <div style={{ fontSize: 12.5, color: 'var(--n-400)', maxWidth: 400, margin: '0 auto 20px' }}>
         {hasProject
           ? 'Agrega insumos del presupuesto del proyecto y proveedores para comparar precios'
           : 'Agrega ítems y proveedores para comparar precios'}
       </div>
-      <button onClick={onAddItem} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-        <Plus size={14} /> Agregar primer ítem
+      <button onClick={onAddItem} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+        <Plus size={13} /> Agregar primer ítem
       </button>
     </div>
   )
@@ -741,8 +744,8 @@ function Modal({ title, children, onClose, width = 460 }: { title: string; child
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: '24px 24px 20px', width: '100%', maxWidth: width, boxShadow: 'var(--shadow-lg)', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>{title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={15} /></button>
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={14} /></button>
         </div>
         {children}
       </div>
@@ -752,9 +755,9 @@ function Modal({ title, children, onClose, width = 460 }: { title: string; child
 
 function ModalFooter({ onCancel, onSave, saving, label }: { onCancel: () => void; onSave: () => void; saving: boolean; label: string }) {
   return (
-    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 18 }}>
-      <button onClick={onCancel} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
-      <button onClick={onSave} disabled={saving} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+      <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
+      <button onClick={onSave} disabled={saving} style={{ padding: '6px 16px', borderRadius: 7, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
         {saving ? 'Guardando…' : label}
       </button>
     </div>
@@ -765,11 +768,11 @@ function ConfirmModal({ title, body, onCancel, onConfirm }: { title: string; bod
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: 24, width: 360, boxShadow: 'var(--shadow-lg)' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-900)', marginBottom: 8 }}>{title}</div>
-        <div style={{ fontSize: 13, color: 'var(--n-500)', marginBottom: 20 }}>{body}</div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onCancel} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={onConfirm} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>{title}</div>
+        <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>{body}</div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={onConfirm} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
         </div>
       </div>
     </div>
@@ -777,7 +780,7 @@ function ConfirmModal({ title, body, onCancel, onConfirm }: { title: string; bod
 }
 
 function FL({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-600)', marginBottom: 5 }}>{children}</div>
+  return <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-600)', marginBottom: 4 }}>{children}</div>
 }
 
 function ErrorMsg({ children }: { children: React.ReactNode }) {
@@ -785,7 +788,7 @@ function ErrorMsg({ children }: { children: React.ReactNode }) {
 }
 
 const iStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 11px', borderRadius: 8,
-  border: '1px solid var(--n-200)', fontSize: 13,
+  width: '100%', height: 32, padding: '0 10px', borderRadius: 6,
+  border: '1px solid var(--n-200)', fontSize: 12.5,
   color: 'var(--n-800)', boxSizing: 'border-box', background: '#fff',
 }
