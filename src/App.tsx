@@ -23,6 +23,7 @@ import AttendancePage from './pages/rrhh/AttendancePage'
 import HHDashboardPage from './pages/rrhh/HHDashboardPage'
 import ValuationsPage from './pages/valuations/ValuationsPage'
 import ValuationEditorPage from './pages/valuations/ValuationEditorPage'
+import LibroPage from './pages/ventas/LibroPage'
 import ComprasPage from './pages/compras/ComprasPage'
 import ComparativoEditorPage from './pages/compras/ComparativoEditorPage'
 import ProveedoresPage from './pages/compras/ProveedoresPage'
@@ -81,6 +82,7 @@ function AuthenticatedApp() {
           <Route path="/budgets/reports"            element={<BudgetReportsPage />} />
           <Route path="/budgets/:id"                element={<BudgetEditorPage />} />
           <Route path="/budgets/:id/:section"       element={<BudgetEditorPage />} />
+          <Route path="/libro"                      element={<LibroPage />} />
           <Route path="/schedule"          element={<SchedulesPage />} />
           <Route path="/schedule/:id"      element={<ScheduleEditorPage />} />
           {/* Compras */}

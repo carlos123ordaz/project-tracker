@@ -54,6 +54,9 @@ DROP TABLE IF EXISTS team_members           CASCADE;
 DROP TABLE IF EXISTS task_statuses          CASCADE;
 DROP TABLE IF EXISTS task_priorities        CASCADE;
 DROP TABLE IF EXISTS task_types             CASCADE;
+DROP TABLE IF EXISTS libro_insumos          CASCADE;
+DROP TABLE IF EXISTS libro_partidas         CASCADE;
+DROP TABLE IF EXISTS libros                 CASCADE;
 
 
 -- ============================================================
@@ -398,6 +401,46 @@ CREATE TABLE comparison_quotes (
   UNIQUE(item_id, comparison_supplier_id)
 );
 
+-- ── Libro de Precios ──────────────────────────────────────
+
+CREATE TABLE libros (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre      TEXT        NOT NULL UNIQUE,
+  descripcion TEXT,
+  anio        INTEGER,
+  fuente      TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE libro_partidas (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_file     TEXT,
+  libro_nombre    TEXT        NOT NULL DEFAULT '',
+  codigo          TEXT,
+  edt_grupo       TEXT,
+  partida         TEXT        NOT NULL,
+  unidad          TEXT,
+  precio_unitario NUMERIC     DEFAULT 0,
+  mano_de_obra    NUMERIC     DEFAULT 0,
+  material        NUMERIC     DEFAULT 0,
+  equipo          NUMERIC     DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT libro_partidas_codigo_unidad_libro_key UNIQUE (codigo, unidad, libro_nombre)
+);
+
+CREATE TABLE libro_insumos (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_file     TEXT,
+  libro_nombre    TEXT        NOT NULL DEFAULT '',
+  nombre          TEXT        NOT NULL,
+  unidad          TEXT,
+  cantidad        NUMERIC     DEFAULT 0,
+  precio_unitario NUMERIC     DEFAULT 0,
+  total           NUMERIC     DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT libro_insumos_nombre_unidad_libro_key UNIQUE (nombre, unidad, libro_nombre)
+);
+
 -- ── Pie de Presupuesto (config global) ────────────────────
 
 CREATE TABLE budget_pie_rows (
@@ -477,6 +520,9 @@ CREATE INDEX idx_valuations_project        ON valuations(project_id);
 CREATE INDEX idx_valuation_items_val       ON valuation_items(valuation_id);
 CREATE INDEX idx_articles_name             ON articles(name);
 CREATE INDEX idx_budget_pie_rows_order     ON budget_pie_rows(sort_order);
+CREATE INDEX idx_libro_partidas_libro      ON libro_partidas(libro_nombre);
+CREATE INDEX idx_libro_partidas_codigo     ON libro_partidas(codigo);
+CREATE INDEX idx_libro_insumos_libro       ON libro_insumos(libro_nombre);
 
 
 -- ============================================================
@@ -610,6 +656,9 @@ ALTER TABLE comparison_quotes      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE valuations             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE valuation_items        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_pie_rows        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libros                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libro_partidas         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libro_insumos          ENABLE ROW LEVEL SECURITY;
 
 -- Tablas de datos: acceso total para usuarios autenticados
 CREATE POLICY "Allow all on task_statuses"       ON task_statuses       FOR ALL USING (true) WITH CHECK (true);
@@ -636,6 +685,9 @@ CREATE POLICY "Allow all on comparison_quotes"   ON comparison_quotes   FOR ALL 
 CREATE POLICY "Allow all on valuations"          ON valuations          FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on valuation_items"     ON valuation_items     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on budget_pie_rows"     ON budget_pie_rows     FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libros"              ON libros              FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libro_partidas"      ON libro_partidas      FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libro_insumos"       ON libro_insumos       FOR ALL USING (true) WITH CHECK (true);
 
 -- user_profiles
 CREATE POLICY "Authenticated read user_profiles"

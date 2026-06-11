@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
-  FileSpreadsheet, ChevronDown,
+  FileSpreadsheet, BookOpen, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
   ShoppingCart, Building2, TrendingDown, Receipt,
 } from 'lucide-react'
@@ -76,6 +76,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: Receipt,
       items: [
         { to: '/budgets', label: 'Presupuestos', icon: FileSpreadsheet },
+        { to: '/libro',   label: 'Libro',        icon: BookOpen },
       ],
     },
     {

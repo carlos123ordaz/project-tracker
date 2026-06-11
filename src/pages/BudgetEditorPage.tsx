@@ -124,12 +124,13 @@ function ResourcePicker({ value, onChange, options }: {
         border: `1px solid ${open ? 'var(--brand-500)' : 'var(--n-200)'}`,
         background: 'var(--n-0)', display: 'flex', alignItems: 'center', gap: 6,
         boxShadow: open ? '0 0 0 3px rgba(79,70,229,.1)' : 'none',
+        overflow: 'hidden', minWidth: 0,
       }}>
         {open
           ? <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)}
               placeholder={selected ? `${selected.name} (${selected.unit})` : 'Buscar insumo…'}
-              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12, width: '100%', color: 'var(--n-900)' }} />
-          : <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: selected ? 'var(--n-900)' : 'var(--n-400)' }}>
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12, width: '100%', minWidth: 0, color: 'var(--n-900)' }} />
+          : <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: selected ? 'var(--n-900)' : 'var(--n-400)' }}>
               {selected ? `${selected.name} (${selected.unit})` : '— Seleccionar insumo —'}
             </span>
         }
@@ -433,7 +434,7 @@ function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine
       </div>
 
       {/* Insumos table */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
         {myLines.length === 0 && !showAddForm ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, padding: 24, textAlign: 'center' }}>
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', maxWidth: 400 }}>
@@ -441,11 +442,20 @@ function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine
             </div>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: 26 }} />
+              <col />
+              <col style={{ width: 60 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 44 }} />
+            </colgroup>
             <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
                 <th style={{ width: 26 }} />
-                <th style={{ padding: '5px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 220 }}>Insumo</th>
+                <th style={{ padding: '5px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Insumo</th>
                 <th style={{ padding: '5px 12px', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 60 }}>Unidad</th>
                 <th style={{ padding: '5px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 90 }}>Cantidad</th>
                 <th style={{ padding: '5px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 90 }}>P.U.</th>
@@ -474,7 +484,7 @@ function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine
                           <td style={{ textAlign: 'center', paddingLeft: 8 }}>
                             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.fg }} />
                           </td>
-                          <td style={{ padding: '5px 12px', color: 'var(--n-800)' }}>{r?.name ?? '—'}</td>
+                          <td style={{ padding: '5px 12px', color: 'var(--n-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>{r?.name ?? '—'}</td>
                           <td style={{ padding: '5px 12px', textAlign: 'center', color: 'var(--n-500)' }} className="mono">{r?.unit}</td>
                           <td style={{ padding: '5px 12px', textAlign: 'right' }} className="mono tnum">
                             <input type="number" step="any" min="0" defaultValue={l.qty}
@@ -504,7 +514,7 @@ function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine
         {showAddForm && available.length > 0 && (
           <div style={{ padding: '10px 14px', borderTop: myLines.length > 0 ? '1px solid var(--n-150)' : 'none', background: 'var(--n-25)' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', marginBottom: 4 }}>Insumo</div>
                 <ResourcePicker value={selResource} onChange={setSelResource} options={available} />
               </div>

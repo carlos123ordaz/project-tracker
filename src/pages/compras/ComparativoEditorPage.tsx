@@ -341,7 +341,7 @@ export default function ComparativoEditorPage() {
       </div>
 
       {/* ── Table ── */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px' }}>
         {items.length === 0 && compSuppliers.length === 0 ? (
           <EmptyHint onAddItem={openAddItem} hasProject={!!comparison.project_id} />
         ) : (
@@ -513,23 +513,23 @@ export default function ComparativoEditorPage() {
               {items.length > 0 && compSuppliers.length > 0 && (
                 <tfoot>
                   <tr style={{ background: 'var(--n-50)', borderTop: '2px solid var(--n-150)' }}>
-                    <td colSpan={4} style={{ padding: '10px 14px', fontSize: 11.5, fontWeight: 700, color: 'var(--n-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <td colSpan={4} style={{ padding: '8px 12px', fontSize: 11, fontWeight: 700, color: 'var(--n-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Total por proveedor
                     </td>
                     {compSuppliers.map(cs => {
                       const total = getSupplierTotal(cs.id)
                       return (
-                        <td key={cs.id} style={{ padding: '10px 10px', textAlign: 'right', borderLeft: '1px solid var(--n-150)', borderRight: '1px solid var(--n-150)' }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: total > 0 ? 'var(--n-800)' : 'var(--n-300)' }}>
+                        <td key={cs.id} style={{ padding: '8px 10px', textAlign: 'right', borderLeft: '1px solid var(--n-150)', borderRight: '1px solid var(--n-150)' }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: total > 0 ? 'var(--n-800)' : 'var(--n-300)' }}>
                             {total > 0 ? fmt(total, currency) : '—'}
                           </span>
                         </td>
                       )
                     })}
-                    <td colSpan={3} style={{ padding: '10px 14px', borderLeft: '2px solid var(--n-150)' }}>
+                    <td colSpan={3} style={{ padding: '8px 12px', borderLeft: '2px solid var(--n-150)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                        <span style={{ fontSize: 11.5, color: 'var(--n-500)' }}>Total seleccionado</span>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--brand-700)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--n-500)' }}>Total seleccionado</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--brand-700)' }}>
                           {fmt(selectedTotal, currency)}
                         </span>
                       </div>
@@ -540,11 +540,11 @@ export default function ComparativoEditorPage() {
               )}
             </table>
 
-            <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, padding: '8px 14px', borderRadius: 8, border: '1.5px dashed var(--n-200)', background: 'transparent', fontSize: 12.5, color: 'var(--n-500)', cursor: 'pointer', transition: 'border-color .15s, color .15s' }}
+            <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8, padding: '6px 12px', borderRadius: 7, border: '1.5px dashed var(--n-200)', background: 'transparent', fontSize: 12, color: 'var(--n-500)', cursor: 'pointer', transition: 'border-color .15s, color .15s' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-400)'; e.currentTarget.style.color = 'var(--brand-600)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-200)'; e.currentTarget.style.color = 'var(--n-500)' }}
             >
-              <Plus size={14} /> Agregar ítem
+              <Plus size={13} /> Agregar ítem
             </button>
           </div>
         )}
@@ -712,7 +712,7 @@ export default function ComparativoEditorPage() {
 
 function TH({ children, width, align }: { children?: React.ReactNode; width?: number; align?: 'left' | 'right' }) {
   return (
-    <th style={{ padding: '10px 10px', fontSize: 11, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: align ?? 'center', width, whiteSpace: 'nowrap' }}>
+    <th style={{ padding: '8px 10px', fontSize: 11, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: align ?? 'center', width, whiteSpace: 'nowrap' }}>
       {children}
     </th>
   )
@@ -742,7 +742,7 @@ function EmptyHint({ onAddItem, hasProject }: { onAddItem: () => void; hasProjec
 function Modal({ title, children, onClose, width = 460 }: { title: string; children: React.ReactNode; onClose: () => void; width?: number }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: '24px 24px 20px', width: '100%', maxWidth: width, boxShadow: 'var(--shadow-lg)', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: width, boxShadow: 'var(--shadow-lg)', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>{title}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={14} /></button>
@@ -767,7 +767,7 @@ function ModalFooter({ onCancel, onSave, saving, label }: { onCancel: () => void
 function ConfirmModal({ title, body, onCancel, onConfirm }: { title: string; body: string; onCancel: () => void; onConfirm: () => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: 24, width: 360, boxShadow: 'var(--shadow-lg)' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>{title}</div>
         <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>{body}</div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
