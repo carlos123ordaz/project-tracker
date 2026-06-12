@@ -806,8 +806,9 @@ export default function LibroPage() {
     const iRows = rawInsumos.map(i => ({
       source_file:     filename,
       libro_nombre:    libroNombre,
-      nombre:          (i.nombre as string) ?? '',
-      unidad:          (i.unidad as string) ?? null,
+      nombre:          (i.nombre    as string) ?? '',
+      categoria:       (i.categoria as string) ?? '',
+      unidad:          (i.unidad    as string) ?? null,
       cantidad:        Number(i.cantidad)        || 0,
       precio_unitario: Number(i.precio_unitario) || 0,
       total:           Number(i.total)           || 0,
