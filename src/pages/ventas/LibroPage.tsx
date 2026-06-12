@@ -4,13 +4,11 @@ import {
   Trash2, X, FileText, Package, Layers, CloudUpload,
   AlertCircle, CheckCircle2, ChevronRight as ChevronRightSm, Plus, Check,
 } from 'lucide-react'
-import { useLibro, type LibroEntry, type LibroPartida, type LibroInsumo } from '../../hooks/useLibro'
+import { useLibro, PAGE_SIZE, type LibroEntry, type LibroPartida, type LibroInsumo } from '../../hooks/useLibro'
 import { StatCard } from '../../components/ui/StatCard'
 import { Button, IconButton } from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import { PageLoader } from '../../components/ui/Loader'
-
-const PAGE_SIZE = 25
 
 // ── table styles ──────────────────────────────────────────────────────────────
 const TH: React.CSSProperties = {
@@ -500,32 +498,35 @@ function UploadModal({ open, onClose, onDone, libros, onNewLibro }: {
 }
 
 // ── panel: partidas ───────────────────────────────────────────────────────────
-function PartidasPanel({ partidas, onDelete }: { partidas: LibroPartida[]; onDelete: (id: string) => void }) {
+function PartidasPanel({
+  partidas, total, panelLoading, libros, onFetch, onDelete,
+}: {
+  partidas: LibroPartida[]
+  total: number
+  panelLoading: boolean
+  libros: LibroEntry[]
+  onFetch: (page: number, search: string, libroFilter: string) => void
+  onDelete: (id: string) => void
+}) {
+  const [inputQ,      setInputQ]      = useState('')
   const [q,           setQ]           = useState('')
   const [page,        setPage]        = useState(1)
   const [libroFilter, setLibroFilter] = useState('')
+  const mounted = useRef(false)
 
-  const panelLibros = useMemo(() =>
-    Array.from(new Set(partidas.map(p => p.libro_nombre).filter(Boolean))).sort()
-  , [partidas])
+  // Debounce search: wait 300 ms after user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => { setQ(inputQ); setPage(1) }, 300)
+    return () => clearTimeout(t)
+  }, [inputQ])
 
-  const filtered = useMemo(() => {
-    const s = q.toLowerCase()
-    return partidas.filter(p => {
-      if (libroFilter && p.libro_nombre !== libroFilter) return false
-      if (!s) return true
-      return (
-        p.partida.toLowerCase().includes(s) ||
-        (p.codigo    ?? '').toLowerCase().includes(s) ||
-        (p.edt_grupo ?? '').toLowerCase().includes(s) ||
-        p.libro_nombre.toLowerCase().includes(s)
-      )
-    })
-  }, [partidas, q, libroFilter])
+  // Fetch from DB whenever page / debounced-search / libroFilter change
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return }
+    onFetch(page, q, libroFilter)
+  }, [page, q, libroFilter, onFetch])
 
-  useEffect(() => setPage(1), [q, libroFilter])
-
-  const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const handleLibro = (v: string) => { setLibroFilter(v); setPage(1) }
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, flex: 1 }}>
@@ -537,27 +538,27 @@ function PartidasPanel({ partidas, onDelete }: { partidas: LibroPartida[]; onDel
           </div>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)' }}>Partidas</span>
           <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '2px 8px', borderRadius: 10 }}>
-            {partidas.length.toLocaleString()}
+            {total.toLocaleString()}
           </span>
-          {(q || libroFilter) && filtered.length !== partidas.length && (
-            <span style={{ fontSize: 10, color: 'var(--n-500)' }}>{filtered.length} filtradas</span>
+          {panelLoading && (
+            <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--brand-200)', borderTopColor: 'var(--brand-600)', animation: 'spin 0.7s linear infinite' }} />
           )}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {panelLibros.length > 1 && (
+          {libros.length > 1 && (
             <select
               value={libroFilter}
-              onChange={e => setLibroFilter(e.target.value)}
+              onChange={e => handleLibro(e.target.value)}
               style={{ height: 30, padding: '0 8px', fontSize: 11.5, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-800)', outline: 'none', flexShrink: 0, maxWidth: 180, cursor: 'pointer' }}
             >
               <option value="">Todos los libros</option>
-              {panelLibros.map(l => <option key={l} value={l}>{l}</option>)}
+              {libros.map(l => <option key={l.id} value={l.nombre}>{l.nombre}</option>)}
             </select>
           )}
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)', pointerEvents: 'none' }} />
             <input
-              value={q} onChange={e => setQ(e.target.value)}
+              value={inputQ} onChange={e => setInputQ(e.target.value)}
               placeholder="Buscar partida, código o grupo…"
               style={{ width: '100%', height: 30, paddingLeft: 28, paddingRight: 10, fontSize: 12, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', outline: 'none', boxSizing: 'border-box' }}
             />
@@ -566,7 +567,7 @@ function PartidasPanel({ partidas, onDelete }: { partidas: LibroPartida[]; onDel
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', opacity: panelLoading ? 0.5 : 1, transition: 'opacity .15s' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: 80 }} />
@@ -595,13 +596,13 @@ function PartidasPanel({ partidas, onDelete }: { partidas: LibroPartida[]; onDel
             </tr>
           </thead>
           <tbody>
-            {slice.length === 0 ? (
+            {partidas.length === 0 ? (
               <tr>
                 <td colSpan={10} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--n-400)', fontSize: 12 }}>
-                  {q || libroFilter ? 'Sin resultados para esa búsqueda' : 'No hay partidas registradas'}
+                  {inputQ || libroFilter ? 'Sin resultados para esa búsqueda' : 'No hay partidas registradas'}
                 </td>
               </tr>
-            ) : slice.map((p, i) => (
+            ) : partidas.map((p, i) => (
               <tr
                 key={p.id}
                 style={{ borderTop: i > 0 ? '1px solid var(--n-100)' : 'none', transition: 'background .1s' }}
@@ -631,37 +632,39 @@ function PartidasPanel({ partidas, onDelete }: { partidas: LibroPartida[]; onDel
         </table>
       </div>
 
-      <Pager page={page} total={filtered.length} onPage={setPage} />
+      <Pager page={page} total={total} onPage={setPage} />
     </div>
   )
 }
 
 // ── panel: insumos ────────────────────────────────────────────────────────────
-function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete: (id: string) => void }) {
+function InsumosPanel({
+  insumos, total, panelLoading, libros, onFetch, onDelete,
+}: {
+  insumos: LibroInsumo[]
+  total: number
+  panelLoading: boolean
+  libros: LibroEntry[]
+  onFetch: (page: number, search: string, libroFilter: string) => void
+  onDelete: (id: string) => void
+}) {
+  const [inputQ,      setInputQ]      = useState('')
   const [q,           setQ]           = useState('')
   const [page,        setPage]        = useState(1)
   const [libroFilter, setLibroFilter] = useState('')
+  const mounted = useRef(false)
 
-  const panelLibros = useMemo(() =>
-    Array.from(new Set(insumos.map(i => i.libro_nombre).filter(Boolean))).sort()
-  , [insumos])
+  useEffect(() => {
+    const t = setTimeout(() => { setQ(inputQ); setPage(1) }, 300)
+    return () => clearTimeout(t)
+  }, [inputQ])
 
-  const filtered = useMemo(() => {
-    const s = q.toLowerCase()
-    return insumos.filter(i => {
-      if (libroFilter && i.libro_nombre !== libroFilter) return false
-      if (!s) return true
-      return (
-        i.nombre.toLowerCase().includes(s) ||
-        (i.unidad ?? '').toLowerCase().includes(s) ||
-        i.libro_nombre.toLowerCase().includes(s)
-      )
-    })
-  }, [insumos, q, libroFilter])
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return }
+    onFetch(page, q, libroFilter)
+  }, [page, q, libroFilter, onFetch])
 
-  useEffect(() => setPage(1), [q, libroFilter])
-
-  const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const handleLibro = (v: string) => { setLibroFilter(v); setPage(1) }
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, flex: 1 }}>
@@ -673,27 +676,27 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
           </div>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)' }}>Insumos</span>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d', background: '#f0fdf4', padding: '2px 8px', borderRadius: 10 }}>
-            {insumos.length.toLocaleString()}
+            {total.toLocaleString()}
           </span>
-          {(q || libroFilter) && filtered.length !== insumos.length && (
-            <span style={{ fontSize: 10, color: 'var(--n-500)' }}>{filtered.length} filtrados</span>
+          {panelLoading && (
+            <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #bbf7d0', borderTopColor: '#16a34a', animation: 'spin 0.7s linear infinite' }} />
           )}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {panelLibros.length > 1 && (
+          {libros.length > 1 && (
             <select
               value={libroFilter}
-              onChange={e => setLibroFilter(e.target.value)}
+              onChange={e => handleLibro(e.target.value)}
               style={{ height: 30, padding: '0 8px', fontSize: 11.5, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-800)', outline: 'none', flexShrink: 0, maxWidth: 180, cursor: 'pointer' }}
             >
               <option value="">Todos los libros</option>
-              {panelLibros.map(l => <option key={l} value={l}>{l}</option>)}
+              {libros.map(l => <option key={l.id} value={l.nombre}>{l.nombre}</option>)}
             </select>
           )}
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)', pointerEvents: 'none' }} />
             <input
-              value={q} onChange={e => setQ(e.target.value)}
+              value={inputQ} onChange={e => setInputQ(e.target.value)}
               placeholder="Buscar insumo o unidad…"
               style={{ width: '100%', height: 30, paddingLeft: 28, paddingRight: 10, fontSize: 12, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', outline: 'none', boxSizing: 'border-box' }}
             />
@@ -702,10 +705,11 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', opacity: panelLoading ? 0.5 : 1, transition: 'opacity .15s' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <colgroup>
             <col />
+            <col style={{ width: 90 }} />
             <col style={{ width: 110 }} />
             <col style={{ width: 44 }} />
             <col style={{ width: 72 }} />
@@ -716,6 +720,7 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
           <thead>
             <tr>
               <th style={TH}>Nombre</th>
+              <th style={{ ...TH, width: 90 }}>Categoría</th>
               <th style={{ ...TH, width: 110 }}>Libro</th>
               <th style={{ ...TH, width: 44, textAlign: 'right' }}>Und</th>
               <th style={{ ...TH, width: 72, textAlign: 'right' }}>Cant.</th>
@@ -725,13 +730,13 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
             </tr>
           </thead>
           <tbody>
-            {slice.length === 0 ? (
+            {insumos.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--n-400)', fontSize: 12 }}>
-                  {q || libroFilter ? 'Sin resultados para esa búsqueda' : 'No hay insumos registrados'}
+                <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--n-400)', fontSize: 12 }}>
+                  {inputQ || libroFilter ? 'Sin resultados para esa búsqueda' : 'No hay insumos registrados'}
                 </td>
               </tr>
-            ) : slice.map((ins, i) => (
+            ) : insumos.map((ins, i) => (
               <tr
                 key={ins.id}
                 style={{ borderTop: i > 0 ? '1px solid var(--n-100)' : 'none', transition: 'background .1s' }}
@@ -739,6 +744,12 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <td style={TD}><Trunc text={ins.nombre} /></td>
+                <td style={TD}>
+                  {ins.categoria
+                    ? <span style={{ fontSize: 10.5, fontWeight: 600, color: '#92400e', background: '#fef3c7', padding: '2px 7px', borderRadius: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{ins.categoria}</span>
+                    : <span style={{ color: 'var(--n-350, var(--n-400))' }}>—</span>
+                  }
+                </td>
                 <td style={TD}>
                   {ins.libro_nombre
                     ? <span style={{ fontSize: 10.5, fontWeight: 600, color: '#15803d', background: '#f0fdf4', padding: '2px 7px', borderRadius: 8, whiteSpace: 'nowrap' }}>{ins.libro_nombre}</span>
@@ -758,21 +769,21 @@ function InsumosPanel({ insumos, onDelete }: { insumos: LibroInsumo[]; onDelete:
         </table>
       </div>
 
-      <Pager page={page} total={filtered.length} onPage={setPage} />
+      <Pager page={page} total={total} onPage={setPage} />
     </div>
   )
 }
 
 // ── page ──────────────────────────────────────────────────────────────────────
 export default function LibroPage() {
-  const { libros, partidas, insumos, loading, insertLibro, insertPartidas, insertInsumos, deletePartida, deleteInsumo } = useLibro()
+  const {
+    libros, loading,
+    partidas, partidasTotal, partidasLoading, fetchPartidas,
+    insumos, insumosTotal, insumosLoading, fetchInsumos,
+    insertLibro, insertPartidas, insertInsumos, deletePartida, deleteInsumo,
+  } = useLibro()
   const [showUpload, setShowUpload] = useState(false)
   const [tab, setTab] = useState<'partidas' | 'insumos'>('partidas')
-
-  const grupos = useMemo(
-    () => new Set(partidas.map(p => p.edt_grupo).filter(Boolean)).size,
-    [partidas]
-  )
 
   const handleDone = useCallback(async (
     rawPartidas: Record<string, unknown>[],
@@ -804,9 +815,15 @@ export default function LibroPage() {
     await Promise.all([insertPartidas(pRows), insertInsumos(iRows)])
   }, [insertPartidas, insertInsumos])
 
+  // Needed for useMemo below — libros is already fetched
+  const grupos = useMemo(
+    () => new Set(partidas.map(p => p.edt_grupo).filter(Boolean)).size,
+    [partidas]
+  )
+
   const TABS = [
-    { key: 'partidas' as const, label: 'Partidas', count: partidas.length, icon: Layers,  activeColor: 'var(--brand-600)', activeBg: 'var(--brand-50)' },
-    { key: 'insumos'  as const, label: 'Insumos',  count: insumos.length,  icon: Package, activeColor: '#16a34a',          activeBg: '#f0fdf4'        },
+    { key: 'partidas' as const, label: 'Partidas', count: partidasTotal, icon: Layers,  activeColor: 'var(--brand-600)', activeBg: 'var(--brand-50)' },
+    { key: 'insumos'  as const, label: 'Insumos',  count: insumosTotal,  icon: Package, activeColor: '#16a34a',          activeBg: '#f0fdf4'        },
   ]
 
   if (loading) {
@@ -842,10 +859,10 @@ export default function LibroPage() {
 
         {/* Stat cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
-          <StatCard icon={Layers}   label="Partidas"   numericValue={partidas.length} sub="precios unitarios"       accent="brand"   sparkSeed={1.4} sparkBase={partidas.length} />
-          <StatCard icon={Package}  label="Insumos"    numericValue={insumos.length}  sub="recursos y materiales"   accent="green"   sparkSeed={2.2} sparkBase={insumos.length} />
-          <StatCard icon={BookOpen} label="Libros"     numericValue={libros.length}   sub="fuentes de precios"      accent="neutral" />
-          <StatCard icon={BookOpen} label="Grupos EDT" numericValue={grupos}          sub="secciones identificadas" accent="neutral" />
+          <StatCard icon={Layers}   label="Partidas"   numericValue={partidasTotal} sub="precios unitarios"       accent="brand"   sparkSeed={1.4} sparkBase={partidasTotal} />
+          <StatCard icon={Package}  label="Insumos"    numericValue={insumosTotal}  sub="recursos y materiales"   accent="green"   sparkSeed={2.2} sparkBase={insumosTotal} />
+          <StatCard icon={BookOpen} label="Libros"     numericValue={libros.length} sub="fuentes de precios"      accent="neutral" />
+          <StatCard icon={BookOpen} label="Grupos EDT" numericValue={grupos}        sub="en página actual"        accent="neutral" />
         </div>
 
         {/* Tab bar */}
@@ -887,8 +904,8 @@ export default function LibroPage() {
       {/* Active panel — fills remaining height */}
       <div style={{ flex: 1, padding: '12px 24px 20px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {tab === 'partidas'
-          ? <PartidasPanel partidas={partidas} onDelete={deletePartida} />
-          : <InsumosPanel  insumos={insumos}   onDelete={deleteInsumo}  />
+          ? <PartidasPanel partidas={partidas} total={partidasTotal} panelLoading={partidasLoading} libros={libros} onFetch={fetchPartidas} onDelete={deletePartida} />
+          : <InsumosPanel  insumos={insumos}   total={insumosTotal}  panelLoading={insumosLoading}  libros={libros} onFetch={fetchInsumos}  onDelete={deleteInsumo}  />
         }
       </div>
 

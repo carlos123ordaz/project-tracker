@@ -1,5 +1,7 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+
+export const PAGE_SIZE = 25
 
 export interface LibroEntry {
   id: string
@@ -14,10 +16,10 @@ export interface LibroPartida {
   id: string
   source_file: string | null
   libro_nombre: string
-  codigo: string | null
+  codigo: string
   edt_grupo: string | null
   partida: string
-  unidad: string | null
+  unidad: string
   precio_unitario: number
   mano_de_obra: number
   material: number
@@ -30,6 +32,7 @@ export interface LibroInsumo {
   source_file: string | null
   libro_nombre: string
   nombre: string
+  categoria: string
   unidad: string | null
   cantidad: number
   precio_unitario: number
@@ -39,27 +42,74 @@ export interface LibroInsumo {
 
 export function useLibro() {
   const [libros,   setLibros]   = useState<LibroEntry[]>([])
-  const [partidas, setPartidas] = useState<LibroPartida[]>([])
-  const [insumos,  setInsumos]  = useState<LibroInsumo[]>([])
   const [loading,  setLoading]  = useState(true)
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true)
+  const [partidas,        setPartidas]        = useState<LibroPartida[]>([])
+  const [partidasTotal,   setPartidasTotal]   = useState(0)
+  const [partidasLoading, setPartidasLoading] = useState(false)
+
+  const [insumos,        setInsumos]        = useState<LibroInsumo[]>([])
+  const [insumosTotal,   setInsumosTotal]   = useState(0)
+  const [insumosLoading, setInsumosLoading] = useState(false)
+
+  // Track last fetch params so mutations can re-fetch the same view
+  const pParamsRef = useRef({ page: 1, search: '', libroFilter: '' })
+  const iParamsRef = useRef({ page: 1, search: '', libroFilter: '' })
+
+  const fetchPartidas = useCallback(async (page: number, search: string, libroFilter: string) => {
+    pParamsRef.current = { page, search, libroFilter }
+    setPartidasLoading(true)
     try {
-      const [lRes, pRes, iRes] = await Promise.all([
-        supabase.from('libros').select('*').order('nombre'),
-        supabase.from('libro_partidas').select('*').order('created_at', { ascending: false }),
-        supabase.from('libro_insumos').select('*').order('created_at', { ascending: false }),
-      ])
-      if (lRes.data) setLibros(lRes.data)
-      if (pRes.data) setPartidas(pRes.data)
-      if (iRes.data) setInsumos(iRes.data)
+      let q = supabase
+        .from('libro_partidas')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+      if (libroFilter) q = q.eq('libro_nombre', libroFilter)
+      if (search) {
+        q = q.or(
+          `partida.ilike.%${search}%,codigo.ilike.%${search}%,edt_grupo.ilike.%${search}%,libro_nombre.ilike.%${search}%`
+        )
+      }
+      const from = (page - 1) * PAGE_SIZE
+      const { data, count } = await q.range(from, from + PAGE_SIZE - 1)
+      if (data) setPartidas(data)
+      setPartidasTotal(count ?? 0)
     } finally {
-      setLoading(false)
+      setPartidasLoading(false)
     }
   }, [])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  const fetchInsumos = useCallback(async (page: number, search: string, libroFilter: string) => {
+    iParamsRef.current = { page, search, libroFilter }
+    setInsumosLoading(true)
+    try {
+      let q = supabase
+        .from('libro_insumos')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+      if (libroFilter) q = q.eq('libro_nombre', libroFilter)
+      if (search) {
+        q = q.or(
+          `nombre.ilike.%${search}%,unidad.ilike.%${search}%,libro_nombre.ilike.%${search}%`
+        )
+      }
+      const from = (page - 1) * PAGE_SIZE
+      const { data, count } = await q.range(from, from + PAGE_SIZE - 1)
+      if (data) setInsumos(data)
+      setInsumosTotal(count ?? 0)
+    } finally {
+      setInsumosLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      supabase.from('libros').select('*').order('nombre').then(({ data }) => { if (data) setLibros(data) }),
+      fetchPartidas(1, '', ''),
+      fetchInsumos(1, '', ''),
+    ]).finally(() => setLoading(false))
+  }, [fetchPartidas, fetchInsumos])
 
   const insertLibro = useCallback(async (nombre: string) => {
     const { data, error } = await supabase
@@ -73,36 +123,50 @@ export function useLibro() {
 
   const insertPartidas = useCallback(async (items: Omit<LibroPartida, 'id' | 'created_at'>[]) => {
     if (!items.length) return
+    const normalized = items.map(i => ({ ...i, codigo: i.codigo ?? '', unidad: i.unidad ?? '' }))
+    const seen = new Map<string, typeof normalized[0]>()
+    for (const item of normalized) {
+      seen.set(`${item.codigo}|${item.unidad}|${item.libro_nombre}`, item)
+    }
     const { error } = await supabase
       .from('libro_partidas')
-      .upsert(items, { onConflict: 'codigo,unidad,libro_nombre', ignoreDuplicates: false })
+      .upsert([...seen.values()], { onConflict: 'codigo,unidad,libro_nombre', ignoreDuplicates: false })
     if (error) throw error
-    const { data } = await supabase.from('libro_partidas').select('*').order('created_at', { ascending: false })
-    if (data) setPartidas(data)
-  }, [])
+    const { page, search, libroFilter } = pParamsRef.current
+    await fetchPartidas(page, search, libroFilter)
+  }, [fetchPartidas])
 
   const insertInsumos = useCallback(async (items: Omit<LibroInsumo, 'id' | 'created_at'>[]) => {
     if (!items.length) return
+    const normalized = items.map(i => ({ ...i, categoria: i.categoria ?? '', unidad: i.unidad ?? '' }))
+    const seen = new Map<string, typeof normalized[0]>()
+    for (const item of normalized) {
+      seen.set(`${item.nombre}|${item.unidad}|${item.libro_nombre}`, item)
+    }
     const { error } = await supabase
       .from('libro_insumos')
-      .upsert(items, { onConflict: 'nombre,unidad,libro_nombre', ignoreDuplicates: false })
+      .upsert([...seen.values()], { onConflict: 'nombre,unidad,libro_nombre', ignoreDuplicates: false })
     if (error) throw error
-    const { data } = await supabase.from('libro_insumos').select('*').order('created_at', { ascending: false })
-    if (data) setInsumos(data)
-  }, [])
+    const { page, search, libroFilter } = iParamsRef.current
+    await fetchInsumos(page, search, libroFilter)
+  }, [fetchInsumos])
 
   const deletePartida = useCallback(async (id: string) => {
     await supabase.from('libro_partidas').delete().eq('id', id)
     setPartidas(prev => prev.filter(p => p.id !== id))
+    setPartidasTotal(prev => Math.max(0, prev - 1))
   }, [])
 
   const deleteInsumo = useCallback(async (id: string) => {
     await supabase.from('libro_insumos').delete().eq('id', id)
     setInsumos(prev => prev.filter(i => i.id !== id))
+    setInsumosTotal(prev => Math.max(0, prev - 1))
   }, [])
 
   return {
-    libros, partidas, insumos, loading,
-    fetchAll, insertLibro, insertPartidas, insertInsumos, deletePartida, deleteInsumo,
+    libros, loading,
+    partidas, partidasTotal, partidasLoading, fetchPartidas,
+    insumos, insumosTotal, insumosLoading, fetchInsumos,
+    insertLibro, insertPartidas, insertInsumos, deletePartida, deleteInsumo,
   }
 }
