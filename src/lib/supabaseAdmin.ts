@@ -11,5 +11,6 @@ export const supabaseSignup = createClient(url, key, {
     persistSession:    false,
     autoRefreshToken:  false,
     detectSessionInUrl: false,
+    storageKey: 'sb-signup-auth-token',
   },
 })

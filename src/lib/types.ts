@@ -385,3 +385,146 @@ export interface GpsCoords {
   lng: number
   accuracy: number
 }
+
+// ── Cotizaciones ─────────────────────────────────────────────────────────────
+
+export type CotizacionStatus = 'Borrador' | 'En revisión' | 'Enviada' | 'Aprobada' | 'Rechazada'
+export type CotizacionSegmento = 'A' | 'B' | 'C'
+export type DisciplinaTipo = 'obras_provisionales' | 'obras_civiles' | 'obras_mecanicas' | 'obras_electricas' | 'automatizacion'
+export type PartidaTipo = 'mo' | 'material' | 'viatico' | 'epp' | 'subcontrato' | 'otro'
+
+export const COTIZACION_STATUSES: CotizacionStatus[] = ['Borrador', 'En revisión', 'Enviada', 'Aprobada', 'Rechazada']
+export const DISCIPLINAS_CONFIG: { tipo: DisciplinaTipo; nombre: string; orden: number; margen_pct: number }[] = [
+  { tipo: 'obras_provisionales', nombre: 'Obras Provisionales', orden: 1, margen_pct: 20 },
+  { tipo: 'obras_civiles',       nombre: 'Obras Civiles',       orden: 2, margen_pct: 20 },
+  { tipo: 'obras_mecanicas',     nombre: 'Obras Mecánicas',     orden: 3, margen_pct: 20 },
+  { tipo: 'obras_electricas',    nombre: 'Obras Eléctricas',    orden: 4, margen_pct: 20 },
+  { tipo: 'automatizacion',      nombre: 'Aut. & Control',      orden: 5, margen_pct: 0  },
+]
+
+export interface PersonalTarifa {
+  id: string
+  perfil: string
+  tipo_contrato: 'Planilla' | 'Recibo'
+  factor_empresa: number
+  sueldo_seg_a: number
+  sueldo_seg_b: number
+  sueldo_seg_c: number
+  orden: number
+  activo: boolean
+  created_at: string
+}
+
+export interface Cotizacion {
+  id: string
+  numero: number
+  titulo: string
+  cliente: string | null
+  proyecto: string | null
+  ubicacion: string | null
+  descripcion: string | null
+  segmento: CotizacionSegmento
+  tipo_cambio: number
+  status: CotizacionStatus
+  plazo_semanas: number | null
+  garantia_meses: number
+  validez_dias: number
+  notas: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CotizacionDisciplina {
+  id: string
+  cotizacion_id: string
+  tipo: DisciplinaTipo
+  nombre: string
+  imprevistos_pct: number
+  margen_pct: number
+  orden: number
+  created_at: string
+}
+
+export interface CotizacionSeccion {
+  id: string
+  disciplina_id: string
+  codigo: string | null
+  nombre: string
+  orden: number
+  created_at: string
+}
+
+export interface CotizacionPartida {
+  id: string
+  seccion_id: string
+  disciplina_id: string
+  tipo: PartidaTipo
+  codigo: string | null
+  descripcion: string
+  area: string | null
+  producto_bitrix: string | null
+  perfil_id: string | null
+  personas: number
+  dias: number
+  unidad: string
+  metrado: number
+  precio_unitario: number
+  costo_compra: number
+  notas: string | null
+  orden: number
+  created_at: string
+  updated_at: string
+  // joined
+  perfil?: PersonalTarifa | null
+}
+
+// ── Gastos Generales ──────────────────────────────────────────────────────────
+export interface GastoGeneral {
+  id: string
+  cotizacion_id: string
+  categoria: 'Variables' | 'Fijos'
+  descripcion: string
+  unidad: string
+  tiempo_pct: number
+  cantidad: number
+  mensual_usd: number
+  orden: number
+  created_at: string
+}
+
+// ── Cronograma ────────────────────────────────────────────────────────────────
+export type CronogramaTipo = 'tarea' | 'hito' | 'entregable'
+
+export interface CronogramaItem {
+  id: string
+  cotizacion_id: string
+  item: number
+  descripcion: string
+  semana_inicio: number
+  semana_fin: number
+  tipo: CronogramaTipo
+  color: string | null
+  orden: number
+  created_at: string
+}
+
+// ── Cash Flow ─────────────────────────────────────────────────────────────────
+export interface CashFlowEgreso {
+  id: string
+  cotizacion_id: string
+  descripcion: string
+  periodos: number[]   // array de hasta 20 montos mensuales
+  orden: number
+  created_at: string
+}
+
+export interface CashFlowIngreso {
+  id: string
+  cotizacion_id: string
+  descripcion: string
+  porcentaje: number
+  periodos: number[]
+  orden: number
+  created_at: string
+}

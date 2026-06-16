@@ -5,7 +5,8 @@ import {
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
   FileSpreadsheet, BookOpen, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
-  ShoppingCart, Building2, TrendingDown, Receipt,
+  ShoppingCart, Building2, TrendingDown, Receipt, ListChecks, HardHat,
+  Calculator, FileText, Users2,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -61,7 +62,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Proyectos',
       icon: FolderOpen,
       items: [
-        { to: '/',             label: 'Dashboard',   icon: LayoutDashboard, end: true },
+        { to: '/',             label: 'Inicio',      icon: LayoutDashboard, end: true },
+        { to: '/dashboard',    label: 'Dashboard',   icon: Gauge },
         { to: '/projects',     label: 'Catálogo',    icon: FolderOpen },
         { to: '/kanban',       label: 'Kanban',       icon: Kanban },
         { to: '/timeline',     label: 'Timeline',     icon: CalendarRange },
@@ -84,8 +86,18 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Compras',
       icon: ShoppingCart,
       items: [
-        { to: '/compras',             label: 'Comparativos', icon: TrendingDown, end: true },
-        { to: '/compras/proveedores', label: 'Proveedores',  icon: Building2 },
+        { to: '/compras',                  label: 'Comparativos',  icon: TrendingDown, end: true },
+        { to: '/compras/proveedores',      label: 'Proveedores',   icon: Building2 },
+        { to: '/compras/tareas/91', label: 'Tareas Compras', icon: ListChecks },
+      ],
+    },
+    {
+      key: 'ingenieria',
+      label: 'Ingeniería',
+      icon: HardHat,
+      items: [
+        { to: '/ingenieria/tareas/362', label: 'Proy. Ejecución',    icon: ListChecks },
+        { to: '/ingenieria/tareas/316', label: 'Proy. Cotizaciones', icon: ListChecks },
       ],
     },
     {
@@ -93,6 +105,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'RRHH',
       icon: Users,
       items: rrhhItems,
+    },
+    {
+      key: 'cotizaciones',
+      label: 'Cotizaciones',
+      icon: Calculator,
+      items: [
+        { to: '/cotizaciones',          label: 'Cotizaciones', icon: FileText },
+        { to: '/cotizaciones/personal', label: 'Personal',     icon: Users2   },
+      ],
     },
   ]
 

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth'
 import { ConfigDataProvider } from './hooks/useConfigData'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
+import PortalPage from './pages/PortalPage'
 import DashboardPage from './pages/DashboardPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
@@ -28,6 +29,12 @@ import ComprasPage from './pages/compras/ComprasPage'
 import ComparativoEditorPage from './pages/compras/ComparativoEditorPage'
 import ProveedoresPage from './pages/compras/ProveedoresPage'
 import ArticulosPage from './pages/compras/ArticulosPage'
+import BitrixTareasPage from './pages/compras/BitrixTareasPage'
+import ComprasGanttPage from './pages/compras/ComprasGanttPage'
+import ComprasDashboardPage from './pages/compras/ComprasDashboardPage'
+import CotizacionesPage from './pages/cotizaciones/CotizacionesPage'
+import PersonalTarifasPage from './pages/cotizaciones/PersonalTarifasPage'
+import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
 
 function AuthenticatedApp() {
   const { user, loading, accountDisabled, signOut } = useAuth()
@@ -68,8 +75,11 @@ function AuthenticatedApp() {
   return (
     <ConfigDataProvider>
       <Routes>
+        {/* Portal fullscreen — sin Layout */}
+        <Route path="/" element={<PortalPage />} />
+
         <Route element={<Layout />}>
-          <Route path="/"            element={<DashboardPage />} />
+          <Route path="/dashboard"   element={<DashboardPage />} />
           <Route path="/projects"    element={<ProjectsPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/kanban"      element={<KanbanPage />} />
@@ -89,6 +99,12 @@ function AuthenticatedApp() {
           <Route path="/compras"              element={<ComprasPage />} />
           <Route path="/compras/articulos"    element={<ArticulosPage />} />
           <Route path="/compras/proveedores"  element={<ProveedoresPage />} />
+          <Route path="/compras/tareas/:groupId/gantt"          element={<ComprasGanttPage />} />
+          <Route path="/compras/tareas/:groupId/dashboard"     element={<ComprasDashboardPage />} />
+          <Route path="/compras/tareas/:groupId"               element={<BitrixTareasPage />} />
+          {/* Ingeniería */}
+          <Route path="/ingenieria/tareas/:groupId/dashboard"  element={<ComprasDashboardPage />} />
+          <Route path="/ingenieria/tareas/:groupId"            element={<BitrixTareasPage />} />
           <Route path="/compras/:id"          element={<ComparativoEditorPage />} />
           {/* RRHH */}
           <Route path="/rrhh/equipo"     element={<EquipoPage />} />
@@ -98,6 +114,10 @@ function AuthenticatedApp() {
           {/* Valorizaciones */}
           <Route path="/projects/:id/valuations"      element={<ValuationsPage />} />
           <Route path="/projects/:id/valuations/:vid" element={<ValuationEditorPage />} />
+          {/* Cotizaciones */}
+          <Route path="/cotizaciones"           element={<CotizacionesPage />} />
+          <Route path="/cotizaciones/personal"  element={<PersonalTarifasPage />} />
+          <Route path="/cotizaciones/:id"       element={<CotizacionEditorPage />} />
         </Route>
       </Routes>
     </ConfigDataProvider>
