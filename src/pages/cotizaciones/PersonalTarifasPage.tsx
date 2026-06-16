@@ -75,7 +75,7 @@ export default function PersonalTarifasPage() {
     setSaving(false)
   }
 
-  const numInput = (val: number | undefined, key: keyof EditRow, setter: (v: EditRow) => void) => (
+  const numInput = (val: number | undefined, key: keyof EditRow, setter: (fn: (p: EditRow) => EditRow) => void) => (
     <input
       type="number"
       step="0.01"
@@ -125,7 +125,6 @@ export default function PersonalTarifasPage() {
                 <>
                   {displayTarifas.map(t => {
                     const isEdit = editId === t.id
-                    const d = isEdit ? editData : t
                     return (
                       <tr key={t.id} style={{ borderBottom: '1px solid var(--n-100)', background: isEdit ? 'var(--brand-50)' : undefined }}
                         onDoubleClick={() => !isEdit && startEdit(t)}

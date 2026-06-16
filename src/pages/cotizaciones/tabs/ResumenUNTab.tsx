@@ -29,7 +29,7 @@ function getPrecioParcial(
     const metrado = p.personas * p.dias
     if (p.perfil_id) {
       const perfil = tarifas.find(t => t.id === p.perfil_id)
-      if (perfil) return metrado * calcularTarifa(perfil, segmento, tc)
+      if (perfil) return metrado * calcularTarifa(perfil, segmento as import('../../../lib/types').CotizacionSegmento, tc)
     }
     return metrado * p.precio_unitario
   }

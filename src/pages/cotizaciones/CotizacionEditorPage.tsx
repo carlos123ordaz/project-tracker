@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   useCotizacionEditor,
@@ -76,7 +76,7 @@ export default function CotizacionEditorPage() {
   const editor = useCotizacionEditor(id!)
   const { tarifas } = usePersonalTarifas()
   const { totalGG } = useGastosGeneralesCot(id!)
-  const _cronograma = useCronogramaCot(id!)
+  useCronogramaCot(id!)
   const { allProductos } = useBitrixProductos()
 
   const {
@@ -146,7 +146,7 @@ export default function CotizacionEditorPage() {
     if (!p.perfil_id) return p.precio_unitario
     const perfil = tarifas.find(t => t.id === p.perfil_id)
     if (!perfil) return p.precio_unitario
-    return calcularTarifa(perfil, cotizacion.segmento, cotizacion.tipo_cambio)
+    return calcularTarifa(perfil, cotizacion!.segmento, cotizacion!.tipo_cambio)
   }
   function getPrecioParcial(p: CotizacionPartida): number {
     if (p.tipo === 'mo') return getMetradoForMO(p) * getPUForMO(p)

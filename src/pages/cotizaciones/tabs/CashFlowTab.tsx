@@ -180,7 +180,6 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
 
   // ── Shared styles ─────────────────────────────────────────────────────────
   const LABEL_W = 200
-  const PCT_W   = 64
   const TOTAL_W = 84
   const COL_W   = 84
 

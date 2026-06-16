@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/audit'
 import type {
   Cotizacion, CotizacionDisciplina, CotizacionSeccion, CotizacionPartida,
-  PersonalTarifa, CotizacionSegmento, PartidaTipo,
+  PersonalTarifa, CotizacionSegmento,
 } from '../lib/types'
 
 // ── Tariff calculation ────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ export function calcPrecioParcial(partida: CotizacionPartida): number {
 }
 
 export function calcSubtotalSeccion(
-  secciones: CotizacionSeccion[],
+  _secciones: CotizacionSeccion[],
   partidas: CotizacionPartida[],
   seccionId: string,
 ): number {

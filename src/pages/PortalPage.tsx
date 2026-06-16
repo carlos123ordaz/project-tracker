@@ -24,10 +24,11 @@ const PALETTES = {
 
 // ── Definición de módulos ─────────────────────────────────────────────────────
 
-interface SubLink { label: string; to: string; icon: React.ComponentType<{ size?: number }> }
+type LucideIcon = React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>
+interface SubLink { label: string; to: string; icon: LucideIcon }
 interface Module {
   key: keyof typeof PALETTES
-  icon: React.ComponentType<{ size?: number }>
+  icon: LucideIcon
   title: string
   description: string
   to: string
@@ -131,7 +132,7 @@ export default function PortalPage() {
     return name.split(' ')[0]
   }, [user])
 
-  const activeProjects = projects.filter(p => p.status !== 'Completado').length
+  const activeProjects = projects.filter(p => !p.end_date || new Date(p.end_date) >= new Date()).length
   const pendingTasks   = tasks.filter(t => t.status !== 'Completado').length
 
   const dayLabel = `${DAYS_ES[(TODAY.getDay() + 6) % 7]}, ${TODAY.getDate()} de ${MONTHS_FULL[TODAY.getMonth()]} ${TODAY.getFullYear()}`
