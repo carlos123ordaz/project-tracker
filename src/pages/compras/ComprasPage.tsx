@@ -99,6 +99,7 @@ export default function ComprasPage() {
           />
         </div>
 
+
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value as ComparisonStatus | 'Todos')}
