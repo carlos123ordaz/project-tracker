@@ -9,7 +9,7 @@ import type {
 } from '../../../lib/types'
 import { calcPrecioVenta } from '../../../hooks/useCotizacionEditor'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL
 
 interface Props {
   cotizacion: Cotizacion
