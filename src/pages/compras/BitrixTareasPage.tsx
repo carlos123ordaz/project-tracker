@@ -45,12 +45,14 @@ export default function BitrixTareasPage() {
   const [filterStatus, setFilterStatus]   = useState('Todos')
   const [filterPriority, setFilterPriority] = useState('Todos')
 
-  const filtered = tareas.filter(t => {
-    const matchSearch   = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.responsible_name.toLowerCase().includes(search.toLowerCase())
-    const matchStatus   = filterStatus === 'Todos' || t.status === filterStatus
-    const matchPriority = filterPriority === 'Todos' || t.priority === filterPriority
-    return matchSearch && matchStatus && matchPriority
-  })
+  const filtered = tareas
+    .filter(t => {
+      const matchSearch   = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.responsible_name.toLowerCase().includes(search.toLowerCase())
+      const matchStatus   = filterStatus === 'Todos' || t.status === filterStatus
+      const matchPriority = filterPriority === 'Todos' || t.priority === filterPriority
+      return matchSearch && matchStatus && matchPriority
+    })
+    .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())
 
   const statusCounts = ALL_STATUSES.reduce((acc, s) => {
     acc[s] = tareas.filter(t => t.status === s).length
