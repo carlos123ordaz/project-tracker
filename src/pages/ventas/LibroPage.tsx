@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import {
   BookOpen, Upload, Search, ChevronLeft, ChevronRight,
   Trash2, X, FileText, Package, Layers, CloudUpload,
-  AlertCircle, CheckCircle2, ChevronRight as ChevronRightSm, Plus, Check,
+  AlertCircle, CheckCircle2, Plus, Check,
 } from 'lucide-react'
 import { useLibro, PAGE_SIZE, type LibroEntry, type LibroPartida, type LibroInsumo } from '../../hooks/useLibro'
 import { StatCard } from '../../components/ui/StatCard'
@@ -225,10 +225,8 @@ function UploadModal({ open, onClose, onDone, libros, onNewLibro }: {
   const [tipo,        setTipo]        = useState<TipoDoc>('partidas')
   const [libroNombre, setLibroNombre] = useState('')
   const [file,        setFile]        = useState<File | null>(null)
-  const [apiUrl,      setApiUrl]      = useState('http://localhost:8001')
   const [status,      setStatus]      = useState<ModalStatus>('idle')
   const [msg,         setMsg]         = useState('')
-  const [showCfg,     setShowCfg]     = useState(false)
   const [extracted,   setExtracted]   = useState<Extracted | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -250,7 +248,7 @@ function UploadModal({ open, onClose, onDone, libros, onNewLibro }: {
     try {
       const form = new FormData()
       form.append('archivo', file)
-      const res = await fetch(`${apiUrl}/extraer/libro/${tipo}`, { method: 'POST', body: form })
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8001'}/extraer/libro/${tipo}`, { method: 'POST', body: form })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error((err as { detail?: string }).detail || `Error ${res.status}`)
@@ -392,28 +390,6 @@ function UploadModal({ open, onClose, onDone, libros, onNewLibro }: {
             </>
           )}
         </div>
-
-        {/* Advanced config */}
-        {status === 'idle' && (
-          <div>
-            <button
-              onClick={() => setShowCfg(v => !v)}
-              style={{ fontSize: 11, color: 'var(--n-500)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-            >
-              <ChevronRightSm size={11} style={{ transform: showCfg ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
-              Configuración avanzada
-            </button>
-            {showCfg && (
-              <div style={{ marginTop: 8 }}>
-                <label style={{ fontSize: 11, color: 'var(--n-600)', display: 'block', marginBottom: 4 }}>URL del servicio extractor</label>
-                <input
-                  value={apiUrl} onChange={e => setApiUrl(e.target.value)}
-                  style={{ height: 30, width: '100%', padding: '0 10px', fontSize: 12, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-800)', outline: 'none', boxSizing: 'border-box' }}
-                />
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Preview — shown after extraction, before saving */}
         {status === 'preview' && extracted && (

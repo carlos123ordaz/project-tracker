@@ -6,7 +6,7 @@ import {
   FileSpreadsheet, BookOpen, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
   ShoppingCart, Building2, TrendingDown, Receipt, ListChecks, HardHat,
-  Calculator, FileText, Users2,
+  Calculator, FileText, Users2, TrendingUp,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -113,6 +113,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       items: [
         { to: '/cotizaciones',          label: 'Cotizaciones', icon: FileText },
         { to: '/cotizaciones/personal', label: 'Personal',     icon: Users2   },
+      ],
+    },
+    {
+      key: 'comercial',
+      label: 'Comercial',
+      icon: TrendingUp,
+      items: [
+        { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp },
       ],
     },
   ]

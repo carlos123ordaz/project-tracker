@@ -35,6 +35,8 @@ import ComprasDashboardPage from './pages/compras/ComprasDashboardPage'
 import CotizacionesPage from './pages/cotizaciones/CotizacionesPage'
 import PersonalTarifasPage from './pages/cotizaciones/PersonalTarifasPage'
 import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
+import DealsPage from './pages/comercial/DealsPage'
+import DealsDashboardPage from './pages/comercial/DealsDashboardPage'
 
 function AuthenticatedApp() {
   const { user, loading, accountDisabled, signOut } = useAuth()
@@ -118,6 +120,9 @@ function AuthenticatedApp() {
           <Route path="/cotizaciones"           element={<CotizacionesPage />} />
           <Route path="/cotizaciones/personal"  element={<PersonalTarifasPage />} />
           <Route path="/cotizaciones/:id"       element={<CotizacionEditorPage />} />
+          {/* Comercial */}
+          <Route path="/comercial/deals"            element={<DealsPage />} />
+          <Route path="/comercial/deals/dashboard"  element={<DealsDashboardPage />} />
         </Route>
       </Routes>
     </ConfigDataProvider>

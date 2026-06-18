@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useProjects'
-import { useTasks } from '../hooks/useTasks'
 import { useMemo } from 'react'
 import {
   FolderOpen, ShoppingCart, Users, BookOpen,
-  FileSpreadsheet, HardHat, Kanban, CalendarRange,
+  HardHat, Kanban, CalendarRange, TrendingUp,
   ChevronRight, BarChart3, ClipboardList, TrendingDown,
   Building2, ListChecks, UserCheck, BarChart2,
 } from 'lucide-react'
@@ -14,9 +13,9 @@ import { MONTHS_FULL, DAYS_ES, TODAY } from '../lib/helpers'
 // ── Paleta por módulo ─────────────────────────────────────────────────────────
 
 const PALETTES = {
-  proyectos:    { from: '#4f46e5', to: '#6366f1', glow: 'rgba(99,102,241,.35)'  },
-  presupuestos: { from: '#0d9488', to: '#14b8a6', glow: 'rgba(20,184,166,.30)'  },
-  compras:      { from: '#d97706', to: '#f59e0b', glow: 'rgba(245,158,11,.30)'  },
+  proyectos:  { from: '#4f46e5', to: '#6366f1', glow: 'rgba(99,102,241,.35)'  },
+  comercial:  { from: '#059669', to: '#10b981', glow: 'rgba(16,185,129,.30)'  },
+  compras:    { from: '#d97706', to: '#f59e0b', glow: 'rgba(245,158,11,.30)'  },
   ingenieria:   { from: '#0369a1', to: '#0ea5e9', glow: 'rgba(14,165,233,.30)'  },
   rrhh:         { from: '#7c3aed', to: '#a78bfa', glow: 'rgba(167,139,250,.30)' },
   ventas:       { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,.30)'  },
@@ -52,15 +51,15 @@ const MODULES: Module[] = [
     ],
   },
   {
-    key: 'presupuestos',
-    icon: FileSpreadsheet,
-    title: 'Presupuestos',
-    description: 'Control de presupuestos por proyecto, partidas y seguimiento de costos.',
-    to: '/budgets',
-    cta: 'Ver presupuestos',
+    key: 'comercial',
+    icon: TrendingUp,
+    title: 'Comercial',
+    description: 'Pipeline de ventas, deals CRM y seguimiento de oportunidades desde Bitrix24.',
+    to: '/comercial/deals',
+    cta: 'Ir a Comercial',
     links: [
-      { label: 'Libro de precios', to: '/libro',           icon: BookOpen    },
-      { label: 'Informes',         to: '/budgets/reports', icon: BarChart3   },
+      { label: 'Deals CRM',  to: '/comercial/deals',           icon: TrendingUp },
+      { label: 'Dashboard',  to: '/comercial/deals/dashboard', icon: BarChart3  },
     ],
   },
   {
@@ -124,7 +123,6 @@ const MODULES: Module[] = [
 export default function PortalPage() {
   const { user }      = useAuth()
   const { projects }  = useProjects()
-  const { tasks }     = useTasks()
   const navigate      = useNavigate()
 
   const firstName = useMemo(() => {
@@ -133,14 +131,12 @@ export default function PortalPage() {
   }, [user])
 
   const activeProjects = projects.filter(p => !p.end_date || new Date(p.end_date) >= new Date()).length
-  const pendingTasks   = tasks.filter(t => t.status !== 'Completado').length
 
   const dayLabel = `${DAYS_ES[(TODAY.getDay() + 6) % 7]}, ${TODAY.getDate()} de ${MONTHS_FULL[TODAY.getMonth()]} ${TODAY.getFullYear()}`
 
   // Inyecta las stats dinámicas en los módulos relevantes
   const modulesWithStats: Module[] = MODULES.map(m => {
     if (m.key === 'proyectos') return { ...m, stat: { label: 'proyectos activos', value: activeProjects } }
-    if (m.key === 'presupuestos') return { ...m, stat: { label: 'tareas pendientes', value: pendingTasks } }
     return m
   })
 
@@ -189,7 +185,6 @@ export default function PortalPage() {
           {/* Quick stats en el hero */}
           <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
             <HeroStat label="Proyectos activos" value={activeProjects} />
-            <HeroStat label="Tareas pendientes" value={pendingTasks} />
             <HeroStat label="Módulos disponibles" value={MODULES.length} />
           </div>
         </div>
