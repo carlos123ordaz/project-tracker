@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { RefreshCw, CheckCircle2, Clock, AlertCircle, XCircle, Pause, Search, Download } from 'lucide-react'
+import { RefreshCw, CheckCircle2, Clock, AlertCircle, XCircle, Pause, Search, Download, List, Kanban } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useBitrixTareas } from '../../hooks/useBitrixTareas'
@@ -25,6 +25,15 @@ const PRIORITY_STYLE: Record<string, { color: string; dot: string }> = {
 const ALL_STATUSES = ['Nueva', 'Pendiente', 'En proceso', 'Por verificar', 'Completada', 'Rechazada', 'Diferida']
 
 
+/** Darkens a 6-char hex color (no '#') for text contrast on light backgrounds */
+function darkenHex(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const r = Math.max(0, ((n >> 16) & 0xff) - 80)
+  const g = Math.max(0, ((n >> 8)  & 0xff) - 80)
+  const b = Math.max(0, ( n        & 0xff) - 80)
+  return `rgb(${r},${g},${b})`
+}
+
 function formatDate(iso: string): string {
   if (!iso) return '—'
   try { return format(parseISO(iso), 'd MMM yyyy', { locale: es }) }
@@ -39,23 +48,32 @@ function isOverdue(deadline: string, status: string): boolean {
 
 export default function BitrixTareasPage() {
   const { groupId = '91' } = useParams<{ groupId: string }>()
-  const { tareas, groupName, lastSync, source, loading, syncing, error, sync } = useBitrixTareas(groupId)
+  const { tareas, stages, groupName, lastSync, source, loading, syncing, error, sync } = useBitrixTareas(groupId)
 
   const [search, setSearch]               = useState('')
   const [filterStatus, setFilterStatus]   = useState('Todos')
   const [filterPriority, setFilterPriority] = useState('Todos')
+  const [view, setView]                   = useState<'list' | 'kanban'>('list')
 
   const filtered = tareas
     .filter(t => {
       const matchSearch   = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.responsible_name.toLowerCase().includes(search.toLowerCase())
-      const matchStatus   = filterStatus === 'Todos' || t.status === filterStatus
+      const matchStatus   = filterStatus === 'Todos'
+        || (useStages ? t.stage_name === filterStatus : t.status === filterStatus)
       const matchPriority = filterPriority === 'Todos' || t.priority === filterPriority
       return matchSearch && matchStatus && matchPriority
     })
     .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())
 
-  const statusCounts = ALL_STATUSES.reduce((acc, s) => {
-    acc[s] = tareas.filter(t => t.status === s).length
+  const useStages = stages.length > 0
+  const kanbanColumns = useStages
+    ? stages.map(s => s.name)
+    : ALL_STATUSES
+
+  const statusCounts = kanbanColumns.reduce((acc, s) => {
+    acc[s] = useStages
+      ? tareas.filter(t => t.stage_name === s).length
+      : tareas.filter(t => t.status === s).length
     return acc
   }, {} as Record<string, number>)
 
@@ -108,8 +126,8 @@ export default function BitrixTareasPage() {
         </div>
 
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selectStyle}>
-          <option value="Todos">Todos los estados</option>
-          {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="Todos">{useStages ? 'Todas las etapas' : 'Todos los estados'}</option>
+          {kanbanColumns.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
         <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={selectStyle}>
@@ -120,6 +138,26 @@ export default function BitrixTareasPage() {
         </select>
 
         <BitrixNavTabs groupId={groupId} active="list" />
+
+        {/* Toggle Lista / Kanban */}
+        <div style={{ display: 'inline-flex', border: '1px solid var(--n-200)', borderRadius: 7, overflow: 'hidden' }}>
+          {([['list', List, 'Lista'], ['kanban', Kanban, 'Kanban']] as const).map(([v, Icon, label]) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              title={label}
+              style={{
+                width: 32, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', border: 'none',
+                background: view === v ? 'var(--brand-600)' : '#fff',
+                color: view === v ? '#fff' : 'var(--n-500)',
+                transition: 'background .12s, color .12s',
+              }}
+            >
+              <Icon size={13} />
+            </button>
+          ))}
+        </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -149,7 +187,7 @@ export default function BitrixTareasPage() {
           >
             {tareas.length} total
           </button>
-          {ALL_STATUSES.filter(s => statusCounts[s] > 0).map(s => {
+          {kanbanColumns.filter(s => statusCounts[s] > 0).map(s => {
             const st     = STATUS_STYLE[s] || STATUS_STYLE['Nueva']
             const active = filterStatus === s
             return (
@@ -179,8 +217,78 @@ export default function BitrixTareasPage() {
         </div>
       )}
 
+      {/* ── Kanban ── */}
+      {!busy && !error && view === 'kanban' && (() => {
+        const columns = useStages
+          ? stages.filter(s => filterStatus === 'Todos' || filterStatus === s.name)
+          : ALL_STATUSES
+              .filter(s => filterStatus === 'Todos' || filterStatus === s)
+              .map(s => ({ id: s, name: s, color: '' }))
+
+        return (
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', alignItems: 'flex-start', paddingBottom: 16 }}>
+            {columns.map(col => {
+              const stageColor = col.color ? `#${col.color}` : null
+              const st = STATUS_STYLE[col.name] || STATUS_STYLE['Nueva']
+              const headerBg     = stageColor ? stageColor + '22' : st.bg
+              const headerBorder = stageColor ? stageColor + '66' : st.border
+              const headerColor  = stageColor ? darkenHex(col.color) : st.color
+              const cards = useStages
+                ? filtered.filter(t => t.stage_id === col.id)
+                : filtered.filter(t => t.status === col.id)
+              return (
+                <div key={col.id} style={{ flex: '0 0 210px', width: 210, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', borderRadius: '8px 8px 0 0', background: headerBg, border: `1px solid ${headerBorder}`, borderBottom: 'none' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: headerColor, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {col.name}
+                    </span>
+                    <span style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 700, color: headerColor, background: headerBorder + '55', padding: '1px 6px', borderRadius: 20 }}>
+                      {cards.length}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: 6, background: 'var(--n-75)', border: `1px solid ${headerBorder}`, borderRadius: '0 0 8px 8px', minHeight: 60, maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
+                    {cards.length === 0
+                      ? <div style={{ fontSize: 11, color: 'var(--n-300)', textAlign: 'center', padding: '14px 0' }}>Sin tareas</div>
+                      : cards.map(t => {
+                        const pr      = PRIORITY_STYLE[t.priority] || PRIORITY_STYLE['Normal']
+                        const overdue = isOverdue(t.deadline, t.status)
+                        const accentColor = stageColor || st.color
+                        return (
+                          <div key={t.id} style={{ background: '#fff', borderRadius: 6, padding: '7px 9px', border: '1px solid var(--n-150)', borderLeft: `3px solid ${accentColor}`, boxShadow: '0 1px 2px rgba(0,0,0,.04)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, overflow: 'hidden' }}>
+                            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-900)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                            {t.description && (
+                              <div style={{ fontSize: 10, color: 'var(--n-400)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t.description}</div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, minWidth: 0 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: pr.color, flexShrink: 0 }}>
+                                <span style={{ width: 5, height: 5, borderRadius: '50%', background: pr.dot }} />
+                                {t.priority}
+                              </span>
+                              {t.responsible_name && (
+                                <span style={{ fontSize: 10, color: 'var(--n-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                                  {t.responsible_name.split(' ')[0]}
+                                </span>
+                              )}
+                              {t.deadline && (
+                                <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: overdue ? 'var(--red-600)' : 'var(--n-400)', background: overdue ? 'var(--red-50)' : 'transparent', padding: overdue ? '1px 4px' : '0', borderRadius: 4 }}>
+                                  {overdue && '⚠ '}{formatDate(t.deadline)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    }
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
+
       {/* Table */}
-      {!busy && !error && (
+      {!busy && !error && view === 'list' && (
         filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, color: 'var(--n-400)', fontSize: 12.5 }}>
             {tareas.length === 0

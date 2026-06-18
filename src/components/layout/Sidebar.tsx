@@ -5,8 +5,8 @@ import {
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
   FileSpreadsheet, BookOpen, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
-  ShoppingCart, Building2, TrendingDown, Receipt, ListChecks, HardHat,
-  Calculator, FileText, Users2, TrendingUp,
+  ShoppingCart, Building2, TrendingDown, Receipt, ListChecks,
+  FileText, Users2, TrendingUp,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -48,9 +48,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
 
   const rrhhItems: NavItem[] = []
   if (isSuperAdmin || hasPermission('rrhh', 'view')) {
-    rrhhItems.push({ to: '/rrhh/equipo',     label: 'Equipo',       icon: Users })
-    rrhhItems.push({ to: '/rrhh/asistencia', label: 'Asistencia',   icon: ClipboardList })
-    rrhhItems.push({ to: '/rrhh/hh',         label: 'Dashboard HH', icon: BarChart3 })
+    rrhhItems.push({ to: '/rrhh/equipo', label: 'Equipo', icon: Users })
+    rrhhItems.push({ to: '/rrhh/asistencia', label: 'Asistencia', icon: ClipboardList })
+    rrhhItems.push({ to: '/rrhh/hh', label: 'Dashboard HH', icon: BarChart3 })
   }
   if (isSuperAdmin) {
     rrhhItems.push({ to: '/rrhh/usuarios', label: 'Usuarios', icon: UserCheck })
@@ -62,14 +62,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Proyectos',
       icon: FolderOpen,
       items: [
-        { to: '/',             label: 'Inicio',      icon: LayoutDashboard, end: true },
-        { to: '/dashboard',    label: 'Dashboard',   icon: Gauge },
-        { to: '/projects',     label: 'Catálogo',    icon: FolderOpen },
-        { to: '/kanban',       label: 'Kanban',       icon: Kanban },
-        { to: '/timeline',     label: 'Timeline',     icon: CalendarRange },
-        { to: '/consolidated', label: 'Consolidado',  icon: List },
-        { to: '/calendar',     label: 'Calendario',   icon: Calendar },
-        { to: '/overview',     label: 'Overview',     icon: Gauge },
+        { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
+        { to: '/dashboard', label: 'Dashboard', icon: Gauge },
+        { to: '/projects', label: 'Catálogo', icon: FolderOpen },
+        { to: '/kanban', label: 'Kanban', icon: Kanban },
+        { to: '/timeline', label: 'Timeline', icon: CalendarRange },
+        { to: '/consolidated', label: 'Consolidado', icon: List },
+        { to: '/calendar', label: 'Calendario', icon: Calendar },
+        { to: '/overview', label: 'Overview', icon: Gauge },
+        { to: '/ingenieria/tareas/362', label: 'Proy. Ejecución', icon: ListChecks },
       ],
     },
     {
@@ -78,7 +79,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: Receipt,
       items: [
         { to: '/budgets', label: 'Presupuestos', icon: FileSpreadsheet },
-        { to: '/libro',   label: 'Libro',        icon: BookOpen },
+        { to: '/libro', label: 'Libro', icon: BookOpen },
+        { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText },
+        { to: '/cotizaciones/personal', label: 'Horas Hombre', icon: Users2 },
+        { to: '/ingenieria/tareas/316', label: 'Proy. Cotizaciones', icon: ListChecks },
       ],
     },
     {
@@ -86,18 +90,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Compras',
       icon: ShoppingCart,
       items: [
-        { to: '/compras',                  label: 'Comparativos',  icon: TrendingDown, end: true },
-        { to: '/compras/proveedores',      label: 'Proveedores',   icon: Building2 },
+        { to: '/compras', label: 'Comparativos', icon: TrendingDown, end: true },
+        { to: '/compras/proveedores', label: 'Proveedores', icon: Building2 },
         { to: '/compras/tareas/91', label: 'Tareas Compras', icon: ListChecks },
-      ],
-    },
-    {
-      key: 'ingenieria',
-      label: 'Ingeniería',
-      icon: HardHat,
-      items: [
-        { to: '/ingenieria/tareas/362', label: 'Proy. Ejecución',    icon: ListChecks },
-        { to: '/ingenieria/tareas/316', label: 'Proy. Cotizaciones', icon: ListChecks },
       ],
     },
     {
@@ -105,15 +100,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'RRHH',
       icon: Users,
       items: rrhhItems,
-    },
-    {
-      key: 'cotizaciones',
-      label: 'Cotizaciones',
-      icon: Calculator,
-      items: [
-        { to: '/cotizaciones',          label: 'Cotizaciones', icon: FileText },
-        { to: '/cotizaciones/personal', label: 'Personal',     icon: Users2   },
-      ],
     },
     {
       key: 'comercial',

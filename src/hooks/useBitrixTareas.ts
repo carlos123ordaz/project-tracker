@@ -6,6 +6,8 @@ export interface BitrixTarea {
   id: string
   title: string
   status: string
+  stage_id: string
+  stage_name: string
   priority: string
   responsible_name: string
   created_by_name: string
@@ -14,17 +16,25 @@ export interface BitrixTarea {
   description: string
 }
 
+export interface BitrixStage {
+  id: string
+  name: string
+  color: string
+}
+
 interface ApiResponse {
   source: 'cache' | 'bitrix'
   group_id: string
   group_name: string
   last_sync: string
   total: number
+  stages: BitrixStage[]
   tareas: BitrixTarea[]
 }
 
 export interface BitrixState {
   tareas: BitrixTarea[]
+  stages: BitrixStage[]
   groupName: string
   lastSync: string
   source: 'cache' | 'bitrix' | ''
@@ -36,6 +46,7 @@ export interface BitrixState {
 
 export function useBitrixTareas(groupId: string): BitrixState {
   const [tareas, setTareas]       = useState<BitrixTarea[]>([])
+  const [stages, setStages]       = useState<BitrixStage[]>([])
   const [groupName, setGroupName] = useState('')
   const [lastSync, setLastSync]   = useState('')
   const [source, setSource]       = useState<'cache' | 'bitrix' | ''>('')
@@ -57,6 +68,7 @@ export function useBitrixTareas(groupId: string): BitrixState {
       }
       const data: ApiResponse = await res.json()
       setTareas(data.tareas)
+      setStages(data.stages || [])
       setGroupName(data.group_name || `Grupo ${groupId}`)
       setLastSync(data.last_sync)
       setSource(data.source)
@@ -70,6 +82,7 @@ export function useBitrixTareas(groupId: string): BitrixState {
 
   useEffect(() => {
     setTareas([])
+    setStages([])
     setGroupName('')
     setLastSync('')
     setSource('')
@@ -77,5 +90,5 @@ export function useBitrixTareas(groupId: string): BitrixState {
     load()
   }, [groupId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { tareas, groupName, lastSync, source, loading, syncing, error, sync: () => load(true) }
+  return { tareas, stages, groupName, lastSync, source, loading, syncing, error, sync: () => load(true) }
 }

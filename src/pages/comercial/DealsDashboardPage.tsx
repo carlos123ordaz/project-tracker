@@ -3,12 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, Legend,
 } from 'recharts'
 import {
   RefreshCw, TrendingUp, Trophy, XCircle, Clock,
-  DollarSign, Percent, List, AlertCircle,
+  DollarSign, Percent, List, AlertCircle, CalendarRange,
 } from 'lucide-react'
-import { format, parseISO, differenceInDays } from 'date-fns'
+import { format, parseISO, differenceInDays, startOfWeek, endOfWeek, subWeeks, isWithinInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useDeals, type Deal } from '../../hooks/useDeals'
 import { PageLoader } from '../../components/ui/Loader'
@@ -67,6 +68,24 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { name:
     <div style={{ background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
       <span style={{ color: p.fill ?? p.color ?? 'var(--n-700)', fontWeight: 700 }}>{p.name}: </span>
       <span style={{ color: 'var(--n-900)', fontWeight: 600 }}>{typeof p.value === 'number' && p.value > 999 ? fmtMoney(p.value) : p.value}</span>
+    </div>
+  )
+}
+
+function MultiTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color?: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div style={{ background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
+      {label && <div style={{ fontSize: 11, color: 'var(--n-500)', marginBottom: 4, fontWeight: 600 }}>{label}</div>}
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color, flexShrink: 0 }} />
+          <span style={{ color: 'var(--n-700)', fontWeight: 600 }}>{p.name}: </span>
+          <span style={{ color: 'var(--n-900)', fontWeight: 700 }}>
+            {typeof p.value === 'number' && p.value > 999 ? fmtMoney(p.value) : p.value}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
@@ -254,6 +273,50 @@ export default function DealsDashboardPage() {
       .slice(0, 8)
   , [deals])
 
+  // Deals a través del tiempo (últimas 12 semanas)
+  const byWeek = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 12 }, (_, i) => {
+      const ref = subWeeks(now, 11 - i)
+      const weekStart = startOfWeek(ref, { weekStartsOn: 1 })
+      const weekEnd   = endOfWeek(ref,   { weekStartsOn: 1 })
+      const label     = format(weekStart, 'd MMM', { locale: es })
+      let created = 0, won = 0, createdAmt = 0, wonAmt = 0
+      deals.forEach(d => {
+        try {
+          const dt = parseISO(d.date_create)
+          if (!isWithinInterval(dt, { start: weekStart, end: weekEnd })) return
+          created++
+          createdAmt += parseFloat(d.opportunity) || 0
+          if (d.stage_semantic_id === 'S') { won++; wonAmt += parseFloat(d.opportunity) || 0 }
+        } catch { /* skip */ }
+      })
+      return { week: label, created, won, createdAmt, wonAmt }
+    })
+  }, [deals])
+
+  // Monto creado / ganado esta semana por responsable
+  const byRespWeek = useMemo(() => {
+    const now       = new Date()
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+    const weekEnd   = endOfWeek(now,   { weekStartsOn: 1 })
+    const map: Record<string, { createdAmt: number; wonAmt: number }> = {}
+    deals.forEach(d => {
+      try {
+        const dt = parseISO(d.date_create)
+        if (!isWithinInterval(dt, { start: weekStart, end: weekEnd })) return
+        const name = (d.assigned_by_name || 'Sin asignar').split(' ')[0]
+        if (!map[name]) map[name] = { createdAmt: 0, wonAmt: 0 }
+        const amt = parseFloat(d.opportunity) || 0
+        map[name].createdAmt += amt
+        if (d.stage_semantic_id === 'S') map[name].wonAmt += amt
+      } catch { /* skip */ }
+    })
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.createdAmt - a.createdAmt)
+  }, [deals])
+
   if (loading) return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <PageLoader />
@@ -281,6 +344,9 @@ export default function DealsDashboardPage() {
         <div style={{ flex: 1 }} />
         <Button icon={List} onClick={() => navigate('/comercial/deals?' + searchParams.toString())}>
           Ver lista{searchParams.toString() ? ' (filtrado)' : ''}
+        </Button>
+        <Button icon={CalendarRange} onClick={() => navigate('/comercial/deals/gantt?' + searchParams.toString())}>
+          Gantt
         </Button>
         <Button icon={RefreshCw} onClick={sync} disabled={syncing}>{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>
       </div>
@@ -335,6 +401,59 @@ export default function DealsDashboardPage() {
         <KPI icon={XCircle}    label="Perdidos"       value={stats.lost.toString()}       sub="cerrados perdidos"   color="#b91c1c" bg="#fef2f2"         border="#fecaca" />
         <KPI icon={DollarSign} label="Monto ganado"   value={fmtMoney(stats.wonAmt)}      sub="total deals ganados" color="#15803d" bg="#f0fdf4"         border="#bbf7d0" />
         <KPI icon={Percent}    label="Pipeline activo" value={fmtMoney(stats.pipeAmt)}   sub="oportunidades abiertas" color="var(--brand-700)" bg="var(--brand-50)" border="var(--brand-200)" />
+      </div>
+
+      {/* Row T: Deals a través del tiempo */}
+      <div style={{ marginBottom: 16, flexShrink: 0 }}>
+        <Section title="Deals a través del tiempo (últimas 12 semanas)">
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={byWeek} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradCreated" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradWon" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--n-150)" vertical={false} />
+                <XAxis dataKey="week" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                <Tooltip content={<MultiTooltip />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                <Area type="monotone" dataKey="created" name="Creados" stroke="#6366f1" strokeWidth={2} fill="url(#gradCreated)" dot={{ r: 3, fill: '#6366f1' }} activeDot={{ r: 5 }} />
+                <Area type="monotone" dataKey="won"     name="Ganados" stroke="#16a34a" strokeWidth={2} fill="url(#gradWon)"     dot={{ r: 3, fill: '#16a34a' }} activeDot={{ r: 5 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+      </div>
+
+      {/* Row W: Monto creado/ganado esta semana por responsable */}
+      <div style={{ marginBottom: 16, flexShrink: 0 }}>
+        <Section title={`Monto creado / ganado esta semana por responsable · ${format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'd MMM', { locale: es })}–${format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'd MMM yyyy', { locale: es })}`}>
+          {byRespWeek.length === 0
+            ? <p style={{ fontSize: 12, color: 'var(--n-400)', margin: 0 }}>Sin deals creados esta semana.</p>
+            : (
+              <div style={{ height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={byRespWeek} margin={{ top: 4, right: 16, left: 0, bottom: 36 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--n-150)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" />
+                    <YAxis tickFormatter={v => fmtMoney(v)} tick={{ fontSize: 10 }} />
+                    <Tooltip content={<MultiTooltip />} />
+                    <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="createdAmt" name="Creado ($)" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="wonAmt"     name="Ganado ($)" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )
+          }
+        </Section>
       </div>
 
       {/* Row 1: Donut estados + Etapas (bar) */}

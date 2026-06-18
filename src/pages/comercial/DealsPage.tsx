@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  RefreshCw, Search, TrendingUp, BarChart2,
+  RefreshCw, Search, TrendingUp, BarChart2, CalendarRange,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Trophy, XCircle, Clock, DollarSign, X,
   User, Calendar, Tag, Layers, Hash, Link2,
@@ -350,6 +350,107 @@ function DealDrawer({ deal, onClose }: { deal: Deal | null; onClose: () => void 
   )
 }
 
+// ── searchable select ─────────────────────────────────────────────────────────
+
+function SearchableSelect({
+  value, onChange, options, placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: string[]
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const filtered = useMemo(
+    () => options.filter(o => o.toLowerCase().includes(search.toLowerCase())),
+    [options, search]
+  )
+  const isActive = value !== 'all'
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => { setOpen(o => !o); setSearch('') }}
+        style={{
+          height: 30, padding: '0 8px', fontSize: 11.5,
+          border: `1px solid ${isActive ? 'var(--brand-400)' : 'var(--n-200)'}`,
+          borderRadius: 6,
+          background: isActive ? 'var(--brand-50)' : 'var(--n-0)',
+          color: 'var(--n-800)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 4,
+          maxWidth: 220,
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>
+          {value === 'all' ? placeholder : value}
+        </span>
+        <ChevronDown size={11} style={{ flexShrink: 0, opacity: 0.6 }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, marginTop: 3,
+          background: 'var(--n-0)', border: '1px solid var(--n-200)',
+          borderRadius: 7, boxShadow: '0 4px 16px rgba(0,0,0,.12)',
+          zIndex: 50, minWidth: 210, maxWidth: 300,
+        }}>
+          <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--n-100)' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={11} style={{ position: 'absolute', left: 7, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)', pointerEvents: 'none' }} />
+              <input
+                autoFocus
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar responsable…"
+                style={{
+                  width: '100%', height: 26, paddingLeft: 24, paddingRight: 8,
+                  fontSize: 11.5, border: '1px solid var(--n-200)', borderRadius: 5,
+                  background: 'var(--n-50)', color: 'var(--n-900)', outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {[{ key: 'all', label: placeholder }, ...filtered.map(r => ({ key: r, label: r }))].map(({ key, label }) => (
+              <div
+                key={key}
+                onClick={() => { onChange(key); setOpen(false) }}
+                style={{
+                  padding: '6px 10px', fontSize: 11.5, cursor: 'pointer',
+                  color: value === key ? 'var(--brand-700)' : 'var(--n-700)',
+                  background: value === key ? 'var(--brand-50)' : 'transparent',
+                  fontWeight: value === key ? 600 : 400,
+                  transition: 'background .08s',
+                }}
+                onMouseEnter={e => { if (value !== key) (e.currentTarget as HTMLElement).style.background = 'var(--n-50)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = value === key ? 'var(--brand-50)' : 'transparent' }}
+              >
+                {label}
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: '8px 10px', fontSize: 11.5, color: 'var(--n-400)' }}>Sin resultados</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── pagination ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 100
@@ -593,6 +694,12 @@ export default function DealsPage() {
           </div>
           <div style={{ flex: 1 }} />
           <Button
+            icon={CalendarRange}
+            onClick={() => navigate('/comercial/deals/gantt?' + searchParams.toString())}
+          >
+            Gantt
+          </Button>
+          <Button
             icon={BarChart2}
             onClick={() => navigate('/comercial/deals/dashboard?' + searchParams.toString())}
           >
@@ -656,11 +763,12 @@ export default function DealsPage() {
         {/* Filters — row 2 */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Responsable */}
-          <select value={responsableFilter} onChange={e => setFilter('resp', e.target.value)}
-            style={{ height: 30, padding: '0 8px', fontSize: 11.5, border: `1px solid ${responsableFilter !== 'all' ? 'var(--brand-400)' : 'var(--n-200)'}`, borderRadius: 6, background: responsableFilter !== 'all' ? 'var(--brand-50)' : 'var(--n-0)', color: 'var(--n-800)', outline: 'none', cursor: 'pointer', maxWidth: 220 }}>
-            <option value="all">Todos los responsables</option>
-            {responsables.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
+          <SearchableSelect
+            value={responsableFilter}
+            onChange={v => setFilter('resp', v)}
+            options={responsables}
+            placeholder="Todos los responsables"
+          />
           {/* Etapa */}
           <select value={etapaFilter} onChange={e => setFilter('etapa', e.target.value)}
             style={{ height: 30, padding: '0 8px', fontSize: 11.5, border: `1px solid ${etapaFilter !== 'all' ? 'var(--brand-400)' : 'var(--n-200)'}`, borderRadius: 6, background: etapaFilter !== 'all' ? 'var(--brand-50)' : 'var(--n-0)', color: 'var(--n-800)', outline: 'none', cursor: 'pointer', maxWidth: 220 }}>
