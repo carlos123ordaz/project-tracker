@@ -304,7 +304,7 @@ function SettingsModal({ targets, saving, onSave, onClose }: {
           </thead>
           <tbody>
             {UNIT_TABS.map(u => {
-              const annual  = Number(drafts[u]) || 0
+              const annual  = parseInputNum(drafts[u] ?? '0')
               const monthly = Math.round(annual / 12)
               return (
                 <tr key={u}>
