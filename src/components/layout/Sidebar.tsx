@@ -107,7 +107,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       label: 'Comercial',
       icon: TrendingUp,
       items: [
-        { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp },
+        { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp, end: true },
         { to: '/comercial/deals/dashboard', label: 'Dashboard', icon: BarChart3 },
       ],
     },
