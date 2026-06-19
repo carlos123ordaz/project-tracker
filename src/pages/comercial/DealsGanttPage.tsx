@@ -69,7 +69,7 @@ function dealBarStyle(deal: Deal, today: Date): BarStyle {
 export default function DealsGanttPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { deals: allDeals, lastSync, source, loading, syncing, error, sync } = useDeals()
+  const { deals: allDeals, lastSync, loading, syncing, error, sync } = useDeals()
 
   const [weekOffset, setWeekOffset]   = useState(0)
   const [onlyOverdue, setOnlyOverdue] = useState(false)
