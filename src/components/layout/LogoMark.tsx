@@ -1,12 +1,9 @@
 /**
- * LogoMark — brand icon + wordmark for the sidebar.
- *
- * The icon is a 3-bar ascending chart on an indigo→violet gradient square,
- * drawn entirely with SVG primitives (no external images or fonts for the mark).
+ * LogoMark — CORSUSA brand logo for the sidebar.
  *
  * Usage:
- *   <LogoMark />              → icon only (32 × 32)
- *   <LogoMark showText />     → icon + "Project Tracker" wordmark
+ *   <LogoMark />              → geometric mark only (icon-only, collapsed sidebar)
+ *   <LogoMark showText />     → full CORSUSA logo (expanded sidebar)
  */
 
 interface LogoMarkProps {
@@ -15,115 +12,74 @@ interface LogoMarkProps {
 }
 
 export default function LogoMark({ showText = false, size = 28 }: LogoMarkProps) {
-  const uid = 'lm'          // stable gradient id (one instance on screen)
+  // Shared color palette (adapted for light backgrounds)
+  const colors = (
+    <style>{`
+      .lm-st0 { fill: #0047BA; }
+      .lm-st1 { fill: #0047BA; }
+      .lm-st2 { fill: #2F7DE1; }
+    `}</style>
+  )
 
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-      {/* ── Icon mark ── */}
+  if (showText) {
+    // Full CORSUSA logo (mark + logotype)
+    return (
       <svg
-        width={size}
-        height={size}
-        viewBox="0 0 32 32"
-        fill="none"
+        viewBox="0 0 243.2 55.7"
+        height={32}
+        width={Math.round(243.2 * (32 / 55.7))}
         xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+        aria-label="CORSUSA"
         style={{ display: 'block', flexShrink: 0 }}
-        aria-hidden
       >
-        <defs>
-          {/* Background gradient: indigo → violet */}
-          <linearGradient id={`${uid}-bg`} x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#5B5EF0" />
-            <stop offset="1" stopColor="#7C3AED" />
-          </linearGradient>
-
-          {/* Top-edge gloss */}
-          <linearGradient id={`${uid}-gloss`} x1="0" y1="0" x2="0" y2="1">
-            <stop stopColor="white" stopOpacity=".15" />
-            <stop offset="1" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-
-          {/* Soft drop shadow for the icon */}
-          <filter id={`${uid}-shadow`} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#4F46E5" floodOpacity=".35" />
-          </filter>
-        </defs>
-
-        {/* Rounded background */}
-        <rect width="32" height="32" rx="7.5" fill={`url(#${uid}-bg)`} filter={`url(#${uid}-shadow)`} />
-
-        {/* Top-edge gloss overlay */}
-        <rect width="32" height="14" rx="7.5" fill={`url(#${uid}-gloss)`} />
-
-        {/* ── Ascending bar chart — 3 columns, bottom-aligned at y = 27 ── */}
-
-        {/* Bar 1 — low (leftmost) */}
-        <rect x="5" y="19" width="6" height="8"  rx="1.5" fill="white" fillOpacity=".40" />
-
-        {/* Bar 2 — medium */}
-        <rect x="13" y="12" width="6" height="15" rx="1.5" fill="white" fillOpacity=".72" />
-
-        {/* Bar 3 — full height (rightmost) */}
-        <rect x="21" y="5"  width="6" height="22" rx="1.5" fill="white" />
-
-        {/* Tiny dot on the tallest bar — represents the "current progress" marker */}
-        <circle cx="24" cy="8.5" r="1.8" fill="white" fillOpacity=".35" />
+        {colors}
+        <g id="XMLID_1217_">
+          <g id="XMLID_1223_">
+            <g id="XMLID_1307_">
+              <path className="lm-st0" d="M85.6,40.3c-1.8,0-3.5-0.3-5-1c-1.5-0.6-2.9-1.5-4-2.6c-1.1-1.1-2-2.4-2.6-3.9c-0.6-1.5-1-3.1-1-4.8v-0.1c0-1.7,0.3-3.3,1-4.8c0.6-1.5,1.5-2.8,2.6-4c1.1-1.1,2.5-2,4-2.7c1.6-0.7,3.3-1,5.2-1c1.1,0,2.2,0.1,3.1,0.3c0.9,0.2,1.8,0.4,2.6,0.8c0.8,0.3,1.5,0.7,2.1,1.2c0.7,0.5,1.3,1,1.8,1.5L92.1,23c-1-0.8-1.9-1.5-2.9-2c-1-0.5-2.1-0.7-3.4-0.7c-1,0-2,0.2-2.9,0.6c-0.9,0.4-1.6,0.9-2.3,1.6c-0.6,0.7-1.1,1.5-1.5,2.4c-0.4,0.9-0.5,1.9-0.5,2.9v0.1c0,1,0.2,2,0.5,2.9c0.4,0.9,0.8,1.7,1.5,2.4c0.6,0.7,1.4,1.2,2.3,1.6c0.9,0.4,1.8,0.6,2.9,0.6c1.4,0,2.6-0.3,3.6-0.8c1-0.5,1.9-1.2,2.9-2.1l3.4,3.4c-0.6,0.7-1.3,1.3-2,1.8c-0.7,0.5-1.4,1-2.2,1.4c-0.8,0.4-1.7,0.7-2.7,0.9S86.8,40.3,85.6,40.3z"/>
+              <path className="lm-st0" d="M110.7,40.3c-1.9,0-3.6-0.3-5.2-1c-1.6-0.7-3-1.5-4.1-2.6c-1.2-1.1-2.1-2.4-2.7-3.9c-0.6-1.5-1-3.1-1-4.8v-0.1c0-1.7,0.3-3.3,1-4.8c0.7-1.5,1.6-2.8,2.7-4c1.2-1.1,2.5-2,4.2-2.7c1.6-0.7,3.4-1,5.3-1c1.9,0,3.6,0.3,5.2,1c1.6,0.7,3,1.5,4.1,2.6c1.2,1.1,2.1,2.4,2.7,3.9s1,3.1,1,4.8v0.1c0,1.7-0.3,3.3-1,4.8c-0.7,1.5-1.6,2.8-2.7,4c-1.2,1.1-2.5,2-4.2,2.7C114.4,39.9,112.6,40.3,110.7,40.3z M110.8,35.4c1.1,0,2.1-0.2,3-0.6c0.9-0.4,1.7-0.9,2.3-1.6c0.6-0.7,1.1-1.5,1.5-2.4c0.4-0.9,0.5-1.9,0.5-2.9v-0.1c0-1-0.2-2-0.5-2.9c-0.4-0.9-0.9-1.7-1.5-2.4c-0.7-0.7-1.5-1.2-2.4-1.6c-0.9-0.4-1.9-0.6-3-0.6c-1.1,0-2.1,0.2-3,0.6c-0.9,0.4-1.7,0.9-2.3,1.6c-0.6,0.7-1.2,1.5-1.5,2.4c-0.4,0.9-0.5,1.9-0.5,2.9v0.1c0,1,0.2,2,0.5,2.9c0.4,0.9,0.9,1.7,1.5,2.4c0.7,0.7,1.5,1.2,2.4,1.6C108.7,35.2,109.7,35.4,110.8,35.4z"/>
+              <path className="lm-st0" d="M127.3,15.8h11.3c3.1,0,5.5,0.8,7.2,2.4c1.4,1.4,2.1,3.2,2.1,5.5v0.1c0,1.9-0.5,3.5-1.5,4.8c-1,1.2-2.2,2.1-3.8,2.7l6,8.6h-6.3l-5.3-7.7h-4.3v7.7h-5.4V15.8z M138.3,27.5c1.3,0,2.4-0.3,3.1-0.9c0.7-0.6,1.1-1.4,1.1-2.5V24c0-1.1-0.4-2-1.1-2.6c-0.8-0.6-1.8-0.9-3.1-0.9h-5.4v6.9H138.3z"/>
+              <path className="lm-st0" d="M160.2,40.2c-1.9,0-3.7-0.3-5.5-0.9c-1.8-0.6-3.4-1.6-4.9-2.9l3.2-3.7c1.1,0.9,2.3,1.6,3.5,2.1c1.2,0.5,2.5,0.8,3.9,0.8c1.1,0,2-0.2,2.6-0.6c0.6-0.4,0.9-1,0.9-1.7v-0.1c0-0.3-0.1-0.6-0.2-0.9c-0.1-0.3-0.4-0.5-0.7-0.7c-0.4-0.2-0.9-0.5-1.5-0.7c-0.6-0.2-1.5-0.5-2.5-0.7c-1.2-0.3-2.4-0.6-3.4-1c-1-0.4-1.9-0.8-2.6-1.4c-0.7-0.5-1.2-1.2-1.6-2c-0.4-0.8-0.6-1.8-0.6-3v-0.1c0-1.1,0.2-2.1,0.6-3c0.4-0.9,1-1.6,1.8-2.3c0.8-0.6,1.7-1.1,2.7-1.5c1.1-0.3,2.2-0.5,3.5-0.5c1.8,0,3.5,0.3,5,0.8c1.5,0.5,2.9,1.3,4.2,2.3l-2.8,4c-1.1-0.7-2.2-1.3-3.2-1.7c-1.1-0.4-2.1-0.6-3.2-0.6c-1.1,0-1.8,0.2-2.4,0.6c-0.5,0.4-0.8,0.9-0.8,1.5v0.1c0,0.4,0.1,0.7,0.2,1c0.2,0.3,0.4,0.5,0.8,0.8c0.4,0.2,0.9,0.4,1.6,0.7c0.7,0.2,1.6,0.4,2.6,0.7c1.2,0.3,2.4,0.7,3.3,1.1c1,0.4,1.8,0.9,2.5,1.4c0.7,0.6,1.2,1.2,1.5,2c0.3,0.8,0.5,1.7,0.5,2.7v0.1c0,1.2-0.2,2.3-0.7,3.2c-0.4,0.9-1.1,1.7-1.9,2.3c-0.8,0.6-1.7,1.1-2.8,1.4C162.8,40,161.6,40.2,160.2,40.2z"/>
+              <path className="lm-st0" d="M183,40.2c-3.3,0-5.9-0.9-7.8-2.7c-1.9-1.8-2.9-4.5-2.9-8V15.8h5.4v13.6c0,2,0.5,3.5,1.4,4.5s2.2,1.5,3.9,1.5c1.7,0,3-0.5,3.9-1.4c0.9-1,1.4-2.4,1.4-4.3V15.8h5.4v13.6c0,1.8-0.3,3.4-0.8,4.8c-0.5,1.4-1.2,2.5-2.2,3.4c-0.9,0.9-2.1,1.6-3.4,2C186.1,40,184.6,40.2,183,40.2z"/>
+              <path className="lm-st0" d="M206.8,40.2c-1.9,0-3.7-0.3-5.5-0.9c-1.8-0.6-3.4-1.6-4.9-2.9l3.2-3.7c1.1,0.9,2.3,1.6,3.5,2.1c1.2,0.5,2.5,0.8,3.9,0.8c1.1,0,2-0.2,2.6-0.6c0.6-0.4,0.9-1,0.9-1.7v-0.1c0-0.3-0.1-0.6-0.2-0.9c-0.1-0.3-0.4-0.5-0.7-0.7c-0.4-0.2-0.9-0.5-1.5-0.7c-0.6-0.2-1.5-0.5-2.5-0.7c-1.2-0.3-2.4-0.6-3.4-1c-1-0.4-1.9-0.8-2.6-1.4c-0.7-0.5-1.2-1.2-1.6-2c-0.4-0.8-0.6-1.8-0.6-3v-0.1c0-1.1,0.2-2.1,0.6-3c0.4-0.9,1-1.6,1.8-2.3c0.8-0.6,1.7-1.1,2.7-1.5c1.1-0.3,2.2-0.5,3.5-0.5c1.8,0,3.5,0.3,5,0.8c1.5,0.5,2.9,1.3,4.2,2.3l-2.8,4c-1.1-0.7-2.2-1.3-3.2-1.7c-1.1-0.4-2.1-0.6-3.2-0.6s-1.8,0.2-2.4,0.6c-0.5,0.4-0.8,0.9-0.8,1.5v0.1c0,0.4,0.1,0.7,0.2,1c0.2,0.3,0.4,0.5,0.8,0.8c0.4,0.2,0.9,0.4,1.6,0.7c0.7,0.2,1.6,0.4,2.6,0.7c1.2,0.3,2.4,0.7,3.3,1.1s1.8,0.9,2.5,1.4c0.7,0.6,1.2,1.2,1.5,2c0.3,0.8,0.5,1.7,0.5,2.7v0.1c0,1.2-0.2,2.3-0.7,3.2c-0.4,0.9-1.1,1.7-1.9,2.3c-0.8,0.6-1.7,1.1-2.8,1.4C209.3,40,208.1,40.2,206.8,40.2z"/>
+              <path className="lm-st0" d="M227.7,15.6h5l10.6,24.2h-5.7l-2.3-5.4h-10.4l-2.3,5.4h-5.5L227.7,15.6z M233.4,29.8l-3.3-7.8l-3.3,7.8H233.4z"/>
+            </g>
+            <path className="lm-st0" d="M20.3,55.7c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l33-32.3c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-33,32.3C22,55.3,21.1,55.7,20.3,55.7z"/>
+            <path className="lm-st1" d="M36.8,55.6c-0.6,0-1.3-0.2-1.8-0.5l-0.2-0.1c-1.5-1-1.9-3-0.9-4.5c1-1.5,3-1.9,4.6-0.9l0.2,0.1c1.5,1,1.9,3,0.9,4.5C38.9,55.1,37.9,55.6,36.8,55.6z"/>
+            <path className="lm-st2" d="M10.1,49.5c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l9.1-8.9c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-9.1,8.9C11.8,49.2,10.9,49.5,10.1,49.5z"/>
+            <path className="lm-st2" d="M48.8,43.9c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l4.5-4.4c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-4.5,4.4C50.5,43.6,49.6,43.9,48.8,43.9z"/>
+            <path className="lm-st1" d="M3.7,39.8c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l0.1-0.1c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5L6,38.8C5.4,39.5,4.5,39.8,3.7,39.8z"/>
+            <path className="lm-st1" d="M28.1,32c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5L44.7,8c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-19,18.6C29.7,31.7,28.9,32,28.1,32z"/>
+            <path className="lm-st0" d="M12.6,31c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5L34.7,1.7c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5L14.9,30.1C14.3,30.7,13.5,31,12.6,31z"/>
+            <path className="lm-st1" d="M3.3,24.1c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l9.5-9.3c1.3-1.3,3.4-1.3,4.6,0s1.3,3.3,0,4.5l-9.5,9.3C5,23.8,4.1,24.1,3.3,24.1z"/>
+          </g>
+          <path className="lm-st2" d="M21,6.7c-1.8,0-3.3-1.4-3.3-3.2V3.2C17.7,1.4,19.2,0,21,0s3.3,1.4,3.3,3.2v0.3C24.3,5.3,22.8,6.7,21,6.7z"/>
+        </g>
       </svg>
+    )
+  }
 
-      {/* ── Wordmark (shown only when expanded) ── */}
-      {showText && (
-        <span
-          aria-label="Project Tracker"
-          style={{
-            display: 'inline-flex',
-            flexDirection: 'column',
-            lineHeight: 1,
-            gap: 2,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {/* Main name — rendered as SVG text so it stays crisp at all sizes
-              and matches the design font, without relying on a web-font load */}
-          <svg
-            width="101"
-            height="28"
-            viewBox="0 0 101 28"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-          >
-            <defs>
-              <linearGradient id={`${uid}-text`} x1="0" y1="0" x2="101" y2="0" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#15171C" />
-                <stop offset="1" stopColor="#3B414C" />
-              </linearGradient>
-            </defs>
-
-            {/* "Project" — weight 650, size 13 */}
-            <text
-              x="0" y="13"
-              fontFamily="'Inter', 'Helvetica Neue', Arial, sans-serif"
-              fontSize="13"
-              fontWeight="650"
-              letterSpacing="-0.25"
-              fill="url(#lm-text)"
-            >
-              Project
-            </text>
-
-            {/* "Tracker" — weight 400, size 10.5, muted */}
-            <text
-              x="0.5" y="26"
-              fontFamily="'Inter', 'Helvetica Neue', Arial, sans-serif"
-              fontSize="10.5"
-              fontWeight="450"
-              letterSpacing="0.15"
-              fill="#7A818F"
-            >
-              TRACKER
-            </text>
-          </svg>
-        </span>
-      )}
-    </span>
+  // Icon-only: geometric C-mark cropped from the left portion of the logo
+  return (
+    <svg
+      viewBox="0 0 62 55.7"
+      width={size}
+      height={size}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="CORSUSA"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      {colors}
+      <path className="lm-st0" d="M20.3,55.7c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l33-32.3c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-33,32.3C22,55.3,21.1,55.7,20.3,55.7z"/>
+      <path className="lm-st1" d="M36.8,55.6c-0.6,0-1.3-0.2-1.8-0.5l-0.2-0.1c-1.5-1-1.9-3-0.9-4.5c1-1.5,3-1.9,4.6-0.9l0.2,0.1c1.5,1,1.9,3,0.9,4.5C38.9,55.1,37.9,55.6,36.8,55.6z"/>
+      <path className="lm-st2" d="M10.1,49.5c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l9.1-8.9c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-9.1,8.9C11.8,49.2,10.9,49.5,10.1,49.5z"/>
+      <path className="lm-st2" d="M48.8,43.9c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l4.5-4.4c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-4.5,4.4C50.5,43.6,49.6,43.9,48.8,43.9z"/>
+      <path className="lm-st1" d="M3.7,39.8c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l0.1-0.1c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5L6,38.8C5.4,39.5,4.5,39.8,3.7,39.8z"/>
+      <path className="lm-st1" d="M28.1,32c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5L44.7,8c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5l-19,18.6C29.7,31.7,28.9,32,28.1,32z"/>
+      <path className="lm-st0" d="M12.6,31c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5L34.7,1.7c1.3-1.3,3.4-1.3,4.6,0c1.3,1.3,1.3,3.3,0,4.5L14.9,30.1C14.3,30.7,13.5,31,12.6,31z"/>
+      <path className="lm-st1" d="M3.3,24.1c-0.8,0-1.7-0.3-2.3-0.9c-1.3-1.3-1.3-3.3,0-4.5l9.5-9.3c1.3-1.3,3.4-1.3,4.6,0s1.3,3.3,0,4.5l-9.5,9.3C5,23.8,4.1,24.1,3.3,24.1z"/>
+      <path className="lm-st2" d="M21,6.7c-1.8,0-3.3-1.4-3.3-3.2V3.2C17.7,1.4,19.2,0,21,0s3.3,1.4,3.3,3.2v0.3C24.3,5.3,22.8,6.7,21,6.7z"/>
+    </svg>
   )
 }

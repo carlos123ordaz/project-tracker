@@ -1,7 +1,7 @@
 -- ============================================================
 -- RESET COMPLETO — elimina todo y lo recrea desde cero
 -- Incluye: core, presupuestos, cronogramas, RRHH/GPS,
---          compras y valorizaciones
+--          compras, valorizaciones y módulo de Cotizaciones
 -- Ejecuta este SQL en el SQL Editor de tu proyecto Supabase
 -- ============================================================
 
@@ -18,15 +18,28 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 --    (elimina automáticamente todos los triggers dependientes)
 -- ============================================================
 
-DROP FUNCTION IF EXISTS update_updated_at() CASCADE;
-DROP FUNCTION IF EXISTS set_updated_at()    CASCADE;
-DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at()        CASCADE;
+DROP FUNCTION IF EXISTS set_updated_at()           CASCADE;
+DROP FUNCTION IF EXISTS fn_set_cotizacion_numero() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_new_user()   CASCADE;
 
 
 -- ============================================================
 -- 3. ELIMINAR TABLAS (orden por dependencias FK)
 -- ============================================================
 
+-- Módulo Cotizaciones
+DROP TABLE IF EXISTS cotizacion_cashflow_ingresos  CASCADE;
+DROP TABLE IF EXISTS cotizacion_cashflow_egresos   CASCADE;
+DROP TABLE IF EXISTS cotizacion_cronograma         CASCADE;
+DROP TABLE IF EXISTS cotizacion_gastos_generales   CASCADE;
+DROP TABLE IF EXISTS cotizacion_partidas           CASCADE;
+DROP TABLE IF EXISTS cotizacion_secciones          CASCADE;
+DROP TABLE IF EXISTS cotizacion_disciplinas        CASCADE;
+DROP TABLE IF EXISTS cotizaciones                  CASCADE;
+DROP TABLE IF EXISTS personal_tarifas              CASCADE;
+
+-- Core
 DROP TABLE IF EXISTS budget_pie_rows        CASCADE;
 DROP TABLE IF EXISTS comparison_quotes      CASCADE;
 DROP TABLE IF EXISTS comparison_items       CASCADE;
@@ -488,11 +501,134 @@ CREATE TABLE valuation_items (
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── Módulo Cotizaciones ────────────────────────────────────
+
+CREATE TABLE personal_tarifas (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  perfil          TEXT        NOT NULL,
+  tipo_contrato   TEXT        NOT NULL DEFAULT 'planilla',  -- planilla | recibo
+  factor_empresa  NUMERIC(5,3) NOT NULL DEFAULT 1.400,
+  sueldo_seg_a    NUMERIC(12,2) NOT NULL DEFAULT 0,
+  sueldo_seg_b    NUMERIC(12,2) NOT NULL DEFAULT 0,
+  sueldo_seg_c    NUMERIC(12,2) NOT NULL DEFAULT 0,
+  orden           INT         NOT NULL DEFAULT 0,
+  activo          BOOLEAN     NOT NULL DEFAULT true,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizaciones (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  numero         TEXT        UNIQUE,                        -- auto-generado por trigger; NULL hasta insertar
+  titulo         TEXT        NOT NULL,
+  cliente        TEXT,
+  proyecto       TEXT,
+  ubicacion      TEXT,
+  descripcion    TEXT,
+  segmento       TEXT        NOT NULL DEFAULT 'B',          -- A | B | C
+  tipo_cambio    NUMERIC(8,4) NOT NULL DEFAULT 3.75,
+  status         TEXT        NOT NULL DEFAULT 'Borrador',
+  plazo_semanas  INT,
+  garantia_meses INT,
+  validez_dias   INT         DEFAULT 30,
+  notas          TEXT,
+  created_by     UUID        REFERENCES auth.users(id),
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_disciplinas (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  cotizacion_id   UUID        NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
+  tipo            TEXT        NOT NULL,
+  nombre          TEXT        NOT NULL,
+  imprevistos_pct NUMERIC(5,2) NOT NULL DEFAULT 5,
+  margen_pct      NUMERIC(5,2) NOT NULL DEFAULT 15,
+  orden           INT         NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_secciones (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  disciplina_id UUID NOT NULL REFERENCES cotizacion_disciplinas(id) ON DELETE CASCADE,
+  codigo        TEXT,
+  nombre        TEXT NOT NULL,
+  orden         INT  NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_partidas (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  seccion_id      UUID        NOT NULL REFERENCES cotizacion_secciones(id) ON DELETE CASCADE,
+  disciplina_id   UUID        NOT NULL REFERENCES cotizacion_disciplinas(id) ON DELETE CASCADE,
+  tipo            TEXT        NOT NULL DEFAULT 'mo',  -- mo | material | viatico | epp | subcontrato | otro
+  codigo          TEXT,
+  descripcion     TEXT        NOT NULL,
+  area            TEXT,
+  producto_bitrix TEXT,
+  perfil_id       UUID        REFERENCES personal_tarifas(id),
+  personas        INT,
+  dias            INT,
+  unidad          TEXT        DEFAULT 'glb',
+  metrado         NUMERIC(14,4) DEFAULT 1,
+  precio_unitario NUMERIC(14,4) DEFAULT 0,
+  costo_compra    NUMERIC(14,4) DEFAULT 0,
+  notas           TEXT,
+  orden           INT         NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_gastos_generales (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  cotizacion_id UUID        NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
+  categoria     TEXT        NOT NULL DEFAULT 'Variables',  -- 'Variables' | 'Fijos'
+  descripcion   TEXT        NOT NULL,
+  unidad        TEXT        NOT NULL DEFAULT 'MES',
+  tiempo_pct    NUMERIC(5,3) DEFAULT 0,
+  cantidad      INT         DEFAULT 1,
+  mensual_usd   NUMERIC(14,2) DEFAULT 0,
+  orden         INT         NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_cronograma (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cotizacion_id UUID NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
+  item          INT  NOT NULL DEFAULT 0,
+  descripcion   TEXT NOT NULL,
+  semana_inicio INT  NOT NULL DEFAULT 1,
+  semana_fin    INT  NOT NULL DEFAULT 1,
+  tipo          TEXT NOT NULL DEFAULT 'tarea',  -- 'tarea' | 'hito' | 'entregable'
+  color         TEXT DEFAULT null,
+  orden         INT  NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_cashflow_egresos (
+  id            UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+  cotizacion_id UUID  NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
+  descripcion   TEXT  NOT NULL,
+  periodos      JSONB NOT NULL DEFAULT '[]',
+  orden         INT   NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE cotizacion_cashflow_ingresos (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  cotizacion_id UUID        NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
+  descripcion   TEXT        NOT NULL,
+  porcentaje    NUMERIC(5,2) NOT NULL DEFAULT 0,
+  periodos      JSONB       NOT NULL DEFAULT '[]',
+  orden         INT         NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 
 -- ============================================================
 -- 5. ÍNDICES
 -- ============================================================
 
+-- Core
 CREATE INDEX idx_tasks_project_id          ON tasks(project_id);
 CREATE INDEX idx_tasks_status              ON tasks(status);
 CREATE INDEX idx_tasks_sort_order          ON tasks(status, sort_order);
@@ -525,6 +661,16 @@ CREATE INDEX idx_libro_partidas_libro      ON libro_partidas(libro_nombre);
 CREATE INDEX idx_libro_partidas_codigo     ON libro_partidas(codigo);
 CREATE INDEX idx_libro_insumos_libro       ON libro_insumos(libro_nombre);
 
+-- Cotizaciones
+CREATE INDEX idx_cotizacion_disciplinas_cot ON cotizacion_disciplinas(cotizacion_id);
+CREATE INDEX idx_cotizacion_secciones_disc  ON cotizacion_secciones(disciplina_id);
+CREATE INDEX idx_cotizacion_partidas_sec    ON cotizacion_partidas(seccion_id);
+CREATE INDEX idx_cotizacion_partidas_disc   ON cotizacion_partidas(disciplina_id);
+CREATE INDEX idx_gastos_generales_cot       ON cotizacion_gastos_generales(cotizacion_id);
+CREATE INDEX idx_cronograma_cot             ON cotizacion_cronograma(cotizacion_id);
+CREATE INDEX idx_cashflow_egresos_cot       ON cotizacion_cashflow_egresos(cotizacion_id);
+CREATE INDEX idx_cashflow_ingresos_cot      ON cotizacion_cashflow_ingresos(cotizacion_id);
+
 
 -- ============================================================
 -- 6. FUNCIÓN Y TRIGGERS updated_at
@@ -538,6 +684,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Core
 CREATE TRIGGER trg_user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -602,9 +749,39 @@ CREATE TRIGGER trg_budget_pie_rows_updated_at
   BEFORE UPDATE ON budget_pie_rows
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- Cotizaciones
+CREATE TRIGGER trg_cotizaciones_updated_at
+  BEFORE UPDATE ON cotizaciones
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_cotizacion_partidas_updated_at
+  BEFORE UPDATE ON cotizacion_partidas
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 
 -- ============================================================
--- 7. TRIGGER: crear perfil al registrar usuario en auth
+-- 7. TRIGGER: auto-número de cotización
+--    Genera '001', '002'... si se inserta sin numero
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_set_cotizacion_numero()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE v_next INT;
+BEGIN
+  SELECT COALESCE(MAX(CAST(NULLIF(regexp_replace(numero::text,'[^0-9]','','g'),'') AS INT)), 0) + 1
+  INTO v_next FROM cotizaciones;
+  NEW.numero := LPAD(v_next::TEXT, 3, '0');
+  RETURN NEW;
+END;$$;
+
+CREATE TRIGGER trg_cotizacion_numero
+BEFORE INSERT ON cotizaciones
+FOR EACH ROW WHEN (NEW.numero IS NULL OR NEW.numero::text = '')
+EXECUTE FUNCTION fn_set_cotizacion_numero();
+
+
+-- ============================================================
+-- 8. TRIGGER: crear perfil al registrar usuario en auth
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -627,68 +804,87 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- ============================================================
--- 8. ROW LEVEL SECURITY
+-- 9. ROW LEVEL SECURITY
 -- ============================================================
 
-ALTER TABLE user_profiles          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE module_permissions     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE task_statuses          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE task_priorities        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE task_types             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_members           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE projects               ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tasks                  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budgets                ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budget_resources       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budget_items           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE apu_lines              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budget_gg_items        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE schedules              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE schedule_tasks         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE schedule_actuals       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE attendance_records     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE articles               ENABLE ROW LEVEL SECURITY;
-ALTER TABLE suppliers              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE purchase_comparisons   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comparison_items       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comparison_suppliers   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comparison_quotes      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE valuations             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE valuation_items        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budget_pie_rows        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE libros                 ENABLE ROW LEVEL SECURITY;
-ALTER TABLE libro_partidas         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE libro_insumos          ENABLE ROW LEVEL SECURITY;
+-- Habilitar RLS
+ALTER TABLE user_profiles               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE module_permissions          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_statuses               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_priorities             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_types                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_members                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks                       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budgets                     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_resources            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_items                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE apu_lines                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_gg_items             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedules                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule_tasks              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule_actuals            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance_records          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE articles                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_comparisons        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comparison_items            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comparison_suppliers        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comparison_quotes           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE valuations                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE valuation_items             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_pie_rows             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libros                      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libro_partidas              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE libro_insumos               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE personal_tarifas            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizaciones                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_disciplinas      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_secciones        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_partidas         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_gastos_generales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_cronograma       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_cashflow_egresos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_cashflow_ingresos ENABLE ROW LEVEL SECURITY;
 
--- Tablas de datos: acceso total para usuarios autenticados
-CREATE POLICY "Allow all on task_statuses"       ON task_statuses       FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on task_priorities"     ON task_priorities     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on task_types"          ON task_types          FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on team_members"        ON team_members        FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on projects"            ON projects            FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on tasks"               ON tasks               FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on audit_logs"          ON audit_logs          FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on budgets"             ON budgets             FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on budget_resources"    ON budget_resources    FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on budget_items"        ON budget_items        FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on apu_lines"           ON apu_lines           FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on budget_gg_items"     ON budget_gg_items     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on schedules"           ON schedules           FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on schedule_tasks"      ON schedule_tasks      FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on schedule_actuals"    ON schedule_actuals    FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on articles"            ON articles            FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on suppliers"           ON suppliers           FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Políticas: acceso total para usuarios autenticados
+CREATE POLICY "Allow all on task_statuses"        ON task_statuses        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on task_priorities"      ON task_priorities      FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on task_types"           ON task_types           FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on team_members"         ON team_members         FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on projects"             ON projects             FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on tasks"                ON tasks                FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on audit_logs"           ON audit_logs           FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budgets"              ON budgets              FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budget_resources"     ON budget_resources     FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budget_items"         ON budget_items         FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on apu_lines"            ON apu_lines            FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budget_gg_items"      ON budget_gg_items      FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on schedules"            ON schedules            FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on schedule_tasks"       ON schedule_tasks       FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on schedule_actuals"     ON schedule_actuals     FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on articles"             ON articles             FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on suppliers"            ON suppliers            FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on purchase_comparisons" ON purchase_comparisons FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on comparison_items"    ON comparison_items    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on comparison_items"     ON comparison_items     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on comparison_suppliers" ON comparison_suppliers FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on comparison_quotes"   ON comparison_quotes   FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on valuations"          ON valuations          FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on valuation_items"     ON valuation_items     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on budget_pie_rows"     ON budget_pie_rows     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on libros"              ON libros              FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on libro_partidas"      ON libro_partidas      FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on libro_insumos"       ON libro_insumos       FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on comparison_quotes"    ON comparison_quotes    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on valuations"           ON valuations           FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on valuation_items"      ON valuation_items      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on budget_pie_rows"      ON budget_pie_rows      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libros"               ON libros               FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libro_partidas"       ON libro_partidas       FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on libro_insumos"        ON libro_insumos        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "auth all on personal_tarifas"      ON personal_tarifas     FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizaciones"                ON cotizaciones                FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_disciplinas"      ON cotizacion_disciplinas      FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_secciones"        ON cotizacion_secciones        FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_partidas"         ON cotizacion_partidas         FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_gastos_generales" ON cotizacion_gastos_generales FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_cronograma"       ON cotizacion_cronograma       FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_cashflow_egresos"  ON cotizacion_cashflow_egresos  FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on cotizacion_cashflow_ingresos" ON cotizacion_cashflow_ingresos FOR ALL USING (auth.role() = 'authenticated');
 
 -- user_profiles
 CREATE POLICY "Authenticated read user_profiles"
@@ -710,70 +906,10 @@ CREATE POLICY "Authenticated write attendance"
 
 
 -- ============================================================
--- 9. DATOS INICIALES DE CONFIGURACIÓN
+-- PRIMER SUPERADMIN (ejecutar manualmente después del primer login)
 -- ============================================================
-
-INSERT INTO budget_pie_rows (variable, description, formula, highlight, sort_order) VALUES
-  ('GG',    'GASTOS GENERALES',   'CD * 0.10',       false, 0),
-  ('UTI',   'UTILIDAD',           'CD * 0.08',       false, 1),
-  ('ST',    'SUBTOTAL',           'CD + GG + UTI',   true,  2),
-  ('IGV',   'IGV',                'ST * 0.18',       false, 3),
-  ('TOTAL', 'TOTAL PRESUPUESTO',  'ST + IGV',        true,  4);
-
-INSERT INTO task_statuses (name, color, dot_color, sort_order) VALUES
-  ('No Iniciado', '#F3F4F6', '#9CA3AF', 0),
-  ('En Progreso',  '#DBEAFE', '#3B82F6', 1),
-  ('Retrasado',    '#FEE2E2', '#EF4444', 2),
-  ('Completado',   '#D1FAE5', '#10B981', 3);
-
-INSERT INTO task_priorities (name, color, sort_order) VALUES
-  ('Crítica', '#FEF2F2', 0),
-  ('Alta',    '#FFF7ED', 1),
-  ('Media',   '#FEFCE8', 2),
-  ('Baja',    '#F9FAFB', 3);
-
-INSERT INTO task_types (name, sort_order) VALUES
-  ('Diseño',               0),
-  ('Ejecución',            1),
-  ('Compras y Logistica',  2),
-  ('Prueba',               3),
-  ('Venta de Equipos',     4),
-  ('Documentación',        5),
-  ('Comercial',            6),
-  ('Gerencia',             7),
-  ('E-Mail',               8),
-  ('Ingeniería',           9),
-  ('Supervisión',         10),
-  ('Gestión',             11);
-
-INSERT INTO team_members (name, role, sort_order) VALUES
-  ('Juan Jimenez',       'Líder de Proyecto',   0),
-  ('Jhunior Contreras',  'Ingeniería',           1),
-  ('Fiorella Rojas',     'Compras y Logística',  2),
-  ('Brandon Coronado',   'Proyectos',            3),
-  ('Richard Samayani',   'Proyectos',            4),
-  ('Paolo Marcas',       'Proyectos',            5),
-  ('Marco Alvitez',      'Venta de Equipos',     6),
-  ('Marco Reyna',        'Proyectos',            7),
-  ('Sabino Vicuña',      'Logística',            8),
-  ('Fredy Huaman',       'Proyectos',            9),
-  ('Dustin Gomez',       'Ingeniería',          10),
-  ('Mariate Rios',       'Administración',      11),
-  ('Jean Lucero',        'Venta de Equipos',    12),
-  ('Francisco Gonzales', 'Gerencia',            13),
-  ('Fabricante',         'Externo',             14);
-
-
--- ============================================================
--- 10. CONFIGURAR EL PRIMER SUPERADMIN
--- ============================================================
--- Después de hacer login con tu cuenta, ejecuta:
 --
---   UPDATE user_profiles
---   SET is_superadmin = true
+--   UPDATE user_profiles SET is_superadmin = true
 --   WHERE email = 'tu-email@empresa.com';
 --
--- O para el primer usuario registrado:
---   UPDATE user_profiles SET is_superadmin = true
---   WHERE id = (SELECT id FROM user_profiles ORDER BY created_at LIMIT 1);
 -- ============================================================

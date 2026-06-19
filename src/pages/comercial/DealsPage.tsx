@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  RefreshCw, Search, TrendingUp, BarChart2, CalendarRange,
+  RefreshCw, Search, TrendingUp, CalendarRange,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Trophy, XCircle, Clock, DollarSign, X,
   User, Calendar, Tag, Layers, Hash, Link2,
@@ -699,12 +699,7 @@ export default function DealsPage() {
           >
             Gantt
           </Button>
-          <Button
-            icon={BarChart2}
-            onClick={() => navigate('/comercial/deals/dashboard?' + searchParams.toString())}
-          >
-            Dashboard
-          </Button>
+
           <Button
             icon={RefreshCw}
             onClick={sync}

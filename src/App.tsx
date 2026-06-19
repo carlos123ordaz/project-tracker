@@ -38,6 +38,7 @@ import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
 import DealsPage from './pages/comercial/DealsPage'
 import DealsDashboardPage from './pages/comercial/DealsDashboardPage'
 import DealsGanttPage from './pages/comercial/DealsGanttPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 function AuthenticatedApp() {
   const { user, loading, accountDisabled, signOut } = useAuth()
@@ -126,6 +127,7 @@ function AuthenticatedApp() {
           <Route path="/comercial/deals/dashboard"  element={<DealsDashboardPage />} />
           <Route path="/comercial/deals/gantt"      element={<DealsGanttPage />} />
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ConfigDataProvider>
   )

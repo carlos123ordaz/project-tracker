@@ -70,13 +70,6 @@ export default function BitrixTareasPage() {
     ? stages.map(s => s.name)
     : ALL_STATUSES
 
-  const statusCounts = kanbanColumns.reduce((acc, s) => {
-    acc[s] = useStages
-      ? tareas.filter(t => t.stage_name === s).length
-      : tareas.filter(t => t.status === s).length
-    return acc
-  }, {} as Record<string, number>)
-
   const busy = loading || syncing
 
   function downloadCSV() {
@@ -178,30 +171,6 @@ export default function BitrixTareasPage() {
         </div>
       </div>
 
-      {/* Status pills */}
-      {!loading && tareas.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-          <button
-            onClick={() => setFilterStatus('Todos')}
-            style={{ ...pillStyle, ...(filterStatus === 'Todos' ? activePillStyle : {}) }}
-          >
-            {tareas.length} total
-          </button>
-          {kanbanColumns.filter(s => statusCounts[s] > 0).map(s => {
-            const st     = STATUS_STYLE[s] || STATUS_STYLE['Nueva']
-            const active = filterStatus === s
-            return (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(prev => prev === s ? 'Todos' : s)}
-                style={{ ...pillStyle, background: active ? st.bg : '#fff', color: active ? st.color : 'var(--n-500)', border: active ? `1.5px solid ${st.border}` : '1px solid var(--n-200)' }}
-              >
-                {statusCounts[s]} {s}
-              </button>
-            )
-          })}
-        </div>
-      )}
 
       {/* Error */}
       {error && (
@@ -237,7 +206,7 @@ export default function BitrixTareasPage() {
                 ? filtered.filter(t => t.stage_id === col.id)
                 : filtered.filter(t => t.status === col.id)
               return (
-                <div key={col.id} style={{ flex: '0 0 210px', width: 210, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden' }}>
+                <div key={col.id} style={{ flex: '0 0 240px', width: 240, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', borderRadius: '8px 8px 0 0', background: headerBg, border: `1px solid ${headerBorder}`, borderBottom: 'none' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: headerColor, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {col.name}
@@ -254,23 +223,23 @@ export default function BitrixTareasPage() {
                         const overdue = isOverdue(t.deadline, t.status)
                         const accentColor = stageColor || st.color
                         return (
-                          <div key={t.id} style={{ background: '#fff', borderRadius: 6, padding: '7px 9px', border: '1px solid var(--n-150)', borderLeft: `3px solid ${accentColor}`, boxShadow: '0 1px 2px rgba(0,0,0,.04)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, overflow: 'hidden' }}>
-                            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-900)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                          <div key={t.id} style={{ background: '#fff', borderRadius: 7, padding: '10px 11px', border: '1px solid var(--n-150)', borderLeft: `3px solid ${accentColor}`, boxShadow: '0 1px 3px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-900)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.title}</div>
                             {t.description && (
-                              <div style={{ fontSize: 10, color: 'var(--n-400)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t.description}</div>
+                              <div style={{ fontSize: 10.5, color: 'var(--n-400)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.description}</div>
                             )}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, minWidth: 0 }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: pr.color, flexShrink: 0 }}>
-                                <span style={{ width: 5, height: 5, borderRadius: '50%', background: pr.dot }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2, minWidth: 0 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10.5, fontWeight: 600, color: pr.color, flexShrink: 0 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: pr.dot }} />
                                 {t.priority}
                               </span>
                               {t.responsible_name && (
-                                <span style={{ fontSize: 10, color: 'var(--n-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: 10.5, color: 'var(--n-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
                                   {t.responsible_name.split(' ')[0]}
                                 </span>
                               )}
                               {t.deadline && (
-                                <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: overdue ? 'var(--red-600)' : 'var(--n-400)', background: overdue ? 'var(--red-50)' : 'transparent', padding: overdue ? '1px 4px' : '0', borderRadius: 4 }}>
+                                <span style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 600, color: overdue ? 'var(--red-600)' : 'var(--n-400)', background: overdue ? 'var(--red-50)' : 'transparent', padding: overdue ? '2px 5px' : '0', borderRadius: 4 }}>
                                   {overdue && '⚠ '}{formatDate(t.deadline)}
                                 </span>
                               )}
@@ -378,11 +347,3 @@ const selectStyle: React.CSSProperties = {
   background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer',
 }
 
-const pillStyle: React.CSSProperties = {
-  padding: '3px 10px', borderRadius: 20, border: '1px solid var(--n-200)',
-  background: '#fff', cursor: 'pointer', fontSize: 11.5, color: 'var(--n-500)', fontWeight: 600,
-}
-
-const activePillStyle: React.CSSProperties = {
-  border: '1.5px solid var(--brand-300)', background: 'var(--brand-50)', color: 'var(--brand-700)',
-}

@@ -92,7 +92,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       items: [
         { to: '/compras', label: 'Comparativos', icon: TrendingDown, end: true },
         { to: '/compras/proveedores', label: 'Proveedores', icon: Building2 },
-        { to: '/compras/tareas/91', label: 'Tareas Compras', icon: ListChecks },
+        { to: '/compras/tareas/91', label: 'Compras Locales', icon: ListChecks },
+        { to: '/compras/tareas/85', label: 'Importaciones', icon: ListChecks },
       ],
     },
     {
@@ -107,6 +108,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: TrendingUp,
       items: [
         { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp },
+        { to: '/comercial/deals/dashboard', label: 'Dashboard', icon: BarChart3 },
       ],
     },
   ]

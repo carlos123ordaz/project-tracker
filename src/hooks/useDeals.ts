@@ -23,6 +23,8 @@ export interface Deal {
   alcance_pau: string         // 'No llenado' | 'Si Incluye' | 'No incluye'
   alcance_pic: string         // 'No llenado' | 'Si Incluye' | 'No incluye'
   dept_cisac: string          // comma-separated: 'Ventas', 'Servicios', 'Proyectos', 'QHSE'
+  company_id: string
+  business_units: string      // comma-separated: 'UNAI', 'PROSER', 'UNAU', etc.
 }
 
 interface ApiResponse {
