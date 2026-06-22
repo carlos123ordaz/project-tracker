@@ -32,6 +32,11 @@ import ArticulosPage from './pages/compras/ArticulosPage'
 import BitrixTareasPage from './pages/compras/BitrixTareasPage'
 import ComprasGanttPage from './pages/compras/ComprasGanttPage'
 import ComprasDashboardPage from './pages/compras/ComprasDashboardPage'
+import SeguimientoGestionPage from './pages/compras/SeguimientoGestionPage'
+import SeguimientoGanttPage from './pages/compras/SeguimientoGanttPage'
+import SeguimientoDashboardPage from './pages/compras/SeguimientoDashboardPage'
+import SolicitudCompraBOMPage from './pages/compras/SolicitudCompraBOMPage'
+import SolicitudCompraBOMDashboardPage from './pages/compras/SolicitudCompraBOMDashboardPage'
 import CotizacionesPage from './pages/cotizaciones/CotizacionesPage'
 import PersonalTarifasPage from './pages/cotizaciones/PersonalTarifasPage'
 import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
@@ -103,6 +108,11 @@ function AuthenticatedApp() {
           <Route path="/compras"              element={<ComprasPage />} />
           <Route path="/compras/articulos"    element={<ArticulosPage />} />
           <Route path="/compras/proveedores"  element={<ProveedoresPage />} />
+          <Route path="/compras/seguimiento"            element={<SeguimientoGestionPage />} />
+          <Route path="/compras/seguimiento/gantt"      element={<SeguimientoGanttPage />} />
+          <Route path="/compras/seguimiento/dashboard"  element={<SeguimientoDashboardPage />} />
+          <Route path="/compras/bom"           element={<SolicitudCompraBOMPage />} />
+          <Route path="/compras/bom/dashboard" element={<SolicitudCompraBOMDashboardPage />} />
           <Route path="/compras/tareas/:groupId/gantt"          element={<ComprasGanttPage />} />
           <Route path="/compras/tareas/:groupId/dashboard"     element={<ComprasDashboardPage />} />
           <Route path="/compras/tareas/:groupId"               element={<BitrixTareasPage />} />
