@@ -6,7 +6,7 @@ import {
   FileSpreadsheet, BookOpen, ChevronDown,
   Users, UserCheck, ClipboardList, BarChart3,
   ShoppingCart, Building2, TrendingDown, Receipt, ListChecks,
-  FileText, Users2, TrendingUp, ClipboardCheck, PackageSearch,
+  FileText, Users2, TrendingUp, ClipboardCheck, PackageSearch, Ticket,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -94,6 +94,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/compras/proveedores', label: 'Proveedores', icon: Building2 },
         { to: '/compras/seguimiento', label: 'Seguimiento Gestión', icon: ClipboardCheck },
         { to: '/compras/bom', label: 'Solicitud Compra BOM', icon: PackageSearch },
+        { to: '/compras/solicitudes', label: 'Solicitudes Boletos', icon: Ticket },
+        { to: '/compras/solicitudes/dashboard', label: 'Boletos Dashboard', icon: LayoutDashboard },
         { to: '/compras/tareas/91', label: 'Compras Locales', icon: ListChecks },
         { to: '/compras/tareas/85', label: 'Importaciones', icon: ListChecks },
       ],

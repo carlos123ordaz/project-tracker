@@ -528,3 +528,44 @@ export interface CashFlowIngreso {
   orden: number
   created_at: string
 }
+
+// ── Generic Form System ───────────────────────────────────────────────────────
+export interface FormDef {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface FormField {
+  id: string
+  form_id: string
+  order_index: number
+  label: string
+  field_key: string
+  field_type: 'radio' | 'checkbox' | 'text' | 'textarea' | 'date' | 'time' | 'select' | 'passenger_list'
+  options: { label: string; value: string }[]
+  required: boolean
+  placeholder: string | null
+  help_text: string | null
+  conditional_on_key: string | null
+  conditional_on_value: string | null
+}
+
+export type SubmissionStatus = 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado'
+
+export interface FormSubmission {
+  id: string
+  form_id: string
+  submitted_by: string | null
+  submitter_name: string | null
+  submitter_email: string | null
+  answers: Record<string, string>
+  status: SubmissionStatus
+  notes: string | null
+  created_at: string
+  updated_at: string
+}

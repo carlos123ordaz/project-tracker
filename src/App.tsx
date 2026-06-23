@@ -37,6 +37,9 @@ import SeguimientoGanttPage from './pages/compras/SeguimientoGanttPage'
 import SeguimientoDashboardPage from './pages/compras/SeguimientoDashboardPage'
 import SolicitudCompraBOMPage from './pages/compras/SolicitudCompraBOMPage'
 import SolicitudCompraBOMDashboardPage from './pages/compras/SolicitudCompraBOMDashboardPage'
+import SolicitudesPage from './pages/compras/SolicitudesPage'
+import SolicitudesDashboardPage from './pages/compras/SolicitudesDashboardPage'
+import FormPage from './pages/forms/FormPage'
 import CotizacionesPage from './pages/cotizaciones/CotizacionesPage'
 import PersonalTarifasPage from './pages/cotizaciones/PersonalTarifasPage'
 import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
@@ -84,7 +87,7 @@ function AuthenticatedApp() {
   return (
     <ConfigDataProvider>
       <Routes>
-        {/* Portal fullscreen — sin Layout */}
+        {/* Páginas fullscreen — sin Layout */}
         <Route path="/" element={<PortalPage />} />
 
         <Route element={<Layout />}>
@@ -111,8 +114,10 @@ function AuthenticatedApp() {
           <Route path="/compras/seguimiento"            element={<SeguimientoGestionPage />} />
           <Route path="/compras/seguimiento/gantt"      element={<SeguimientoGanttPage />} />
           <Route path="/compras/seguimiento/dashboard"  element={<SeguimientoDashboardPage />} />
-          <Route path="/compras/bom"           element={<SolicitudCompraBOMPage />} />
-          <Route path="/compras/bom/dashboard" element={<SolicitudCompraBOMDashboardPage />} />
+          <Route path="/compras/bom"            element={<SolicitudCompraBOMPage />} />
+          <Route path="/compras/bom/dashboard"  element={<SolicitudCompraBOMDashboardPage />} />
+          <Route path="/compras/solicitudes"           element={<SolicitudesPage />} />
+          <Route path="/compras/solicitudes/dashboard" element={<SolicitudesDashboardPage />} />
           <Route path="/compras/tareas/:groupId/gantt"          element={<ComprasGanttPage />} />
           <Route path="/compras/tareas/:groupId/dashboard"     element={<ComprasDashboardPage />} />
           <Route path="/compras/tareas/:groupId"               element={<BitrixTareasPage />} />
@@ -148,6 +153,8 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Formularios públicos — sin login Supabase, usan auth Microsoft propio */}
+          <Route path="/forms/:slug" element={<FormPage />} />
           <Route path="/*" element={<AuthenticatedApp />} />
         </Routes>
       </AuthProvider>
