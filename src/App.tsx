@@ -41,6 +41,7 @@ import SolicitudesPage from './pages/compras/SolicitudesPage'
 import SolicitudesDashboardPage from './pages/compras/SolicitudesDashboardPage'
 import FormPage from './pages/forms/FormPage'
 import FormPreviewPage from './pages/forms/FormPreviewPage'
+import AuthRedirectPage from './pages/AuthRedirectPage'
 import CotizacionesPage from './pages/cotizaciones/CotizacionesPage'
 import PersonalTarifasPage from './pages/cotizaciones/PersonalTarifasPage'
 import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
@@ -157,6 +158,7 @@ export default function App() {
         <Routes>
           {/* Formularios públicos — sin login Supabase, usan auth Microsoft propio */}
           <Route path="/forms/:slug" element={<FormPage />} />
+          <Route path="/auth-redirect" element={<AuthRedirectPage />} />
           <Route path="/*" element={<AuthenticatedApp />} />
         </Routes>
       </AuthProvider>
