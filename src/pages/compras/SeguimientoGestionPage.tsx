@@ -4,7 +4,7 @@ import { SeguimientoNavTabs } from './SeguimientoNavTabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useSeguimientoGestion } from '../../hooks/useSeguimientoGestion'
-import type { Prioridad, StatusFinal, SeguimientoTareaInsert } from '../../hooks/useSeguimientoGestion'
+import type { Prioridad, StatusFinal, SeguimientoTareaInsert, SortField, SortDir } from '../../hooks/useSeguimientoGestion'
 import { useTeamMembers } from '../../hooks/useConfig'
 
 const STATUS_STYLE: Record<StatusFinal, { bg: string; color: string; border: string }> = {
@@ -32,9 +32,11 @@ export default function SeguimientoGestionPage() {
   const [filterPrioridad, setFilterPrioridad] = useState<Prioridad | 'TODAS'>('TODAS')
   const [page, setPage]               = useState(1)
   const [pageSize, setPageSize]       = useState(20)
+  const [sortField, setSortField]     = useState<SortField>('vence')
+  const [sortDir, setSortDir]         = useState<SortDir>('asc')
 
   const { tareas, total, statusCounts, loading, error, create, update, remove } =
-    useSeguimientoGestion({ page, pageSize, search, status: filterStatus, prioridad: filterPrioridad })
+    useSeguimientoGestion({ page, pageSize, search, status: filterStatus, prioridad: filterPrioridad, sortField, sortDir })
   const { items: teamMembers } = useTeamMembers()
 
   const [showModal, setShowModal]     = useState(false)
@@ -105,6 +107,20 @@ export default function SeguimientoGestionPage() {
           <option value="ALTO">Alto</option>
           <option value="MEDIO">Medio</option>
           <option value="BAJO">Bajo</option>
+        </select>
+
+        <select value={sortField} onChange={e => { setSortField(e.target.value as SortField); setPage(1) }}
+          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
+          <option value="vence">Ordenar por Vence</option>
+          <option value="asignado">Ordenar por Asignado</option>
+          <option value="status">Ordenar por Avance</option>
+          <option value="created_at">Ordenar por Creación</option>
+        </select>
+
+        <select value={sortDir} onChange={e => { setSortDir(e.target.value as SortDir); setPage(1) }}
+          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
+          <option value="asc">Menor a mayor</option>
+          <option value="desc">Mayor a menor</option>
         </select>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -182,7 +198,11 @@ export default function SeguimientoGestionPage() {
                           {t.status_final}
                         </span>
                       </td>
-                      <td style={{ padding: '8px 12px', color: 'var(--n-400)', fontSize: 11.5, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t.nota}>{t.nota || '—'}</td>
+                      <td style={{ padding: '8px 12px', color: 'var(--n-600)', fontSize: 11.5, minWidth: 220, maxWidth: 320 }}>
+                        <div style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={t.nota || undefined}>
+                          {t.nota || <span style={{ color: 'var(--n-300)' }}>—</span>}
+                        </div>
+                      </td>
                       <td style={{ padding: '8px 8px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button onClick={() => openEdit(t)} style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-500)', display: 'flex', alignItems: 'center' }}><Edit2 size={11} /></button>
@@ -300,7 +320,8 @@ export default function SeguimientoGestionPage() {
               </div>
               <div style={{ gridColumn: '1/-1' }}>
                 <FL>Nota</FL>
-                <input value={form.nota} onChange={e => setForm(p => ({ ...p, nota: e.target.value }))} placeholder="Observaciones adicionales" style={iStyle} />
+                <textarea value={form.nota} onChange={e => setForm(p => ({ ...p, nota: e.target.value }))} placeholder="Observaciones adicionales"
+                  rows={4} style={{ ...iStyle, height: 'auto', padding: '8px 10px', resize: 'vertical', lineHeight: 1.5 }} />
               </div>
             </div>
 

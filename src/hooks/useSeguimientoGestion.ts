@@ -22,20 +22,27 @@ export interface SeguimientoTarea {
 
 export type SeguimientoTareaInsert = Omit<SeguimientoTarea, 'id' | 'created_at' | 'updated_at'>
 
+export type SortField = 'vence' | 'asignado' | 'status' | 'created_at'
+export type SortDir   = 'asc' | 'desc'
+
 export interface SeguimientoParams {
   page?: number
   pageSize?: number    // 0 = sin paginación (carga todo)
   search?: string
   status?: StatusFinal | 'TODOS'
   prioridad?: Prioridad | 'TODAS'
+  sortField?: SortField
+  sortDir?: SortDir
 }
 
 export function useSeguimientoGestion(params?: SeguimientoParams) {
-  const page      = params?.page      ?? 1
-  const pageSize  = params?.pageSize  ?? 0
-  const search    = params?.search    ?? ''
-  const status    = params?.status    ?? 'TODOS'
-  const prioridad = params?.prioridad ?? 'TODAS'
+  const page       = params?.page       ?? 1
+  const pageSize   = params?.pageSize   ?? 0
+  const search     = params?.search     ?? ''
+  const status     = params?.status     ?? 'TODOS'
+  const prioridad  = params?.prioridad  ?? 'TODAS'
+  const sortField  = params?.sortField  ?? 'sort_order'
+  const sortDir    = params?.sortDir    ?? 'asc'
 
   const [tareas, setTareas]           = useState<SeguimientoTarea[]>([])
   const [total, setTotal]             = useState(0)
@@ -52,7 +59,8 @@ export function useSeguimientoGestion(params?: SeguimientoParams) {
     if (search)                q = q.or(`solicitante.ilike.%${search}%,tarea.ilike.%${search}%,nota.ilike.%${search}%`)
     if (status !== 'TODOS')    q = q.eq('status_final', status)
     if (prioridad !== 'TODAS') q = q.eq('prioridad', prioridad)
-    q = q.order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    const asc = sortDir === 'asc'
+    q = q.order(sortField as string, { ascending: asc, nullsFirst: false }).order('created_at', { ascending: true })
     if (pageSize > 0) q = q.range((page - 1) * pageSize, page * pageSize - 1)
 
     const { data, error: err, count } = await q
@@ -83,7 +91,7 @@ export function useSeguimientoGestion(params?: SeguimientoParams) {
     }
 
     setLoading(false)
-  }, [page, pageSize, search, status, prioridad])
+  }, [page, pageSize, search, status, prioridad, sortField, sortDir])
 
   useEffect(() => { fetchData() }, [fetchData])
 

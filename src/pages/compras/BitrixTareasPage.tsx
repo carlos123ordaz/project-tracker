@@ -55,6 +55,11 @@ export default function BitrixTareasPage() {
   const [filterPriority, setFilterPriority] = useState('Todos')
   const [view, setView]                   = useState<'list' | 'kanban'>('list')
 
+  const useStages = stages.length > 0
+  const kanbanColumns = useStages
+    ? stages.map(s => s.name)
+    : ALL_STATUSES
+
   const filtered = tareas
     .filter(t => {
       const matchSearch   = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.responsible_name.toLowerCase().includes(search.toLowerCase())
@@ -64,11 +69,6 @@ export default function BitrixTareasPage() {
       return matchSearch && matchStatus && matchPriority
     })
     .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())
-
-  const useStages = stages.length > 0
-  const kanbanColumns = useStages
-    ? stages.map(s => s.name)
-    : ALL_STATUSES
 
   const busy = loading || syncing
 

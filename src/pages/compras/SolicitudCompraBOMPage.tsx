@@ -396,7 +396,13 @@ export default function SolicitudCompraBOMPage() {
                       {colVis.codigo      && <td style={{ ...tdS, color: 'var(--n-500)', whiteSpace: 'nowrap', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }} title={it.codigo}>{it.codigo || '—'}</td>}
                       {colVis.material    && <td style={{ ...tdS, color: 'var(--n-500)', whiteSpace: 'nowrap' }}>{it.material}</td>}
                       {colVis.masa        && <td style={{ ...tdS, color: 'var(--n-500)', whiteSpace: 'nowrap' }}>{it.masa}</td>}
-                      {colVis.comentarios && <td style={{ ...tdS, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--n-400)', fontSize: 11 }} title={it.comentarios}>{it.comentarios || '—'}</td>}
+                      {colVis.comentarios && (
+                        <td style={{ ...tdS, color: 'var(--n-500)', fontSize: 11, minWidth: 160, maxWidth: 260 }}>
+                          <div style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={it.comentarios || undefined}>
+                            {it.comentarios || <span style={{ color: 'var(--n-300)' }}>—</span>}
+                          </div>
+                        </td>
+                      )}
 
                       {(['polimetales', 'othero', 'pernos', 'ducasse', 'em_metal'] as ColKey[]).map(ck => {
                         if (!colVis[ck]) return null
@@ -426,7 +432,13 @@ export default function SolicitudCompraBOMPage() {
                         </span>
                       </td>
 
-                      {colVis.observaciones && <td style={{ ...tdS, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--n-400)', fontSize: 11 }} title={it.observaciones}>{it.observaciones || '—'}</td>}
+                      {colVis.observaciones && (
+                        <td style={{ ...tdS, color: 'var(--n-500)', fontSize: 11, minWidth: 180, maxWidth: 300 }}>
+                          <div style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={it.observaciones || undefined}>
+                            {it.observaciones || <span style={{ color: 'var(--n-300)' }}>—</span>}
+                          </div>
+                        </td>
+                      )}
 
                       <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: 4 }}>
@@ -567,7 +579,8 @@ export default function SolicitudCompraBOMPage() {
               </div>
               <div style={{ gridColumn: '1/-1' }}>
                 <FL>Comentarios</FL>
-                <input value={form.comentarios} onChange={e => setForm(p => ({ ...p, comentarios: e.target.value }))} placeholder="Especificaciones adicionales" style={iStyle} />
+                <textarea value={form.comentarios} onChange={e => setForm(p => ({ ...p, comentarios: e.target.value }))} placeholder="Especificaciones adicionales"
+                  rows={3} style={{ ...iStyle, height: 'auto', padding: '7px 10px', resize: 'vertical', lineHeight: 1.5 }} />
               </div>
 
               <div style={{ gridColumn: '1/-1', borderTop: '1px solid var(--n-150)', paddingTop: 10, marginTop: 2 }}>
@@ -584,7 +597,8 @@ export default function SolicitudCompraBOMPage() {
 
               <div style={{ gridColumn: '1/-1' }}>
                 <FL>Observaciones</FL>
-                <input value={form.observaciones} onChange={e => setForm(p => ({ ...p, observaciones: e.target.value }))} placeholder="Ej: Ya se encuentra en San Pedrito" style={iStyle} />
+                <textarea value={form.observaciones} onChange={e => setForm(p => ({ ...p, observaciones: e.target.value }))} placeholder="Ej: Ya se encuentra en San Pedrito"
+                  rows={3} style={{ ...iStyle, height: 'auto', padding: '7px 10px', resize: 'vertical', lineHeight: 1.5 }} />
               </div>
             </div>
 

@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { CheckCircle2, Clock, AlertCircle, TrendingUp } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { CheckCircle2, Clock, AlertCircle, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,6 +7,7 @@ import {
 import { useSeguimientoGestion } from '../../hooks/useSeguimientoGestion'
 import { SeguimientoNavTabs } from './SeguimientoNavTabs'
 import { differenceInDays, parseISO } from 'date-fns'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const STATUS_COLOR = {
   'CULMINADO':  '#22c55e',
@@ -24,21 +25,29 @@ function KpiCard({ label, value, sub, color, Icon }: {
   label: string; value: string | number; sub?: string; color: string; Icon: React.ElementType
 }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 38, height: 38, borderRadius: 10, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={18} style={{ color }} />
+    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 8, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={16} style={{ color }} />
       </div>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--n-900)', lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>{label}</div>
-        {sub && <div style={{ fontSize: 10.5, color, fontWeight: 600, marginTop: 1 }}>{sub}</div>}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--n-900)', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 2 }}>{label}</div>
+        {sub && <div style={{ fontSize: 10, color, fontWeight: 600, marginTop: 1 }}>{sub}</div>}
       </div>
     </div>
   )
 }
 
+type PanelKey = 'vencidas' | 'proximas' | 'sinVencer' | 'enProceso' | 'completadas'
+
 export default function SeguimientoDashboardPage() {
   const { tareas, loading } = useSeguimientoGestion()
+  const isMobile = useIsMobile()
+
+  const [openPanels, setOpenPanels] = useState<Record<PanelKey, boolean>>({
+    vencidas: true, proximas: true, sinVencer: false, enProceso: false, completadas: false,
+  })
+  const toggle = (k: PanelKey) => setOpenPanels(p => ({ ...p, [k]: !p[k] }))
 
   const stats = useMemo(() => {
     const total       = tareas.length
@@ -52,21 +61,18 @@ export default function SeguimientoDashboardPage() {
       t.status_final !== 'CULMINADO' && t.vence && parseISO(t.vence) < now
     ).length
 
-    // Por estado (pie)
     const byStatus = [
       { name: 'Culminado',  value: culminados,  color: STATUS_COLOR['CULMINADO']  },
       { name: 'En proceso', value: enProceso,   color: STATUS_COLOR['EN PROCESO'] },
       { name: 'Pendiente',  value: pendientes,  color: STATUS_COLOR['PENDIENTE']  },
     ].filter(d => d.value > 0)
 
-    // Por prioridad
     const byPrio = [
       { name: 'Alto',  value: tareas.filter(t => t.prioridad === 'ALTO').length,  color: PRIO_COLOR['ALTO']  },
       { name: 'Medio', value: tareas.filter(t => t.prioridad === 'MEDIO').length, color: PRIO_COLOR['MEDIO'] },
       { name: 'Bajo',  value: tareas.filter(t => t.prioridad === 'BAJO').length,  color: PRIO_COLOR['BAJO']  },
     ].filter(d => d.value > 0)
 
-    // Por solicitante (top 10)
     const solMap = new Map<string, number>()
     tareas.forEach(t => solMap.set(t.solicitante, (solMap.get(t.solicitante) ?? 0) + 1))
     const bySolicitante = [...solMap.entries()]
@@ -74,7 +80,6 @@ export default function SeguimientoDashboardPage() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10)
 
-    // Por responsable
     const respMap = new Map<string, { total: number; done: number }>()
     tareas.forEach(t => {
       const r = t.responsable || '—'
@@ -86,48 +91,52 @@ export default function SeguimientoDashboardPage() {
       .sort((a, b) => b.total - a.total)
       .slice(0, 8)
 
-    // Tareas próximas a vencer (no terminadas, con fecha)
-    const proximas = tareas
+    // Grupos para paneles desplegables
+    const withDays = tareas
       .filter(t => t.status_final !== 'CULMINADO' && t.vence)
       .map(t => ({ ...t, daysLeft: differenceInDays(parseISO(t.vence!), now) }))
-      .sort((a, b) => a.daysLeft - b.daysLeft)
-      .slice(0, 8)
 
-    return { total, culminados, enProceso, pendientes, vencidas, avgProgress, byStatus, byPrio, bySolicitante, byResponsable, proximas }
+    const grupoVencidas    = withDays.filter(t => t.daysLeft < 0).sort((a, b) => a.daysLeft - b.daysLeft)
+    const grupoProximas    = withDays.filter(t => t.daysLeft >= 0 && t.daysLeft <= 7).sort((a, b) => a.daysLeft - b.daysLeft)
+    const grupoSinVencer   = tareas.filter(t => t.status_final !== 'CULMINADO' && !t.vence)
+    const grupoEnProceso   = tareas.filter(t => t.status_final === 'EN PROCESO')
+    const grupoCompletadas = tareas.filter(t => t.status_final === 'CULMINADO')
+
+    return { total, culminados, enProceso, pendientes, vencidas, avgProgress, byStatus, byPrio, bySolicitante, byResponsable, grupoVencidas, grupoProximas, grupoSinVencer, grupoEnProceso, grupoCompletadas }
   }, [tareas])
 
   if (loading) return <div style={{ padding: 48, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando…</div>
 
   return (
-    <div style={{ padding: '20px 24px' }}>
+    <div style={{ padding: isMobile ? '14px 12px' : '20px 24px' }}>
+
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <div style={{ flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Seguimiento de Gestión</h1>
-          <p style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 1, marginBottom: 0 }}>{stats.total} tareas en total</p>
+          <p style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1, marginBottom: 0 }}>{stats.total} tareas en total</p>
         </div>
         <SeguimientoNavTabs active="dashboard" />
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 16 }}>
-        <KpiCard label="Total tareas"  value={stats.total}        color="#6366f1" Icon={TrendingUp}   />
-        <KpiCard label="Culminadas"    value={stats.culminados}   color="#22c55e" Icon={CheckCircle2} sub={`${Math.round(stats.culminados / Math.max(stats.total,1) * 100)}% del total`} />
-        <KpiCard label="En proceso"    value={stats.enProceso}    color="#6366f1" Icon={Clock}        />
-        <KpiCard label="Pendientes"    value={stats.pendientes}   color="#94a3b8" Icon={AlertCircle}  />
-        <KpiCard label="Avance promedio" value={`${stats.avgProgress}%`} color="#f59e0b" Icon={TrendingUp} />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8, marginBottom: 14 }}>
+        <KpiCard label="Total tareas"    value={stats.total}        color="#6366f1" Icon={TrendingUp}   />
+        <KpiCard label="Culminadas"      value={stats.culminados}   color="#22c55e" Icon={CheckCircle2} sub={`${Math.round(stats.culminados / Math.max(stats.total,1) * 100)}%`} />
+        <KpiCard label="En proceso"      value={stats.enProceso}    color="#6366f1" Icon={Clock}        />
+        <KpiCard label="Pendientes"      value={stats.pendientes}   color="#94a3b8" Icon={AlertCircle}  />
+        <KpiCard label="Avance prom."    value={`${stats.avgProgress}%`} color="#f59e0b" Icon={TrendingUp} />
         {stats.vencidas > 0 && (
           <KpiCard label="Vencidas" value={stats.vencidas} color="#ef4444" Icon={AlertCircle} sub="Sin completar" />
         )}
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
 
-        {/* Pie por estado */}
         <div style={cardS}>
           <SectionTitle>Por estado</SectionTitle>
-          <ResponsiveContainer width="100%" height={210}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={stats.byStatus} dataKey="value" cx="50%" cy="45%" outerRadius={65} innerRadius={32}>
                 {stats.byStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
@@ -141,10 +150,9 @@ export default function SeguimientoDashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Pie por prioridad */}
         <div style={cardS}>
           <SectionTitle>Por prioridad</SectionTitle>
-          <ResponsiveContainer width="100%" height={210}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={stats.byPrio} dataKey="value" cx="50%" cy="45%" outerRadius={65} innerRadius={32}>
                 {stats.byPrio.map((e, i) => <Cell key={i} fill={e.color} />)}
@@ -158,7 +166,6 @@ export default function SeguimientoDashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Bar por solicitante */}
         <div style={cardS}>
           <SectionTitle>Tareas por solicitante (top 10)</SectionTitle>
           <ResponsiveContainer width="100%" height={180}>
@@ -173,70 +180,100 @@ export default function SeguimientoDashboardPage() {
         </div>
       </div>
 
-      {/* Responsable + Próximas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-
-        {/* Responsable table */}
-        <div style={cardS}>
-          <SectionTitle>Eficiencia por responsable</SectionTitle>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 8 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--n-100)' }}>
-                {['Responsable', 'Total', 'Completadas', 'Avance'].map(h => (
-                  <th key={h} style={{ padding: '5px 8px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: 'var(--n-500)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {stats.byResponsable.map((r, i) => (
-                <tr key={r.name} style={{ borderBottom: i < stats.byResponsable.length - 1 ? '1px solid var(--n-100)' : undefined }}>
-                  <td style={{ padding: '6px 8px', fontWeight: 600, color: 'var(--n-800)' }}>{r.name}</td>
-                  <td style={{ padding: '6px 8px', color: 'var(--n-600)', textAlign: 'center' }}>{r.total}</td>
-                  <td style={{ padding: '6px 8px', color: '#22c55e', fontWeight: 600, textAlign: 'center' }}>{r.done}</td>
-                  <td style={{ padding: '6px 8px', minWidth: 100 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ flex: 1, height: 5, background: 'var(--n-150)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${r.pct}%`, background: r.pct === 100 ? '#22c55e' : '#6366f1', borderRadius: 3 }} />
-                      </div>
-                      <span style={{ fontSize: 10, color: 'var(--n-500)', fontWeight: 600, minWidth: 26 }}>{r.pct}%</span>
-                    </div>
-                  </td>
-                </tr>
+      {/* Eficiencia por responsable */}
+      <div style={{ ...cardS, marginBottom: 12, overflowX: 'auto' }}>
+        <SectionTitle>Eficiencia por responsable</SectionTitle>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 8 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--n-100)' }}>
+              {['Responsable', 'Total', 'Complet.', 'Avance'].map(h => (
+                <th key={h} style={{ padding: '5px 8px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: 'var(--n-500)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Próximas a vencer */}
-        <div style={cardS}>
-          <SectionTitle>Próximas a vencer / vencidas</SectionTitle>
-          {stats.proximas.length === 0 ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 12 }}>Sin tareas pendientes con fecha</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-              {stats.proximas.map(t => {
-                const overdue = t.daysLeft < 0
-                const soon    = t.daysLeft >= 0 && t.daysLeft <= 3
-                return (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: overdue ? '#fef2f2' : soon ? '#fefce8' : 'var(--n-50)', border: `1px solid ${overdue ? '#fecaca' : soon ? '#fde68a' : 'var(--n-150)'}` }}>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.tarea}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--n-400)' }}>{t.solicitante}</div>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.byResponsable.map((r, i) => (
+              <tr key={r.name} style={{ borderBottom: i < stats.byResponsable.length - 1 ? '1px solid var(--n-100)' : undefined }}>
+                <td style={{ padding: '6px 8px', fontWeight: 600, color: 'var(--n-800)', whiteSpace: 'nowrap' }}>{r.name}</td>
+                <td style={{ padding: '6px 8px', color: 'var(--n-600)', textAlign: 'center' }}>{r.total}</td>
+                <td style={{ padding: '6px 8px', color: '#22c55e', fontWeight: 600, textAlign: 'center' }}>{r.done}</td>
+                <td style={{ padding: '6px 8px', minWidth: 90 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ flex: 1, height: 5, background: 'var(--n-150)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${r.pct}%`, background: r.pct === 100 ? '#22c55e' : '#6366f1', borderRadius: 3 }} />
                     </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: overdue ? '#dc2626' : soon ? '#ca8a04' : 'var(--n-600)' }}>
-                        {overdue ? `${Math.abs(t.daysLeft)}d vencida` : t.daysLeft === 0 ? 'Hoy' : `${t.daysLeft}d`}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--n-400)' }}>
-                        {({ CULMINADO: 'Culminado', 'EN PROCESO': 'En proceso', PENDIENTE: 'Pendiente' } as Record<string,string>)[t.status_final]}
-                      </div>
-                    </div>
+                    <span style={{ fontSize: 10, color: 'var(--n-500)', fontWeight: 600, minWidth: 26 }}>{r.pct}%</span>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Listas desplegables */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+        <CollapsePanel panelKey="vencidas" open={openPanels.vencidas} onToggle={toggle}
+          label="Tareas vencidas" count={stats.grupoVencidas.length}
+          accentColor="#ef4444" bgColor="#fef2f2" borderColor="#fecaca">
+          {stats.grupoVencidas.length === 0
+            ? <EmptyMsg text="Sin tareas vencidas" />
+            : stats.grupoVencidas.map(t => (
+              <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
+                badge={`${Math.abs((t as any).daysLeft)}d vencida`} badgeColor="#dc2626" badgeBg="#fee2e2"
+                prioridad={t.prioridad} nota={t.nota} />
+            ))}
+        </CollapsePanel>
+
+        <CollapsePanel panelKey="proximas" open={openPanels.proximas} onToggle={toggle}
+          label="Próximas a vencer (≤7 días)" count={stats.grupoProximas.length}
+          accentColor="#f59e0b" bgColor="#fefce8" borderColor="#fde68a">
+          {stats.grupoProximas.length === 0
+            ? <EmptyMsg text="Sin tareas próximas a vencer" />
+            : stats.grupoProximas.map(t => (
+              <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
+                badge={(t as any).daysLeft === 0 ? 'Hoy' : `${(t as any).daysLeft}d`}
+                badgeColor="#92400e" badgeBg="#fef3c7"
+                prioridad={t.prioridad} nota={t.nota} />
+            ))}
+        </CollapsePanel>
+
+        <CollapsePanel panelKey="sinVencer" open={openPanels.sinVencer} onToggle={toggle}
+          label="Sin fecha de vencimiento" count={stats.grupoSinVencer.length}
+          accentColor="#94a3b8" bgColor="var(--n-50)" borderColor="var(--n-200)">
+          {stats.grupoSinVencer.length === 0
+            ? <EmptyMsg text="Todas las tareas pendientes tienen fecha" />
+            : stats.grupoSinVencer.map(t => (
+              <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
+                badge="Sin fecha" badgeColor="var(--n-500)" badgeBg="var(--n-100)"
+                prioridad={t.prioridad} nota={t.nota} />
+            ))}
+        </CollapsePanel>
+
+        <CollapsePanel panelKey="enProceso" open={openPanels.enProceso} onToggle={toggle}
+          label="En proceso" count={stats.grupoEnProceso.length}
+          accentColor="#6366f1" bgColor="#eef2ff" borderColor="#c7d2fe">
+          {stats.grupoEnProceso.length === 0
+            ? <EmptyMsg text="Sin tareas en proceso" />
+            : stats.grupoEnProceso.map(t => (
+              <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
+                badge={`${Math.round(t.status * 100)}%`} badgeColor="#4338ca" badgeBg="#e0e7ff"
+                prioridad={t.prioridad} nota={t.nota} />
+            ))}
+        </CollapsePanel>
+
+        <CollapsePanel panelKey="completadas" open={openPanels.completadas} onToggle={toggle}
+          label="Completadas" count={stats.grupoCompletadas.length}
+          accentColor="#22c55e" bgColor="#f0fdf4" borderColor="#bbf7d0">
+          {stats.grupoCompletadas.length === 0
+            ? <EmptyMsg text="Sin tareas completadas aún" />
+            : stats.grupoCompletadas.map(t => (
+              <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
+                badge="Culminado" badgeColor="#15803d" badgeBg="#dcfce7"
+                prioridad={t.prioridad} nota={t.nota} />
+            ))}
+        </CollapsePanel>
 
       </div>
     </div>
@@ -249,4 +286,56 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 const cardS: React.CSSProperties = {
   background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px',
+}
+
+const PRIO_DOT: Record<string, string> = { ALTO: '#ef4444', MEDIO: '#f59e0b', BAJO: '#22c55e' }
+
+function CollapsePanel({ panelKey, open, onToggle, label, count, accentColor, bgColor, borderColor, children }: {
+  panelKey: PanelKey; open: boolean; onToggle: (k: PanelKey) => void
+  label: string; count: number; accentColor: string; bgColor: string; borderColor: string
+  children: React.ReactNode
+}) {
+  return (
+    <div style={{ border: `1px solid ${borderColor}`, borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+      <button onClick={() => onToggle(panelKey)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: open ? bgColor : '#fff', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}>
+        {open
+          ? <ChevronDown size={14} style={{ color: accentColor, flexShrink: 0 }} />
+          : <ChevronRight size={14} style={{ color: 'var(--n-400)', flexShrink: 0 }} />}
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--n-800)', flex: 1 }}>{label}</span>
+        <span style={{ fontSize: 11.5, fontWeight: 700, padding: '2px 9px', borderRadius: 20, background: accentColor + '20', color: accentColor }}>{count}</span>
+      </button>
+      {open && (
+        <div style={{ borderTop: `1px solid ${borderColor}`, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 420, overflowY: 'auto' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TaskRow({ tarea, sub, responsable, badge, badgeColor, badgeBg, prioridad, nota }: {
+  tarea: string; sub: string; responsable: string
+  badge: string; badgeColor: string; badgeBg: string
+  prioridad: string; nota: string
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 8px', borderRadius: 7, background: 'var(--n-50)', border: '1px solid var(--n-100)' }}>
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: PRIO_DOT[prioridad] ?? '#94a3b8', marginTop: 5, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-800)', wordBreak: 'break-word' }}>{tarea}</div>
+        <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 1 }}>
+          {sub}{responsable && sub !== responsable ? ` · ${responsable}` : ''}
+        </div>
+        {nota && (
+          <div style={{ fontSize: 10.5, color: 'var(--n-500)', marginTop: 2, fontStyle: 'italic', wordBreak: 'break-word' }}>{nota}</div>
+        )}
+      </div>
+      <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: badgeBg, color: badgeColor, whiteSpace: 'nowrap', flexShrink: 0 }}>{badge}</span>
+    </div>
+  )
+}
+
+function EmptyMsg({ text }: { text: string }) {
+  return <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 12 }}>{text}</div>
 }
