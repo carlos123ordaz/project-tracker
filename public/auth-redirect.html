@@ -1,1 +1,25 @@
-<!DOCTYPE html><html><head><title>Auth</title></head><body></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Autenticando…</title>
+</head>
+<body>
+<script type="module">
+  import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.14.0/+esm';
+
+  const msal = new PublicClientApplication({
+    auth: {
+      clientId:    '8a218fe7-66e5-4c25-a3f5-7cf521ea5b53',
+      authority:   'https://login.microsoftonline.com/f4b15f34-f621-424a-bfec-5310adb781fa',
+      redirectUri:  window.location.origin + '/auth-redirect.html',
+    },
+    cache: { cacheLocation: 'localStorage' },
+  });
+
+  await msal.initialize();
+  await msal.handleRedirectPromise();
+
+  if (window.opener) window.close();
+</script>
+</body>
+</html>
