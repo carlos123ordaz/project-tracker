@@ -18,9 +18,6 @@ export function useMicrosoftAuth() {
       try {
         await msalInstance.initialize()
 
-        // Handle redirect response (if any)
-        await msalInstance.handleRedirectPromise()
-
         // Check for existing session
         const accounts = msalInstance.getAllAccounts()
         if (accounts.length > 0) {
