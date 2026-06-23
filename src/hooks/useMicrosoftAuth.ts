@@ -46,6 +46,7 @@ export function useMicrosoftAuth() {
       const result = await msalInstance.loginPopup({
         scopes:      LOGIN_SCOPES,
         prompt:      'select_account',
+        redirectUri: `${window.location.origin}/auth-redirect.html`,
       })
       setMsUser({
         name:    result.account.name  ?? result.account.username,
@@ -62,7 +63,10 @@ export function useMicrosoftAuth() {
 
   async function signOut() {
     if (!msUser) return
-    await msalInstance.logoutPopup({ account: msUser.account })
+    await msalInstance.logoutPopup({
+      account:     msUser.account,
+      postLogoutRedirectUri: `${window.location.origin}/auth-redirect.html`,
+    })
     setMsUser(null)
   }
 
