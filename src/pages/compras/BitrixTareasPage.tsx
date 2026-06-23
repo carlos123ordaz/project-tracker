@@ -56,19 +56,17 @@ export default function BitrixTareasPage() {
   const [view, setView]                   = useState<'list' | 'kanban'>('list')
 
   const useStages = stages.length > 0
-  const kanbanColumns = useStages
-    ? stages.map(s => s.name)
-    : ALL_STATUSES
 
   const filtered = tareas
     .filter(t => {
       const matchSearch   = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.responsible_name.toLowerCase().includes(search.toLowerCase())
-      const matchStatus   = filterStatus === 'Todos'
-        || (useStages ? t.stage_name === filterStatus : t.status === filterStatus)
+      const matchStatus   = filterStatus === 'Todos' || t.status === filterStatus
       const matchPriority = filterPriority === 'Todos' || t.priority === filterPriority
       return matchSearch && matchStatus && matchPriority
     })
     .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())
+
+  const statusCounts = ALL_STATUSES.map(s => ({ s, n: tareas.filter(t => t.status === s).length })).filter(x => x.n > 0)
 
   const busy = loading || syncing
 
@@ -119,8 +117,8 @@ export default function BitrixTareasPage() {
         </div>
 
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selectStyle}>
-          <option value="Todos">{useStages ? 'Todas las etapas' : 'Todos los estados'}</option>
-          {kanbanColumns.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="Todos">Todos los estados</option>
+          {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
         <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={selectStyle}>
@@ -172,6 +170,49 @@ export default function BitrixTareasPage() {
       </div>
 
 
+      {/* Status pills */}
+      {!busy && !error && statusCounts.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          <button
+            onClick={() => setFilterStatus('Todos')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', borderRadius: 20, cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
+              border: `1px solid ${filterStatus === 'Todos' ? 'var(--brand-500)' : 'var(--n-200)'}`,
+              background: filterStatus === 'Todos' ? 'var(--brand-600)' : '#fff',
+              color: filterStatus === 'Todos' ? '#fff' : 'var(--n-600)',
+            }}
+          >
+            Todos
+            <span style={{ background: filterStatus === 'Todos' ? 'rgba(255,255,255,.25)' : 'var(--n-100)', borderRadius: 10, padding: '0 5px', fontSize: 10.5 }}>
+              {tareas.length}
+            </span>
+          </button>
+          {statusCounts.map(({ s, n }) => {
+            const st = STATUS_STYLE[s] || STATUS_STYLE['Nueva']
+            const active = filterStatus === s
+            return (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(active ? 'Todos' : s)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '3px 10px', borderRadius: 20, cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
+                  border: `1px solid ${active ? st.border : 'var(--n-200)'}`,
+                  background: active ? st.bg : '#fff',
+                  color: active ? st.color : 'var(--n-600)',
+                }}
+              >
+                {st.icon} {s}
+                <span style={{ background: active ? st.border : 'var(--n-100)', borderRadius: 10, padding: '0 5px', fontSize: 10.5 }}>
+                  {n}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--red-50)', border: '1px solid var(--red-200)', color: 'var(--red-700)', fontSize: 12.5, marginBottom: 12 }}>
@@ -189,9 +230,8 @@ export default function BitrixTareasPage() {
       {/* ── Kanban ── */}
       {!busy && !error && view === 'kanban' && (() => {
         const columns = useStages
-          ? stages.filter(s => filterStatus === 'Todos' || filterStatus === s.name)
+          ? stages
           : ALL_STATUSES
-              .filter(s => filterStatus === 'Todos' || filterStatus === s)
               .map(s => ({ id: s, name: s, color: '' }))
 
         return (
