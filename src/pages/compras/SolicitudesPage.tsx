@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import {
   Ticket, Search, Copy, Check,
-  Clock, CheckCircle2, XCircle, Loader2, X, User, FileDown,
+  Clock, CheckCircle2, XCircle, Loader2, FileDown,
   ChevronLeft, ChevronRight, LayoutDashboard,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 import { useFormSubmissions, PAGE_SIZE } from '../../hooks/useForms'
@@ -23,24 +23,6 @@ const STATUS_STYLE: Record<SubmissionStatus, { bg: string; color: string; icon: 
   Cancelado:   { bg: 'var(--n-100)',     color: 'var(--n-500)',      icon: <XCircle size={11} /> },
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  tipo_boleto: 'Tipo de Boleto',
-  destino_vuelo: 'Destino de Vuelo',
-  num_pasajeros: 'N° Pasajeros',
-  datos_pasajeros: 'Datos de Pasajeros',
-  personal_tercero: 'Personal Tercero',
-  tipo_servicio: 'Tipo de Servicio',
-  ciudad_salida: 'Ciudad de Salida',
-  fecha_salida: 'Fecha de Salida',
-  ciudad_destino: 'Ciudad Destino',
-  hora_llegada_destino: 'Hora Llegada Destino',
-  fecha_regreso: 'Fecha de Regreso',
-  hora_salida_aeropuerto: 'Hora Salida Aeropuerto',
-  equipaje: 'Equipaje',
-  centro_costo: 'Centro de Costo',
-  numero_task: 'N° Task',
-  nota: 'Nota',
-}
 
 const TIPO_LABEL: Record<string, string> = {
   aereo: 'Aéreo', terrestre: 'Terrestre',
@@ -58,9 +40,10 @@ export default function SolicitudesPage() {
   const [page,         setPage]         = useState(1)
   const [search,       setSearch]       = useState('')
   const [copied,       setCopied]       = useState(false)
-  const [detail,       setDetail]       = useState<FormSubmission | null>(null)
   const [updatingId,   setUpdatingId]   = useState<string | null>(null)
   const [downloadingId,setDownloadingId]= useState<string | null>(null)
+
+  const navigate = useNavigate()
 
   const { submissions, total, loading, updateStatus } = useFormSubmissions(FORM_SLUG, {
     status: filterStatus,
@@ -87,7 +70,6 @@ export default function SolicitudesPage() {
   async function handleStatusChange(id: string, status: SubmissionStatus) {
     setUpdatingId(id)
     try { await updateStatus(id, status) } finally { setUpdatingId(null) }
-    if (detail?.id === id) setDetail(prev => prev ? { ...prev, status } : null)
   }
 
   async function downloadPdf(s: FormSubmission) {
@@ -253,7 +235,7 @@ export default function SolicitudesPage() {
                   return (
                     <tr
                       key={s.id}
-                      onClick={() => setDetail(s)}
+                      onClick={() => navigate(`/compras/solicitudes/${s.id}/preview`)}
                       style={{
                         borderBottom: idx < filtered.length - 1 ? '1px solid var(--n-100)' : 'none',
                         cursor: 'pointer',
@@ -403,139 +385,6 @@ export default function SolicitudesPage() {
         </>
       )}
 
-      {/* Detail modal */}
-      {detail && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 50, padding: 24,
-          }}
-          onClick={e => { if (e.target === e.currentTarget) setDetail(null) }}
-        >
-          <div style={{
-            background: '#fff', borderRadius: 14, width: '100%', maxWidth: 560,
-            maxHeight: '88vh', display: 'flex', flexDirection: 'column',
-            boxShadow: 'var(--shadow-lg)',
-          }}>
-            {/* Modal header */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '16px 20px', borderBottom: '1px solid var(--n-150)',
-            }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)' }}>
-                  Detalle de Solicitud
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>
-                  {detail.submitter_name} · {format(new Date(detail.created_at), "d MMM yyyy HH:mm", { locale: es })}
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <select
-                  value={detail.status}
-                  disabled={updatingId === detail.id}
-                  onChange={e => handleStatusChange(detail.id, e.target.value as SubmissionStatus)}
-                  style={{
-                    padding: '4px 8px', borderRadius: 20, border: 'none',
-                    background: STATUS_STYLE[detail.status]?.bg ?? 'var(--n-100)',
-                    color: STATUS_STYLE[detail.status]?.color ?? 'var(--n-600)',
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  }}
-                >
-                  {STATUS_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => downloadPdf(detail)}
-                  disabled={downloadingId === detail.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '5px 11px', borderRadius: 7,
-                    border: '1px solid var(--n-200)', background: '#fff',
-                    fontSize: 12, color: 'var(--n-700)',
-                    cursor: downloadingId === detail.id ? 'not-allowed' : 'pointer',
-                    opacity: downloadingId === detail.id ? 0.6 : 1,
-                  }}
-                >
-                  <FileDown size={13} />
-                  {downloadingId === detail.id ? 'Generando…' : 'Descargar PDF'}
-                </button>
-                <button
-                  onClick={() => setDetail(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal body */}
-            <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {Object.entries(FIELD_LABELS).map(([key, label]) => {
-                const val = detail.answers?.[key]
-                if (!val) return null
-
-                if (key === 'datos_pasajeros') {
-                  let passengers: { nombre: string; dni: string; nacimiento: string; celular: string; correo: string }[] = []
-                  try { passengers = JSON.parse(val) } catch { /* plain text fallback */ }
-                  if (passengers.length > 0) {
-                    return (
-                      <div key={key} style={{ padding: '10px 12px', background: 'var(--n-25)', borderRadius: 8, border: '1px solid var(--n-100)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
-                          {label}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {passengers.map((p, i) => (
-                            <div key={i} style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 8, overflow: 'hidden' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'var(--brand-50)', borderBottom: '1px solid var(--n-150)' }}>
-                                <User size={11} style={{ color: 'var(--brand-600)' }} />
-                                <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--brand-700)' }}>Pasajero {i + 1}</span>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-                                {[
-                                  { label: 'Nombre', value: p.nombre },
-                                  { label: 'DNI', value: p.dni },
-                                  { label: 'Nacimiento', value: p.nacimiento },
-                                  { label: 'Celular', value: p.celular },
-                                  { label: 'Correo', value: p.correo },
-                                ].filter(f => f.value).map((f, fi, arr) => (
-                                  <div key={f.label} style={{
-                                    padding: '6px 10px',
-                                    borderBottom: fi < arr.length - 1 ? '1px solid var(--n-100)' : 'none',
-                                    borderRight: fi % 2 === 0 ? '1px solid var(--n-100)' : 'none',
-                                    gridColumn: f.label === 'Nombre' ? '1 / -1' : 'auto',
-                                  }}>
-                                    <div style={{ fontSize: 10, color: 'var(--n-400)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</div>
-                                    <div style={{ fontSize: 12.5, color: 'var(--n-800)', marginTop: 1 }}>{f.value}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  }
-                }
-
-                const isLong = val.length > 60
-                return (
-                  <div key={key} style={{ padding: '10px 12px', background: 'var(--n-25)', borderRadius: 8, border: '1px solid var(--n-100)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-                      {label}
-                    </div>
-                    <div style={{ fontSize: 12.5, color: 'var(--n-800)', whiteSpace: isLong ? 'pre-wrap' : 'normal' }}>
-                      {displayValue(key, val)}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
