@@ -7,7 +7,7 @@ const msalConfig: Configuration = {
     redirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: 'sessionStorage',
+    cacheLocation: 'localStorage',
   },
 }
 
