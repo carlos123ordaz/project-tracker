@@ -8,6 +8,12 @@ export interface MSUser {
   account: AccountInfo
 }
 
+// Current page URL without hash — used as redirectUri so Microsoft
+// sends the user back to the same form after authentication.
+function currentRedirectUri() {
+  return window.location.origin + window.location.pathname
+}
+
 export function useMicrosoftAuth() {
   const [msUser,   setMsUser]   = useState<MSUser | null>(null)
   const [loading,  setLoading]  = useState(true)
@@ -18,7 +24,19 @@ export function useMicrosoftAuth() {
       try {
         await msalInstance.initialize()
 
-        // Check for existing session
+        // Handle response from Microsoft redirect (if any)
+        const response = await msalInstance.handleRedirectPromise()
+        if (response) {
+          setMsUser({
+            name:    response.account.name  ?? response.account.username,
+            email:   response.account.username,
+            account: response.account,
+          })
+          setLoading(false)
+          return
+        }
+
+        // Check for existing cached session
         const accounts = msalInstance.getAllAccounts()
         if (accounts.length > 0) {
           const account = accounts[0]
@@ -40,31 +58,22 @@ export function useMicrosoftAuth() {
   async function signIn() {
     setError('')
     try {
-      const result = await msalInstance.loginPopup({
+      await msalInstance.loginRedirect({
         scopes:      LOGIN_SCOPES,
-        prompt:      'select_account',
-        redirectUri: `${window.location.origin}/auth-redirect.html`,
-      })
-      setMsUser({
-        name:    result.account.name  ?? result.account.username,
-        email:   result.account.username,
-        account: result.account,
+        redirectUri: currentRedirectUri(),
       })
     } catch (e: unknown) {
-      // User cancelled the popup — not an error worth showing
-      if ((e as { errorCode?: string }).errorCode !== 'user_cancelled') {
-        setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')
-      }
+      setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')
+      console.error(e)
     }
   }
 
   async function signOut() {
     if (!msUser) return
-    await msalInstance.logoutPopup({
-      account:     msUser.account,
-      postLogoutRedirectUri: `${window.location.origin}/auth-redirect.html`,
+    await msalInstance.logoutRedirect({
+      account:               msUser.account,
+      postLogoutRedirectUri: currentRedirectUri(),
     })
-    setMsUser(null)
   }
 
   return { msUser, loading, error, signIn, signOut }
