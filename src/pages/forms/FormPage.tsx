@@ -808,14 +808,15 @@ function CitySelector({ value, onChange, placeholder, side }: {
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
+        // Guardar lo que el usuario escribió (texto libre o ciudad de lista)
+        const current = inputVal.trim()
+        if (current) onChange(current)
         setFocused(false)
-        // Si no coincide con ninguna ciudad, guardar lo escrito
-        setInputVal(value)
       }
     }
     if (focused) document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
-  }, [focused, value])
+  }, [focused, inputVal, onChange])
 
   return (
     <div ref={ref} style={{ position: 'relative', flex: 1 }}>
@@ -834,13 +835,12 @@ function CitySelector({ value, onChange, placeholder, side }: {
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => {
-              // Guardar texto libre si no hay click en sugerencia
               setTimeout(() => {
                 if (!ref.current?.contains(document.activeElement)) {
-                  onChange(inputVal)
+                  if (inputVal.trim()) onChange(inputVal.trim())
                   setFocused(false)
                 }
-              }, 200)
+              }, 150)
             }}
             placeholder={placeholder}
             style={{
@@ -999,7 +999,7 @@ function FlightWidget({
     <div style={{
       border: `1.5px solid ${hasErr ? T.required : '#c8deda'}`,
       borderRadius: 14, overflow: 'visible',
-      boxShadow: '0 2px 12px rgba(15,110,98,.10)',
+      boxShadow: 'none',
       background: '#fff',
     }}>
       {/* ── Fila ciudades (oculta para Cambio de Fecha) ── */}
