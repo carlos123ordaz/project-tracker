@@ -930,6 +930,9 @@ function FlightWidget({
   // Panel derecho: solo para ida y regreso
   const showPanel2 = esIdaYRegreso && showRegreso
 
+  // Fila ciudades: oculta para cambio de fecha (misma ruta, solo cambia la fecha)
+  const showCities = !esCambioFecha
+
   const hasErr = errorSalida || errorDestino || errorFechaSalida || errorFechaRegreso
 
   const timeInput = (_value: string): React.CSSProperties => ({
@@ -945,43 +948,47 @@ function FlightWidget({
       boxShadow: '0 2px 12px rgba(15,110,98,.10)',
       background: '#fff',
     }}>
-      {/* ── Fila ciudades ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}>
-        <div style={{ flex: 1, borderRight: '1.5px solid #c8deda', borderRadius: '14px 0 0 0', background: errorSalida ? '#fff8f8' : '#fff' }}>
-          <CitySelector value={salida} onChange={onSalidaChange} placeholder="Ciudad de salida" side="left" />
-          {errorSalida && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>}
-        </div>
+      {/* ── Fila ciudades (oculta para Cambio de Fecha) ── */}
+      {showCities && (
+        <div style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}>
+          <div style={{ flex: 1, borderRight: '1.5px solid #c8deda', borderRadius: '14px 0 0 0', background: errorSalida ? '#fff8f8' : '#fff' }}>
+            <CitySelector value={salida} onChange={onSalidaChange} placeholder="Ciudad de salida" side="left" />
+            {errorSalida && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>}
+          </div>
 
-        <button
-          type="button"
-          onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
-          title="Intercambiar ciudades"
-          style={{
-            position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
-            width: 34, height: 34, borderRadius: '50%',
-            background: '#fff', border: '1.5px solid #c8deda',
-            cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)' }}
-        >⇄</button>
+          <button
+            type="button"
+            onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
+            title="Intercambiar ciudades"
+            style={{
+              position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
+              width: 34, height: 34, borderRadius: '50%',
+              background: '#fff', border: '1.5px solid #c8deda',
+              cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)' }}
+          >⇄</button>
 
-        <div style={{ flex: 1, borderRadius: '0 14px 0 0', background: errorDestino ? '#fff8f8' : '#fff' }}>
-          <CitySelector value={destino} onChange={onDestinoChange} placeholder="Ciudad de destino" side="right" />
-          {errorDestino && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>}
+          <div style={{ flex: 1, borderRadius: '0 14px 0 0', background: errorDestino ? '#fff8f8' : '#fff' }}>
+            <CitySelector value={destino} onChange={onDestinoChange} placeholder="Ciudad de destino" side="right" />
+            {errorDestino && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Fila fechas + horas ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1.5px solid #c8deda' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', borderTop: showCities ? '1.5px solid #c8deda' : 'none' }}>
 
         {/* Panel 1 — IDA / REGRESO / NUEVA FECHA según tipo */}
         <div style={{
           flex: 1, padding: '12px 18px 14px',
           borderRight: showPanel2 ? '1.5px solid #c8deda' : 'none',
           background: errorFechaSalida ? '#fff8f8' : '#fafffe',
-          borderRadius: showPanel2 ? '0 0 0 14px' : '0 0 14px 14px',
+          borderRadius: showPanel2
+            ? (showCities ? '0 0 0 14px' : '14px 0 0 14px')
+            : (showCities ? '0 0 14px 14px' : '14px'),
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
             {labelPanel1}
@@ -1014,7 +1021,7 @@ function FlightWidget({
           <div style={{
             flex: 1, padding: '12px 18px 14px',
             background: errorFechaRegreso ? '#fff8f8' : '#fafffe',
-            borderRadius: '0 0 14px 0',
+            borderRadius: showCities ? '0 0 14px 0' : '0 14px 14px 0',
           }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>REGRESO</div>
             <DatePicker value={fechaRegreso} onChange={onFechaRegresoChange} error={errorFechaRegreso} />
