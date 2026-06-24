@@ -76,7 +76,7 @@ const ALL_CITIES: CityOption[] = [
 
 /* Claves de campos que el FlightWidget consume (no se renderizan individualmente) */
 const FLIGHT_TRIGGER  = 'ciudad_salida'
-const FLIGHT_CONSUMED = new Set(['ciudad_destino', 'fecha_salida', 'fecha_regreso'])
+const FLIGHT_CONSUMED = new Set(['ciudad_destino', 'fecha_salida', 'fecha_regreso', 'hora_llegada_destino', 'hora_salida_aeropuerto'])
 
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 export default function FormPage() {
@@ -312,11 +312,16 @@ export default function FormPage() {
                   destino={answers['ciudad_destino'] ?? ''}
                   fechaSalida={answers['fecha_salida'] ?? ''}
                   fechaRegreso={answers['fecha_regreso'] ?? ''}
+                  horaLlegada={answers['hora_llegada_destino'] ?? ''}
+                  horaSalida={answers['hora_salida_aeropuerto'] ?? ''}
+                  tipoServicio={answers['tipo_servicio'] ?? ''}
                   showRegreso={showRegreso}
                   onSalidaChange={v => setAnswer('ciudad_salida', v)}
                   onDestinoChange={v => setAnswer('ciudad_destino', v)}
                   onFechaSalidaChange={v => setAnswer('fecha_salida', v)}
                   onFechaRegresoChange={v => setAnswer('fecha_regreso', v)}
+                  onHoraLlegadaChange={v => setAnswer('hora_llegada_destino', v)}
+                  onHoraSalidaChange={v => setAnswer('hora_salida_aeropuerto', v)}
                   errorSalida={errors['ciudad_salida']}
                   errorDestino={errors['ciudad_destino']}
                   errorFechaSalida={errors['fecha_salida']}
@@ -898,17 +903,39 @@ function CitySelector({ value, onChange, placeholder, side }: {
 
 /* ── Flight widget (Latam-style) ─────────────────────────────────────────── */
 function FlightWidget({
-  salida, destino, fechaSalida, fechaRegreso, showRegreso,
+  salida, destino, fechaSalida, fechaRegreso, horaLlegada, horaSalida,
+  tipoServicio, showRegreso,
   onSalidaChange, onDestinoChange, onFechaSalidaChange, onFechaRegresoChange,
+  onHoraLlegadaChange, onHoraSalidaChange,
   errorSalida, errorDestino, errorFechaSalida, errorFechaRegreso,
 }: {
   salida: string; destino: string; fechaSalida: string; fechaRegreso: string
-  showRegreso: boolean
+  horaLlegada: string; horaSalida: string; tipoServicio: string; showRegreso: boolean
   onSalidaChange: (v: string) => void; onDestinoChange: (v: string) => void
   onFechaSalidaChange: (v: string) => void; onFechaRegresoChange: (v: string) => void
+  onHoraLlegadaChange: (v: string) => void; onHoraSalidaChange: (v: string) => void
   errorSalida?: string; errorDestino?: string; errorFechaSalida?: string; errorFechaRegreso?: string
 }) {
+  // Derivar paneles según el tipo de servicio seleccionado
+  const esRegreso      = tipoServicio === 'regreso'
+  const esCambioFecha  = tipoServicio === 'cambio_fecha'
+  const esIdaYRegreso  = tipoServicio === 'ida_regreso'
+
+  // Panel izquierdo: siempre visible; su label cambia según tipo
+  const labelPanel1   = esRegreso ? 'REGRESO' : esCambioFecha ? 'NUEVA FECHA' : 'IDA'
+  const horaLabel1    = esRegreso ? 'HORA MÁX. SALIDA AEROPUERTO' : 'HORA MÁX. LLEGADA AL DESTINO'
+  const horaPlaceholder1 = esRegreso ? 'ej: 09:00' : 'ej: 14:00'
+
+  // Panel derecho: solo para ida y regreso
+  const showPanel2 = esIdaYRegreso && showRegreso
+
   const hasErr = errorSalida || errorDestino || errorFechaSalida || errorFechaRegreso
+
+  const timeInput = (_value: string): React.CSSProperties => ({
+    border: 'none', outline: 'none', fontSize: 14,
+    color: _value ? T.text : T.textMuted, background: 'transparent',
+    fontFamily: "'Open Sans', system-ui, sans-serif", width: '100%',
+  })
 
   return (
     <div style={{
@@ -919,91 +946,97 @@ function FlightWidget({
     }}>
       {/* ── Fila ciudades ── */}
       <div style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}>
-        {/* Origen */}
-        <div style={{
-          flex: 1, borderRight: '1.5px solid #c8deda',
-          borderRadius: '14px 0 0 0',
-          background: errorSalida ? '#fff8f8' : '#fff',
-        }}>
+        <div style={{ flex: 1, borderRight: '1.5px solid #c8deda', borderRadius: '14px 0 0 0', background: errorSalida ? '#fff8f8' : '#fff' }}>
           <CitySelector value={salida} onChange={onSalidaChange} placeholder="Ciudad de salida" side="left" />
-          {errorSalida && (
-            <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>
-          )}
+          {errorSalida && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>}
         </div>
 
-        {/* Botón intercambiar */}
         <button
           type="button"
           onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
           title="Intercambiar ciudades"
           style={{
-            position: 'absolute', left: '50%', top: '40%',
-            transform: 'translate(-50%, -50%)',
+            position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
             width: 34, height: 34, borderRadius: '50%',
             background: '#fff', border: '1.5px solid #c8deda',
-            cursor: 'pointer', zIndex: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: T.primary, fontSize: 17,
-            boxShadow: '0 2px 8px rgba(0,0,0,.12)',
-            transition: 'transform .2s, box-shadow .2s',
+            cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)'
-          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)' }}
         >⇄</button>
 
-        {/* Destino */}
-        <div style={{
-          flex: 1, borderRadius: '0 14px 0 0',
-          background: errorDestino ? '#fff8f8' : '#fff',
-        }}>
+        <div style={{ flex: 1, borderRadius: '0 14px 0 0', background: errorDestino ? '#fff8f8' : '#fff' }}>
           <CitySelector value={destino} onChange={onDestinoChange} placeholder="Ciudad de destino" side="right" />
-          {errorDestino && (
-            <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>
-          )}
+          {errorDestino && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>}
         </div>
       </div>
 
-      {/* ── Fila fechas ── */}
-      <div style={{
-        display: 'flex', alignItems: 'stretch',
-        borderTop: '1.5px solid #c8deda',
-      }}>
-        {/* Fecha ida */}
+      {/* ── Fila fechas + horas ── */}
+      <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1.5px solid #c8deda' }}>
+
+        {/* Panel 1 — IDA / REGRESO / NUEVA FECHA según tipo */}
         <div style={{
           flex: 1, padding: '12px 18px 14px',
-          borderRight: showRegreso ? '1.5px solid #c8deda' : 'none',
+          borderRight: showPanel2 ? '1.5px solid #c8deda' : 'none',
           background: errorFechaSalida ? '#fff8f8' : '#fafffe',
-          borderRadius: showRegreso ? '0 0 0 14px' : '0 0 14px 14px',
+          borderRadius: showPanel2 ? '0 0 0 14px' : '0 0 14px 14px',
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
-            IDA
+            {labelPanel1}
           </div>
           <DatePicker value={fechaSalida} onChange={onFechaSalidaChange} error={errorFechaSalida} />
-          {errorFechaSalida && (
-            <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaSalida}</div>
-          )}
+          {errorFechaSalida && <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaSalida}</div>}
+
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #ddeae8' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.textMuted, letterSpacing: '.06em', marginBottom: 5 }}>
+              {horaLabel1}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: T.primary }}>
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M8 4.5v3.8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              <input
+                type="text"
+                value={esRegreso ? horaSalida : horaLlegada}
+                onChange={e => esRegreso ? onHoraSalidaChange(e.target.value) : onHoraLlegadaChange(e.target.value)}
+                placeholder={horaPlaceholder1}
+                style={timeInput(esRegreso ? horaSalida : horaLlegada)}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Fecha regreso */}
-        {showRegreso && (
+        {/* Panel 2 — solo para Ida y regreso */}
+        {showPanel2 && (
           <div style={{
             flex: 1, padding: '12px 18px 14px',
             background: errorFechaRegreso ? '#fff8f8' : '#fafffe',
             borderRadius: '0 0 14px 0',
           }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
-              REGRESO
-            </div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>REGRESO</div>
             <DatePicker value={fechaRegreso} onChange={onFechaRegresoChange} error={errorFechaRegreso} />
-            {errorFechaRegreso && (
-              <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaRegreso}</div>
-            )}
+            {errorFechaRegreso && <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaRegreso}</div>}
+
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #ddeae8' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: T.textMuted, letterSpacing: '.06em', marginBottom: 5 }}>
+                HORA MÁX. SALIDA AEROPUERTO
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: T.primary }}>
+                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M8 4.5v3.8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                <input
+                  type="text"
+                  value={horaSalida}
+                  onChange={e => onHoraSalidaChange(e.target.value)}
+                  placeholder="ej: 09:00"
+                  style={timeInput(horaSalida)}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
