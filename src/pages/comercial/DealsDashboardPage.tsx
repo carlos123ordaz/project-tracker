@@ -134,7 +134,7 @@ function NoData({ msg = 'Sin datos' }: { msg?: string }) {
 function MultiTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
       {label && <div style={{ fontSize: 11, color: 'var(--n-500)', marginBottom: 4, fontWeight: 600 }}>{label}</div>}
       {payload.map((p, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
@@ -288,7 +288,7 @@ function SettingsModal({ targets, saving, onSave, onClose }: {
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: '#fff', borderRadius: 12, padding: '24px 28px', minWidth: 420, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
+      <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '24px 28px', minWidth: 420, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C_NAVY }}>Configurar Metas por Unidad</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--n-400)', lineHeight: 1 }}>×</button>
@@ -1032,7 +1032,7 @@ function TabIndividual({
         <select
           value={selectedRep}
           onChange={e => setSelectedRep(e.target.value)}
-          style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid var(--n-200)', fontSize: 12.5, background: '#fff', color: 'var(--n-800)' }}
+          style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid var(--n-200)', fontSize: 12.5, background: 'var(--n-0)', color: 'var(--n-800)' }}
         >
           {allReps.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
@@ -1103,7 +1103,7 @@ function TabIndividual({
                   {priorityDeals.length === 0
                     ? <tr><td colSpan={6} style={{ ...TD, textAlign: 'center', color: 'var(--n-400)', paddingLeft: 14 }}>Sin deals en proceso</td></tr>
                     : priorityDeals.map((d, i) => (
-                      <tr key={d.id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
+                      <tr key={d.id} style={{ background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)' }}>
                         <td style={{ ...TD, paddingLeft: 14, maxWidth: 220 }}>
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11 }}>
                             {d.title.length > 50 ? d.title.slice(0, 50) + '…' : d.title}
@@ -1143,7 +1143,7 @@ function TabIndividual({
                 </thead>
                 <tbody>
                   {fullDeals.map((d, i) => (
-                    <tr key={d.id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
+                    <tr key={d.id} style={{ background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)' }}>
                       <td style={{ ...TD, paddingLeft: 14, maxWidth: 220 }}>
                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11 }}>
                           {d.title.length > 50 ? d.title.slice(0, 50) + '…' : d.title}
@@ -1292,12 +1292,12 @@ export default function DealsDashboardPage() {
   const ytdTarget = prevYearWon > 0 ? prevYearWon : annualTarget * (doy / 365)
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', background: '#f8fafc' }}>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', background: 'var(--n-50)' }}>
 
       {/* ── Top header bar ─────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 24px', background: '#fff',
+        padding: '10px 24px', background: 'var(--n-0)',
         borderBottom: '1px solid var(--n-150)', flexShrink: 0,
       }}>
         {/* Date + sync */}
@@ -1389,7 +1389,7 @@ export default function DealsDashboardPage() {
       </div>
 
       {/* ── Content tabs (pills) ──────────────────────────────────────────── */}
-      <div style={{ display: 'flex', padding: '8px 20px', gap: 6, flexShrink: 0, background: '#fff', borderBottom: '1px solid var(--n-150)' }}>
+      <div style={{ display: 'flex', padding: '8px 20px', gap: 6, flexShrink: 0, background: 'var(--n-0)', borderBottom: '1px solid var(--n-150)' }}>
         {CONTENT_TABS.map(t => (
           <button
             key={t}
@@ -1432,7 +1432,7 @@ export default function DealsDashboardPage() {
       </div>
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <div style={{ padding: '8px 24px', background: '#fff', borderTop: '1px solid var(--n-150)', flexShrink: 0, fontSize: 11.5, color: 'var(--n-500)', textAlign: 'right' }}>
+      <div style={{ padding: '8px 24px', background: 'var(--n-0)', borderTop: '1px solid var(--n-150)', flexShrink: 0, fontSize: 11.5, color: 'var(--n-500)', textAlign: 'right' }}>
         Última Actualización: {fmtTimestamp(lastSync)}
       </div>
 

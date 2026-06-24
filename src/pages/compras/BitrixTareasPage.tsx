@@ -112,7 +112,7 @@ export default function BitrixTareasPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar tarea o responsable…"
-            style={{ width: '100%', paddingLeft: 30, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: '#fff', boxSizing: 'border-box' }}
+            style={{ width: '100%', paddingLeft: 30, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)', boxSizing: 'border-box' }}
           />
         </div>
 
@@ -140,7 +140,7 @@ export default function BitrixTareasPage() {
               style={{
                 width: 32, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', border: 'none',
-                background: view === v ? 'var(--brand-600)' : '#fff',
+                background: view === v ? 'var(--brand-600)' : 'var(--n-0)',
                 color: view === v ? '#fff' : 'var(--n-500)',
                 transition: 'background .12s, color .12s',
               }}
@@ -154,7 +154,7 @@ export default function BitrixTareasPage() {
           <button
             onClick={downloadCSV}
             disabled={filtered.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: filtered.length === 0 ? 'not-allowed' : 'pointer', color: 'var(--n-700)', opacity: filtered.length === 0 ? 0.5 : 1 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, fontWeight: 500, cursor: filtered.length === 0 ? 'not-allowed' : 'pointer', color: 'var(--n-700)', opacity: filtered.length === 0 ? 0.5 : 1 }}
           >
             <Download size={13} /> Exportar CSV
           </button>
@@ -179,7 +179,7 @@ export default function BitrixTareasPage() {
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 10px', borderRadius: 20, cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
               border: `1px solid ${filterStatus === 'Todos' ? 'var(--brand-500)' : 'var(--n-200)'}`,
-              background: filterStatus === 'Todos' ? 'var(--brand-600)' : '#fff',
+              background: filterStatus === 'Todos' ? 'var(--brand-600)' : 'var(--n-0)',
               color: filterStatus === 'Todos' ? '#fff' : 'var(--n-600)',
             }}
           >
@@ -199,7 +199,7 @@ export default function BitrixTareasPage() {
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   padding: '3px 10px', borderRadius: 20, cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
                   border: `1px solid ${active ? st.border : 'var(--n-200)'}`,
-                  background: active ? st.bg : '#fff',
+                  background: active ? st.bg : 'var(--n-0)',
                   color: active ? st.color : 'var(--n-600)',
                 }}
               >
@@ -263,7 +263,7 @@ export default function BitrixTareasPage() {
                         const overdue = isOverdue(t.deadline, t.status)
                         const accentColor = stageColor || st.color
                         return (
-                          <div key={t.id} style={{ background: '#fff', borderRadius: 7, padding: '10px 11px', border: '1px solid var(--n-150)', borderLeft: `3px solid ${accentColor}`, boxShadow: '0 1px 3px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                          <div key={t.id} style={{ background: 'var(--n-0)', borderRadius: 7, padding: '10px 11px', border: '1px solid var(--n-150)', borderLeft: `3px solid ${accentColor}`, boxShadow: '0 1px 3px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-900)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.title}</div>
                             {t.description && (
                               <div style={{ fontSize: 10.5, color: 'var(--n-400)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.description}</div>
@@ -299,13 +299,13 @@ export default function BitrixTareasPage() {
       {/* Table */}
       {!busy && !error && view === 'list' && (
         filtered.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, color: 'var(--n-400)', fontSize: 12.5 }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, color: 'var(--n-400)', fontSize: 12.5 }}>
             {tareas.length === 0
               ? 'No se encontraron tareas. Pulsa Sincronizar para cargar desde Bitrix24.'
               : 'Sin resultados para los filtros aplicados.'}
           </div>
         ) : (
-          <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
               <thead>
                 <tr style={{ background: 'var(--n-50)', borderBottom: '1px solid var(--n-150)' }}>
@@ -323,7 +323,7 @@ export default function BitrixTareasPage() {
                   const pr      = PRIORITY_STYLE[t.priority] || PRIORITY_STYLE['Normal']
                   const overdue = isOverdue(t.deadline, t.status)
                   return (
-                    <tr key={t.id} style={{ borderBottom: '1px solid var(--n-100)', background: idx % 2 === 0 ? '#fff' : 'var(--n-50)' }}>
+                    <tr key={t.id} style={{ borderBottom: '1px solid var(--n-100)', background: idx % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)' }}>
                       <td style={{ padding: '9px 12px', color: 'var(--n-400)', fontWeight: 600, fontSize: 11 }}>{t.id}</td>
                       <td style={{ padding: '9px 12px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--n-900)', marginBottom: t.description ? 2 : 0 }}>{t.title}</div>
@@ -384,6 +384,6 @@ function Th({ children, w }: { children?: React.ReactNode; w?: number }) {
 
 const selectStyle: React.CSSProperties = {
   height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)',
-  background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer',
+  background: 'var(--n-0)', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer',
 }
 

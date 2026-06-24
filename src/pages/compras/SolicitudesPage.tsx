@@ -160,7 +160,7 @@ export default function SolicitudesPage() {
             onClick={() => changeStatus(s)}
             style={{
               flex: 1, padding: '8px 10px', border: 'none', cursor: 'pointer',
-              background: filterStatus === s ? '#fff' : 'transparent',
+              background: filterStatus === s ? 'var(--n-0)' : 'transparent',
               textAlign: 'center',
               borderRight: i < STATUS_OPTIONS.length ? '1px solid var(--n-150)' : 'none',
             }}
@@ -189,7 +189,7 @@ export default function SolicitudesPage() {
           style={{
             width: '100%', paddingLeft: 30, paddingRight: 10, height: 30,
             border: '1px solid var(--n-200)', borderRadius: 7,
-            fontSize: 12, color: 'var(--n-800)', background: '#fff',
+            fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)',
             boxSizing: 'border-box',
           }}
         />
@@ -203,7 +203,7 @@ export default function SolicitudesPage() {
       ) : filtered.length === 0 ? (
         <div style={{
           padding: '56px 24px', textAlign: 'center',
-          background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12,
+          background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12,
         }}>
           <Ticket size={36} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-600)' }}>
@@ -215,7 +215,7 @@ export default function SolicitudesPage() {
         </div>
       ) : (
         <>
-          <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)' }}>
@@ -302,7 +302,7 @@ export default function SolicitudesPage() {
                           style={{
                             display: 'flex', alignItems: 'center', gap: 5,
                             padding: '4px 10px', borderRadius: 6,
-                            border: '1px solid var(--n-200)', background: '#fff',
+                            border: '1px solid var(--n-200)', background: 'var(--n-0)',
                             cursor: downloadingId === s.id ? 'not-allowed' : 'pointer',
                             color: 'var(--n-700)', fontSize: 12,
                             opacity: downloadingId === s.id ? 0.6 : 1,
@@ -334,7 +334,7 @@ export default function SolicitudesPage() {
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 7,
-                  border: '1px solid var(--n-200)', background: '#fff',
+                  border: '1px solid var(--n-200)', background: 'var(--n-0)',
                   cursor: page === 1 ? 'not-allowed' : 'pointer',
                   color: page === 1 ? 'var(--n-300)' : 'var(--n-700)',
                 }}
@@ -358,7 +358,7 @@ export default function SolicitudesPage() {
                       style={{
                         width: 28, height: 28, borderRadius: 7, fontSize: 12.5, fontWeight: 600,
                         border: page === p ? 'none' : '1px solid var(--n-200)',
-                        background: page === p ? 'var(--brand-600)' : '#fff',
+                        background: page === p ? 'var(--brand-600)' : 'var(--n-0)',
                         color: page === p ? '#fff' : 'var(--n-700)',
                         cursor: 'pointer',
                       }}
@@ -373,7 +373,7 @@ export default function SolicitudesPage() {
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 7,
-                  border: '1px solid var(--n-200)', background: '#fff',
+                  border: '1px solid var(--n-200)', background: 'var(--n-0)',
                   cursor: page === totalPages ? 'not-allowed' : 'pointer',
                   color: page === totalPages ? 'var(--n-300)' : 'var(--n-700)',
                 }}

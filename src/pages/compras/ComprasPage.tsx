@@ -95,7 +95,7 @@ export default function ComprasPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar comparativo…"
-            style={{ width: '100%', paddingLeft: 30, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: '#fff', boxSizing: 'border-box' }}
+            style={{ width: '100%', paddingLeft: 30, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)', boxSizing: 'border-box' }}
           />
         </div>
 
@@ -103,7 +103,7 @@ export default function ComprasPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value as ComparisonStatus | 'Todos')}
-          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}
+          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}
         >
           <option value="Todos">Todos los estados</option>
           {COMPARISON_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -116,7 +116,7 @@ export default function ComprasPage() {
               onClick={() => setFilterStatus('Todos')}
               style={{
                 padding: '3px 10px', borderRadius: 20, border: filterStatus === 'Todos' ? '1.5px solid var(--brand-300)' : '1px solid var(--n-200)',
-                background: filterStatus === 'Todos' ? 'var(--brand-50)' : '#fff',
+                background: filterStatus === 'Todos' ? 'var(--brand-50)' : 'var(--n-0)',
                 cursor: 'pointer', fontSize: 12, color: filterStatus === 'Todos' ? 'var(--brand-700)' : 'var(--n-600)', fontWeight: 600,
               }}
             >
@@ -132,7 +132,7 @@ export default function ComprasPage() {
                   style={{
                     padding: '3px 10px', borderRadius: 20,
                     border: active ? `1.5px solid ${st.border}` : '1px solid var(--n-200)',
-                    background: active ? st.bg : '#fff',
+                    background: active ? st.bg : 'var(--n-0)',
                     cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
                     color: active ? st.color : 'var(--n-500)',
                   }}
@@ -147,7 +147,7 @@ export default function ComprasPage() {
 
           <button
             onClick={() => navigate('/compras/proveedores')}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', color: 'var(--n-700)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', color: 'var(--n-700)' }}
           >
             <Building2 size={13} /> Proveedores
           </button>
@@ -185,7 +185,7 @@ export default function ComprasPage() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
           onClick={e => { if (e.target === e.currentTarget) setShowNewModal(false) }}
         >
-          <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: 460, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: 460, boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Nuevo Comparativo</h2>
               <button onClick={() => setShowNewModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={14} /></button>
@@ -227,7 +227,7 @@ export default function ComprasPage() {
             {formErr && <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--red-600)', background: 'var(--red-50)', padding: '7px 11px', borderRadius: 7 }}>{formErr}</div>}
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setShowNewModal(false)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
+              <button onClick={() => setShowNewModal(false)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
               <button onClick={handleCreate} disabled={saving} style={{ padding: '6px 16px', borderRadius: 7, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
                 {saving ? 'Creando…' : 'Crear y abrir'}
               </button>
@@ -239,11 +239,11 @@ export default function ComprasPage() {
       {/* Confirm Delete */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>¿Eliminar comparativo?</div>
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>Se eliminarán todos los ítems y cotizaciones asociadas. Esta acción no se puede deshacer.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={async () => { await deleteComparison(confirmDelete); setConfirmDelete(null) }} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
@@ -258,7 +258,7 @@ function ComparisonCard({ comparison, projectName, onOpen, onDelete }: { compari
   return (
     <div
       onClick={onOpen}
-      style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', transition: 'border-color .15s, box-shadow .15s', display: 'flex', alignItems: 'center', gap: 12 }}
+      style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', transition: 'border-color .15s, box-shadow .15s', display: 'flex', alignItems: 'center', gap: 12 }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-200)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.05)' }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-150)'; e.currentTarget.style.boxShadow = 'none' }}
     >
@@ -312,7 +312,7 @@ function ComparisonCard({ comparison, projectName, onOpen, onDelete }: { compari
 
 function EmptyState({ hasFilter, onNew }: { hasFilter: boolean; onNew: () => void }) {
   return (
-    <div style={{ padding: '48px 24px', textAlign: 'center', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+    <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
       <TrendingDown size={26} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-700)', marginBottom: 5 }}>
         {hasFilter ? 'Sin resultados' : 'No hay comparativos aún'}
@@ -336,5 +336,5 @@ function FL({ children }: { children: React.ReactNode }) {
 const iStyle: React.CSSProperties = {
   width: '100%', height: 32, padding: '0 10px', borderRadius: 6,
   border: '1px solid var(--n-200)', fontSize: 12.5,
-  color: 'var(--n-800)', boxSizing: 'border-box', background: '#fff',
+  color: 'var(--n-800)', boxSizing: 'border-box', background: 'var(--n-0)',
 }

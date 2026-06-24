@@ -89,7 +89,7 @@ export default function ProveedoresPage() {
             style={{
               width: '100%', paddingLeft: 30, paddingRight: 10, height: 30,
               border: '1px solid var(--n-200)', borderRadius: 7,
-              fontSize: 12, color: 'var(--n-800)', background: '#fff',
+              fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)',
               boxSizing: 'border-box',
             }}
           />
@@ -130,7 +130,7 @@ export default function ProveedoresPage() {
       ) : filtered.length === 0 ? (
         <div style={{
           padding: '48px 24px', textAlign: 'center',
-          background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12,
+          background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12,
         }}>
           <Building2 size={32} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-600)' }}>
@@ -141,7 +141,7 @@ export default function ProveedoresPage() {
           </div>
         </div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)' }}>
@@ -228,7 +228,7 @@ export default function ProveedoresPage() {
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                       <button
                         onClick={() => openEdit(s)}
-                        style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-600)' }}
+                        style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)' }}
                         title="Editar"
                       >
                         <Pencil size={13} />
@@ -258,7 +258,7 @@ export default function ProveedoresPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
         >
           <div style={{
-            background: '#fff', borderRadius: 12, padding: '20px 22px 18px',
+            background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px 18px',
             width: '100%', maxWidth: 520, boxShadow: 'var(--shadow-lg)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -331,7 +331,7 @@ export default function ProveedoresPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 18 }}>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}
               >
                 Cancelar
               </button>
@@ -358,7 +358,7 @@ export default function ProveedoresPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
         }}>
           <div style={{
-            background: '#fff', borderRadius: 14, padding: 28,
+            background: 'var(--n-0)', borderRadius: 14, padding: 28,
             width: 360, boxShadow: 'var(--shadow-lg)',
           }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>
@@ -370,7 +370,7 @@ export default function ProveedoresPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmDelete(null)}
-                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}
               >
                 Cancelar
               </button>

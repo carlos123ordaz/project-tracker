@@ -251,7 +251,7 @@ export default function CotizacionEditorPage() {
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <div style={{
         flexShrink: 0, borderBottom: '1px solid var(--n-150)',
-        background: '#fff', padding: '0 20px',
+        background: 'var(--n-0)', padding: '0 20px',
         display: 'flex', alignItems: 'center', gap: 12, height: 52,
       }}>
         <Link to="/cotizaciones" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--n-400)', fontSize: 12, textDecoration: 'none', flexShrink: 0 }}>
@@ -342,7 +342,7 @@ export default function CotizacionEditorPage() {
               {cotizacion.status} <ChevronDown size={10} />
             </button>
             {showStatusMenu && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 8, boxShadow: 'var(--shadow-md)', zIndex: 30, minWidth: 140, overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 8, boxShadow: 'var(--shadow-md)', zIndex: 30, minWidth: 140, overflow: 'hidden' }}>
                 {COTIZACION_STATUSES.map(s => {
                   const st = STATUS_STYLE[s]
                   return (
@@ -376,7 +376,7 @@ export default function CotizacionEditorPage() {
       <div style={{
         flexShrink: 0,
         borderBottom: '1px solid var(--n-150)',
-        background: '#fff',
+        background: 'var(--n-0)',
         padding: '0 20px',
         display: 'flex',
         alignItems: 'flex-end',
@@ -486,7 +486,7 @@ export default function CotizacionEditorPage() {
                         value={newSeccionNombre}
                         onChange={e => setNewSeccionNombre(e.target.value)}
                         placeholder="Nombre de la sección…"
-                        style={{ flex: 1, height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid var(--brand-200)', fontSize: 12.5, background: '#fff' }}
+                        style={{ flex: 1, height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid var(--brand-200)', fontSize: 12.5, background: 'var(--n-0)' }}
                         onKeyDown={e => { if (e.key === 'Enter') handleAddSeccion(activeDisciplina.id); if (e.key === 'Escape') setAddSeccionDisciplinaId(null) }}
                       />
                       <button onClick={() => handleAddSeccion(activeDisciplina.id)} style={{ ...smBtn('brand') }}><Check size={12} /> Crear</button>
@@ -511,7 +511,7 @@ export default function CotizacionEditorPage() {
                     const np = newPartidaBySection[sec.id]
 
                     return (
-                      <div key={sec.id} style={{ marginBottom: 14, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div key={sec.id} style={{ marginBottom: 14, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
                         {/* Section header */}
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
@@ -594,7 +594,7 @@ export default function CotizacionEditorPage() {
                                             <select
                                               value={p.perfil_id ?? ''}
                                               onChange={e => updatePartidaField(p.id, 'perfil_id', e.target.value || null)}
-                                              style={{ fontSize: 11.5, padding: '2px 6px', borderRadius: 5, border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-800)', width: '100%' }}
+                                              style={{ fontSize: 11.5, padding: '2px 6px', borderRadius: 5, border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-800)', width: '100%' }}
                                             >
                                               <option value="">— Perfil manual —</option>
                                               {tarifas.filter(t => t.activo).map(t => <option key={t.id} value={t.id}>{t.perfil}</option>)}
@@ -635,7 +635,7 @@ export default function CotizacionEditorPage() {
                                             padding: '0 6px',
                                             borderRadius: 5,
                                             border: '1px solid var(--n-200)',
-                                            background: '#fff',
+                                            background: 'var(--n-0)',
                                             color: p.producto_bitrix ? 'var(--n-800)' : 'var(--n-400)',
                                             fontSize: 11,
                                             cursor: 'pointer',
@@ -729,7 +729,7 @@ export default function CotizacionEditorPage() {
                                         <button onClick={() => saveNewPartida(sec.id, activeDisciplina.id)} disabled={savingPartida} style={{ padding: '3px 5px', borderRadius: 5, border: 'none', background: 'var(--green-500, var(--green-600))', color: '#fff', cursor: 'pointer' }}>
                                           <Check size={11} />
                                         </button>
-                                        <button onClick={() => setNewPartidaBySection(prev => { const n = { ...prev }; delete n[sec.id]; return n })} style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-500)' }}>
+                                        <button onClick={() => setNewPartidaBySection(prev => { const n = { ...prev }; delete n[sec.id]; return n })} style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-500)' }}>
                                           <span style={{ fontSize: 12 }}>×</span>
                                         </button>
                                       </div>
@@ -770,7 +770,7 @@ export default function CotizacionEditorPage() {
             <div style={{
               width: 260, flexShrink: 0, overflowY: 'auto',
               borderLeft: '1px solid var(--n-150)',
-              background: '#fff', padding: '16px 14px',
+              background: 'var(--n-0)', padding: '16px 14px',
             }}>
               {activeDisciplina && (
                 <>
@@ -977,7 +977,7 @@ export default function CotizacionEditorPage() {
               left,
               zIndex: 46,
               width: POPOVER_W,
-              background: '#fff',
+              background: 'var(--n-0)',
               border: '1px solid var(--n-200)',
               borderRadius: 8,
               boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
@@ -1068,7 +1068,7 @@ function NumInput({ value, onChange, decimals }: { value: number; onChange: (v: 
       step={decimals ? '0.01' : '1'}
       value={value}
       onChange={e => onChange(parseFloat(e.target.value) || 0)}
-      style={{ width: 72, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-150)', fontSize: 12, color: 'var(--n-800)', textAlign: 'right', background: '#fff' }}
+      style={{ width: 72, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-150)', fontSize: 12, color: 'var(--n-800)', textAlign: 'right', background: 'var(--n-0)' }}
     />
   )
 }
@@ -1096,14 +1096,14 @@ function smBtn(color: 'brand' | 'n'): React.CSSProperties {
     display: 'inline-flex', alignItems: 'center', gap: 4,
     padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
     border: color === 'brand' ? 'none' : '1px solid var(--n-200)',
-    background: color === 'brand' ? 'var(--brand-600)' : '#fff',
+    background: color === 'brand' ? 'var(--brand-600)' : 'var(--n-0)',
     color: color === 'brand' ? '#fff' : 'var(--n-700)',
   }
 }
 const hInput: React.CSSProperties = {
   height: 30, padding: '0 10px', borderRadius: 6,
   border: '1px solid var(--brand-200)', fontSize: 13, fontWeight: 600,
-  color: 'var(--n-900)', background: '#fff', outline: 'none',
+  color: 'var(--n-900)', background: 'var(--n-0)', outline: 'none',
 }
 const inlineInput: React.CSSProperties = {
   width: '100%', height: 26, padding: '0 6px', borderRadius: 5,

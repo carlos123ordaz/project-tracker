@@ -209,11 +209,11 @@ export default function SolicitudCompraBOMPage() {
         <div style={{ position: 'relative', flex: '0 0 240px' }}>
           <Search size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)' }} />
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Buscar descripción, tipo…"
-            style={{ width: '100%', paddingLeft: 28, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: '#fff', boxSizing: 'border-box' }} />
+            style={{ width: '100%', paddingLeft: 28, paddingRight: 10, height: 30, border: '1px solid var(--n-200)', borderRadius: 7, fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)', boxSizing: 'border-box' }} />
         </div>
 
         <select value={filterProceso} onChange={e => { setFilterProceso(e.target.value as ProcesoBOM | 'TODOS'); setPage(1) }}
-          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
+          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
           <option value="TODOS">Todo proceso</option>
           <option value="Compra">Compra</option>
           <option value="Fabricación">Fabricación</option>
@@ -228,7 +228,7 @@ export default function SolicitudCompraBOMPage() {
               <button key={s} onClick={() => { setFilterEstado(s); setPage(1) }} style={{
                 padding: '3px 10px', borderRadius: 20, cursor: 'pointer', fontSize: 11.5, fontWeight: 600,
                 border: active ? `1.5px solid ${st ? st.border : 'var(--brand-300)'}` : '1px solid var(--n-200)',
-                background: active ? (st ? st.bg : 'var(--brand-50)') : '#fff',
+                background: active ? (st ? st.bg : 'var(--brand-50)') : 'var(--n-0)',
                 color: active ? (st ? st.color : 'var(--brand-700)') : 'var(--n-500)',
               }}>
                 {count} {s === 'TODOS' ? 'total' : s.toLowerCase()}
@@ -245,7 +245,7 @@ export default function SolicitudCompraBOMPage() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px',
                 borderRadius: 7, border: '1px solid var(--n-200)',
-                background: showColPicker ? 'var(--n-100)' : '#fff',
+                background: showColPicker ? 'var(--n-100)' : 'var(--n-0)',
                 fontSize: 12, cursor: 'pointer', color: 'var(--n-700)', fontWeight: 500,
               }}
             >
@@ -261,7 +261,7 @@ export default function SolicitudCompraBOMPage() {
             {showColPicker && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40,
-                background: '#fff', border: '1px solid var(--n-200)', borderRadius: 10,
+                background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 10,
                 boxShadow: '0 8px 24px rgba(0,0,0,.10)', width: 220, padding: '10px 0',
               }}>
                 <div style={{ padding: '0 12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--n-100)' }}>
@@ -322,7 +322,7 @@ export default function SolicitudCompraBOMPage() {
       {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: 'var(--red-50)', color: 'var(--red-600)', borderRadius: 8, fontSize: 12.5 }}>{error}</div>}
 
       {/* ── Tabla ──────────────────────────────────────────────────────────── */}
-      <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando…</div>
         ) : (
@@ -442,7 +442,7 @@ export default function SolicitudCompraBOMPage() {
 
                       <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button onClick={() => openEdit(it)} style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-500)', display: 'flex', alignItems: 'center' }}><Edit2 size={11} /></button>
+                          <button onClick={() => openEdit(it)} style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-500)', display: 'flex', alignItems: 'center' }}><Edit2 size={11} /></button>
                           <button onClick={() => setConfirmDelete(it.id)} style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)', display: 'flex', alignItems: 'center' }}><Trash2 size={11} /></button>
                         </div>
                       </td>
@@ -464,7 +464,7 @@ export default function SolicitudCompraBOMPage() {
               {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} de {total} ítems
             </span>
             <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
-              style={{ height: 26, padding: '0 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 11.5, color: 'var(--n-700)', cursor: 'pointer' }}>
+              style={{ height: 26, padding: '0 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 11.5, color: 'var(--n-700)', cursor: 'pointer' }}>
               <option value={15}>15 / pág.</option>
               <option value={30}>30 / pág.</option>
               <option value={50}>50 / pág.</option>
@@ -495,7 +495,7 @@ export default function SolicitudCompraBOMPage() {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: 620, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: 620, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>{editId ? 'Editar Ítem' : 'Nuevo Ítem BOM'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={14} /></button>
@@ -535,7 +535,7 @@ export default function SolicitudCompraBOMPage() {
                     <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f) }} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: uploading ? 'not-allowed' : 'pointer', color: 'var(--n-700)', fontWeight: 500 }}>
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, cursor: uploading ? 'not-allowed' : 'pointer', color: 'var(--n-700)', fontWeight: 500 }}>
                       <Upload size={12} />
                       {uploading ? 'Subiendo…' : previewUrl ? 'Cambiar imagen' : 'Subir imagen'}
                     </button>
@@ -603,7 +603,7 @@ export default function SolicitudCompraBOMPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
               <button onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 16px', borderRadius: 7, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
                 <Check size={13} /> {saving ? 'Guardando…' : editId ? 'Guardar cambios' : 'Agregar ítem'}
               </button>
@@ -615,11 +615,11 @@ export default function SolicitudCompraBOMPage() {
       {/* ── Confirm Delete ─────────────────────────────────────────────────── */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>¿Eliminar ítem?</div>
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>Esta acción no se puede deshacer.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
@@ -635,14 +635,14 @@ function FL({ children }: { children: React.ReactNode }) {
 
 const thS: React.CSSProperties = { padding: '8px 10px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: 'var(--n-500)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }
 const tdS: React.CSSProperties = { padding: '7px 10px', color: 'var(--n-700)' }
-const iStyle: React.CSSProperties = { width: '100%', height: 32, padding: '0 10px', borderRadius: 6, border: '1px solid var(--n-200)', fontSize: 12.5, color: 'var(--n-800)', boxSizing: 'border-box', background: '#fff' }
+const iStyle: React.CSSProperties = { width: '100%', height: 32, padding: '0 10px', borderRadius: 6, border: '1px solid var(--n-200)', fontSize: 12.5, color: 'var(--n-800)', boxSizing: 'border-box', background: 'var(--n-0)' }
 
 function pageBtnS(disabled: boolean, active = false): React.CSSProperties {
   return {
     width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
     borderRadius: 6, fontSize: 12, fontWeight: active ? 700 : 500, cursor: disabled ? 'not-allowed' : 'pointer',
     border: active ? '1.5px solid var(--brand-400)' : '1px solid var(--n-200)',
-    background: active ? 'var(--brand-50)' : '#fff',
+    background: active ? 'var(--brand-50)' : 'var(--n-0)',
     color: active ? 'var(--brand-700)' : disabled ? 'var(--n-300)' : 'var(--n-600)',
   }
 }

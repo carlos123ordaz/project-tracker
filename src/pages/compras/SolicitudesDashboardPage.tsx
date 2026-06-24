@@ -31,7 +31,7 @@ function StatCard({ label, value, sub, icon, color }: {
 }) {
   return (
     <div style={{
-      background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12,
+      background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12,
       padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14,
     }}>
       <div style={{
@@ -83,7 +83,7 @@ function BarChart({ data, total, color = 'var(--brand-500)' }: {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, padding: '18px 20px' }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, padding: '18px 20px' }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
         {title}
       </div>
@@ -118,7 +118,7 @@ function UserCombobox({ users, counts, total, value, onChange }: {
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
           fontSize: 12.5, color: 'var(--n-800)', padding: '5px 10px',
-          border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff',
+          border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)',
           cursor: 'pointer', fontFamily: 'inherit', minWidth: 240,
           justifyContent: 'space-between',
         }}
@@ -132,7 +132,7 @@ function UserCombobox({ users, counts, total, value, onChange }: {
       {open && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200,
-          background: '#fff', border: '1px solid var(--n-200)', borderRadius: 8,
+          background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8,
           boxShadow: '0 4px 16px rgba(0,0,0,.1)', width: 280, overflow: 'hidden',
         }}>
           {/* Search input */}
@@ -162,13 +162,13 @@ function UserCombobox({ users, counts, total, value, onChange }: {
               onMouseDown={() => { onChange(''); setSearch(''); setOpen(false) }}
               style={{
                 padding: '8px 12px', fontSize: 12.5, cursor: 'pointer',
-                background: !value ? 'var(--brand-50)' : '#fff',
+                background: !value ? 'var(--brand-50)' : 'var(--n-0)',
                 color: !value ? 'var(--brand-700)' : 'var(--n-700)',
                 fontWeight: !value ? 600 : 400,
                 display: 'flex', justifyContent: 'space-between',
               }}
               onMouseEnter={e => { if (value) e.currentTarget.style.background = 'var(--n-50)' }}
-              onMouseLeave={e => { if (value) e.currentTarget.style.background = '#fff' }}
+              onMouseLeave={e => { if (value) e.currentTarget.style.background = 'var(--n-0)' }}
             >
               <span>Todos los usuarios</span>
               <span style={{ color: 'var(--n-400)', fontSize: 11.5 }}>{total}</span>
@@ -179,14 +179,14 @@ function UserCombobox({ users, counts, total, value, onChange }: {
                 onMouseDown={() => { onChange(u); setSearch(''); setOpen(false) }}
                 style={{
                   padding: '8px 12px', fontSize: 12.5, cursor: 'pointer',
-                  background: value === u ? 'var(--brand-50)' : '#fff',
+                  background: value === u ? 'var(--brand-50)' : 'var(--n-0)',
                   color: value === u ? 'var(--brand-700)' : 'var(--n-700)',
                   fontWeight: value === u ? 600 : 400,
                   display: 'flex', justifyContent: 'space-between',
                   borderTop: '1px solid var(--n-50)',
                 }}
                 onMouseEnter={e => { if (value !== u) e.currentTarget.style.background = 'var(--n-50)' }}
-                onMouseLeave={e => { if (value !== u) e.currentTarget.style.background = '#fff' }}
+                onMouseLeave={e => { if (value !== u) e.currentTarget.style.background = 'var(--n-0)' }}
               >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u}</span>
                 <span style={{ color: 'var(--n-400)', fontSize: 11.5, flexShrink: 0, marginLeft: 8 }}>{counts[u] ?? 0}</span>
@@ -318,7 +318,7 @@ export default function SolicitudesDashboardPage() {
             display: 'flex', alignItems: 'center', gap: 5,
             fontSize: 12.5, color: 'var(--n-600)', textDecoration: 'none',
             padding: '5px 10px', borderRadius: 7, border: '1px solid var(--n-200)',
-            background: '#fff',
+            background: 'var(--n-0)',
           }}
         >
           <ArrowLeft size={13} /> Volver
@@ -358,7 +358,7 @@ export default function SolicitudesDashboardPage() {
 
       {/* Status bar */}
       {stats.total > 0 && (
-        <div style={{ marginBottom: 20, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, padding: '14px 20px' }}>
+        <div style={{ marginBottom: 20, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, padding: '14px 20px' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
             Distribución por estado
           </div>
@@ -385,7 +385,7 @@ export default function SolicitudesDashboardPage() {
 
       {/* Trend chart */}
       {stats.trend.length > 0 && (
-        <div style={{ marginBottom: 20, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ marginBottom: 20, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <TrendingUp size={14} style={{ color: 'var(--brand-600)' }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
