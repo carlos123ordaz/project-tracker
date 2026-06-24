@@ -32,6 +32,52 @@ function numPaxFromAnswer(val: string): number {
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
+/* ── Ciudades para autocomplete ───────────────────────────────────────────── */
+interface CityOption { city: string; code: string; country: string }
+const ALL_CITIES: CityOption[] = [
+  { city: 'Lima',              code: 'LIM', country: 'Perú' },
+  { city: 'Cusco',             code: 'CUZ', country: 'Perú' },
+  { city: 'Arequipa',          code: 'AQP', country: 'Perú' },
+  { city: 'Trujillo',          code: 'TRU', country: 'Perú' },
+  { city: 'Piura',             code: 'PIU', country: 'Perú' },
+  { city: 'Iquitos',           code: 'IQT', country: 'Perú' },
+  { city: 'Chiclayo',          code: 'CIX', country: 'Perú' },
+  { city: 'Pucallpa',          code: 'PCL', country: 'Perú' },
+  { city: 'Juliaca',           code: 'JUL', country: 'Perú' },
+  { city: 'Tacna',             code: 'TCQ', country: 'Perú' },
+  { city: 'Tarapoto',          code: 'TPP', country: 'Perú' },
+  { city: 'Huánuco',           code: 'HUU', country: 'Perú' },
+  { city: 'Ayacucho',          code: 'AYP', country: 'Perú' },
+  { city: 'Cajamarca',         code: 'CJA', country: 'Perú' },
+  { city: 'Tumbes',            code: 'TBP', country: 'Perú' },
+  { city: 'Puerto Maldonado',  code: 'PEM', country: 'Perú' },
+  { city: 'Chachapoyas',       code: 'CHH', country: 'Perú' },
+  { city: 'Andahuaylas',       code: 'ANS', country: 'Perú' },
+  { city: 'Bogotá',            code: 'BOG', country: 'Colombia' },
+  { city: 'Medellín',          code: 'MDE', country: 'Colombia' },
+  { city: 'Santiago',          code: 'SCL', country: 'Chile' },
+  { city: 'Buenos Aires',      code: 'EZE', country: 'Argentina' },
+  { city: 'São Paulo',         code: 'GRU', country: 'Brasil' },
+  { city: 'Quito',             code: 'UIO', country: 'Ecuador' },
+  { city: 'Guayaquil',         code: 'GYE', country: 'Ecuador' },
+  { city: 'La Paz',            code: 'LPB', country: 'Bolivia' },
+  { city: 'Caracas',           code: 'CCS', country: 'Venezuela' },
+  { city: 'Ciudad de México',  code: 'MEX', country: 'México' },
+  { city: 'Panamá',            code: 'PTY', country: 'Panamá' },
+  { city: 'Miami',             code: 'MIA', country: 'EE. UU.' },
+  { city: 'Nueva York',        code: 'JFK', country: 'EE. UU.' },
+  { city: 'Los Ángeles',       code: 'LAX', country: 'EE. UU.' },
+  { city: 'Houston',           code: 'IAH', country: 'EE. UU.' },
+  { city: 'Madrid',            code: 'MAD', country: 'España' },
+  { city: 'Londres',           code: 'LHR', country: 'Reino Unido' },
+  { city: 'París',             code: 'CDG', country: 'Francia' },
+  { city: 'Dubai',             code: 'DXB', country: 'EAU' },
+]
+
+/* Claves de campos que el FlightWidget consume (no se renderizan individualmente) */
+const FLIGHT_TRIGGER  = 'ciudad_salida'
+const FLIGHT_CONSUMED = new Set(['ciudad_destino', 'fecha_salida', 'fecha_regreso'])
+
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 export default function FormPage() {
   const { slug = '' } = useParams<{ slug: string }>()
@@ -211,6 +257,11 @@ export default function FormPage() {
 
   const visibleFields = fields.filter(f => isVisible(f))
 
+  // Numeración de preguntas excluyendo los campos consumidos por FlightWidget
+  const questionFields = visibleFields.filter(f => !FLIGHT_CONSUMED.has(f.field_key))
+  const qNum = (key: string) => (questionFields.findIndex(f => f.field_key === key) + 1) || 0
+  const showRegreso = visibleFields.some(f => f.field_key === 'fecha_regreso')
+
   return shell(
     <FormCard>
       {/* ── Form header ── */}
@@ -242,30 +293,66 @@ export default function FormPage() {
       </div>
 
       {/* ── Questions — single flow, separated by dividers ── */}
-      {visibleFields.map((field, idx) => (
-        <div key={field.id} id={`field-${field.field_key}`}>
-          <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
-          <div style={{ padding: '28px 56px' }}>
-            {/* Question label */}
-            <p style={{ fontSize: 17, color: T.text, marginBottom: field.help_text ? 8 : 22, lineHeight: 1.45 }}>
-              {idx + 1}. {field.label}
-              {field.required && <span style={{ color: T.required, marginLeft: 4 }}>*</span>}
-            </p>
-            {field.help_text && (
-              <p style={{ fontSize: 14, color: T.textSub, marginBottom: 18, lineHeight: 1.5 }}>
-                {field.help_text}
+      {visibleFields.map((field) => {
+        // Campos consumidos dentro del FlightWidget — no renderizar solos
+        if (FLIGHT_CONSUMED.has(field.field_key)) return null
+
+        // Ciudad de salida dispara el widget de vuelo completo
+        if (field.field_key === FLIGHT_TRIGGER) {
+          return (
+            <div key={field.id} id="field-ciudad_salida">
+              <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
+              <div style={{ padding: '28px 56px' }}>
+                <p style={{ fontSize: 17, color: T.text, marginBottom: 22, lineHeight: 1.45 }}>
+                  {qNum(FLIGHT_TRIGGER)}. Origen, destino y fechas del vuelo
+                  <span style={{ color: T.required, marginLeft: 4 }}>*</span>
+                </p>
+                <FlightWidget
+                  salida={answers['ciudad_salida'] ?? ''}
+                  destino={answers['ciudad_destino'] ?? ''}
+                  fechaSalida={answers['fecha_salida'] ?? ''}
+                  fechaRegreso={answers['fecha_regreso'] ?? ''}
+                  showRegreso={showRegreso}
+                  onSalidaChange={v => setAnswer('ciudad_salida', v)}
+                  onDestinoChange={v => setAnswer('ciudad_destino', v)}
+                  onFechaSalidaChange={v => setAnswer('fecha_salida', v)}
+                  onFechaRegresoChange={v => setAnswer('fecha_regreso', v)}
+                  errorSalida={errors['ciudad_salida']}
+                  errorDestino={errors['ciudad_destino']}
+                  errorFechaSalida={errors['fecha_salida']}
+                  errorFechaRegreso={errors['fecha_regreso']}
+                />
+              </div>
+            </div>
+          )
+        }
+
+        // Renderizado normal para el resto de campos
+        const n = qNum(field.field_key)
+        return (
+          <div key={field.id} id={`field-${field.field_key}`}>
+            <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
+            <div style={{ padding: '28px 56px' }}>
+              <p style={{ fontSize: 17, color: T.text, marginBottom: field.help_text ? 8 : 22, lineHeight: 1.45 }}>
+                {n}. {field.label}
+                {field.required && <span style={{ color: T.required, marginLeft: 4 }}>*</span>}
               </p>
-            )}
-            <FieldRenderer
-              field={field}
-              value={answers[field.field_key] ?? ''}
-              onChange={v => setAnswer(field.field_key, v)}
-              error={errors[field.field_key]}
-              answers={answers}
-            />
+              {field.help_text && (
+                <p style={{ fontSize: 14, color: T.textSub, marginBottom: 18, lineHeight: 1.5 }}>
+                  {field.help_text}
+                </p>
+              )}
+              <FieldRenderer
+                field={field}
+                value={answers[field.field_key] ?? ''}
+                onChange={v => setAnswer(field.field_key, v)}
+                error={errors[field.field_key]}
+                answers={answers}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* ── Submit ── */}
       <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
@@ -689,6 +776,239 @@ const navBtn: React.CSSProperties = {
   background: 'none', border: 'none', cursor: 'pointer',
   padding: '4px', borderRadius: 4, color: T.text,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
+}
+
+/* ── City selector with autocomplete ────────────────────────────────────── */
+function CitySelector({ value, onChange, placeholder, side }: {
+  value: string; onChange: (v: string) => void
+  placeholder: string; side: 'left' | 'right'
+}) {
+  const [focused,  setFocused]  = useState(false)
+  const [inputVal, setInputVal] = useState(value)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setInputVal(value) }, [value])
+
+  const suggestions = inputVal.trim().length > 0
+    ? ALL_CITIES.filter(c =>
+        c.city.toLowerCase().includes(inputVal.toLowerCase()) ||
+        c.code.toLowerCase().includes(inputVal.toLowerCase())
+      ).slice(0, 7)
+    : ALL_CITIES.filter(c => c.country === 'Perú').slice(0, 7)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setFocused(false)
+        // Si no coincide con ninguna ciudad, guardar lo escrito
+        setInputVal(value)
+      }
+    }
+    if (focused) document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [focused, value])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flex: 1 }}>
+      <div style={{ padding: '10px 18px 12px' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: T.textMuted, letterSpacing: '.08em', marginBottom: 6 }}>
+          {side === 'left' ? 'ORIGEN' : 'DESTINO'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{side === 'left' ? '🛫' : '🛬'}</span>
+          <input
+            type="text"
+            value={inputVal}
+            onChange={e => {
+              setInputVal(e.target.value)
+              if (!e.target.value) onChange('')
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+              // Guardar texto libre si no hay click en sugerencia
+              setTimeout(() => {
+                if (!ref.current?.contains(document.activeElement)) {
+                  onChange(inputVal)
+                  setFocused(false)
+                }
+              }, 200)
+            }}
+            placeholder={placeholder}
+            style={{
+              border: 'none', outline: 'none', fontSize: 16, fontWeight: inputVal ? 600 : 400,
+              color: inputVal ? T.text : T.textMuted, background: 'transparent', width: '100%',
+              fontFamily: "'Open Sans', system-ui, sans-serif",
+            }}
+          />
+        </div>
+        {inputVal && (
+          <div style={{ fontSize: 12, color: T.textMuted, marginTop: 3, paddingLeft: 28 }}>
+            {ALL_CITIES.find(c => c.city.toLowerCase() === inputVal.toLowerCase())?.country ?? 'Ciudad personalizada'}
+          </div>
+        )}
+      </div>
+
+      {/* Dropdown de sugerencias */}
+      {focused && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
+          background: '#fff', borderRadius: 10,
+          boxShadow: '0 8px 30px rgba(0,0,0,.15)',
+          border: '1px solid #e0e0e0', overflow: 'hidden',
+          minWidth: 220,
+        }}>
+          {suggestions.map((c, i) => (
+            <div
+              key={c.code}
+              onMouseDown={() => {
+                onChange(c.city)
+                setInputVal(c.city)
+                setFocused(false)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 14px', cursor: 'pointer',
+                borderTop: i > 0 ? '1px solid #f5f5f5' : 'none',
+                background: '#fff',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+            >
+              <div style={{
+                minWidth: 36, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: T.primaryLight, borderRadius: 5,
+                fontSize: 11, fontWeight: 700, color: T.primary,
+              }}>{c.code}</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{c.city}</div>
+                <div style={{ fontSize: 11, color: T.textMuted }}>{c.country}</div>
+              </div>
+            </div>
+          ))}
+          {suggestions.length === 0 && (
+            <div style={{ padding: '12px 14px', fontSize: 13, color: T.textMuted }}>
+              Sin coincidencias — se usará el texto escrito
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Flight widget (Latam-style) ─────────────────────────────────────────── */
+function FlightWidget({
+  salida, destino, fechaSalida, fechaRegreso, showRegreso,
+  onSalidaChange, onDestinoChange, onFechaSalidaChange, onFechaRegresoChange,
+  errorSalida, errorDestino, errorFechaSalida, errorFechaRegreso,
+}: {
+  salida: string; destino: string; fechaSalida: string; fechaRegreso: string
+  showRegreso: boolean
+  onSalidaChange: (v: string) => void; onDestinoChange: (v: string) => void
+  onFechaSalidaChange: (v: string) => void; onFechaRegresoChange: (v: string) => void
+  errorSalida?: string; errorDestino?: string; errorFechaSalida?: string; errorFechaRegreso?: string
+}) {
+  const hasErr = errorSalida || errorDestino || errorFechaSalida || errorFechaRegreso
+
+  return (
+    <div style={{
+      border: `1.5px solid ${hasErr ? T.required : '#c8deda'}`,
+      borderRadius: 14, overflow: 'visible',
+      boxShadow: '0 2px 12px rgba(15,110,98,.10)',
+      background: '#fff',
+    }}>
+      {/* ── Fila ciudades ── */}
+      <div style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}>
+        {/* Origen */}
+        <div style={{
+          flex: 1, borderRight: '1.5px solid #c8deda',
+          borderRadius: '14px 0 0 0',
+          background: errorSalida ? '#fff8f8' : '#fff',
+        }}>
+          <CitySelector value={salida} onChange={onSalidaChange} placeholder="Ciudad de salida" side="left" />
+          {errorSalida && (
+            <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>
+          )}
+        </div>
+
+        {/* Botón intercambiar */}
+        <button
+          type="button"
+          onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
+          title="Intercambiar ciudades"
+          style={{
+            position: 'absolute', left: '50%', top: '40%',
+            transform: 'translate(-50%, -50%)',
+            width: 34, height: 34, borderRadius: '50%',
+            background: '#fff', border: '1.5px solid #c8deda',
+            cursor: 'pointer', zIndex: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.primary, fontSize: 17,
+            boxShadow: '0 2px 8px rgba(0,0,0,.12)',
+            transition: 'transform .2s, box-shadow .2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)'
+          }}
+        >⇄</button>
+
+        {/* Destino */}
+        <div style={{
+          flex: 1, borderRadius: '0 14px 0 0',
+          background: errorDestino ? '#fff8f8' : '#fff',
+        }}>
+          <CitySelector value={destino} onChange={onDestinoChange} placeholder="Ciudad de destino" side="right" />
+          {errorDestino && (
+            <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Fila fechas ── */}
+      <div style={{
+        display: 'flex', alignItems: 'stretch',
+        borderTop: '1.5px solid #c8deda',
+      }}>
+        {/* Fecha ida */}
+        <div style={{
+          flex: 1, padding: '12px 18px 14px',
+          borderRight: showRegreso ? '1.5px solid #c8deda' : 'none',
+          background: errorFechaSalida ? '#fff8f8' : '#fafffe',
+          borderRadius: showRegreso ? '0 0 0 14px' : '0 0 14px 14px',
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
+            IDA
+          </div>
+          <DatePicker value={fechaSalida} onChange={onFechaSalidaChange} error={errorFechaSalida} />
+          {errorFechaSalida && (
+            <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaSalida}</div>
+          )}
+        </div>
+
+        {/* Fecha regreso */}
+        {showRegreso && (
+          <div style={{
+            flex: 1, padding: '12px 18px 14px',
+            background: errorFechaRegreso ? '#fff8f8' : '#fafffe',
+            borderRadius: '0 0 14px 0',
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
+              REGRESO
+            </div>
+            <DatePicker value={fechaRegreso} onChange={onFechaRegresoChange} error={errorFechaRegreso} />
+            {errorFechaRegreso && (
+              <div style={{ fontSize: 12, color: T.required, marginTop: 4 }}>{errorFechaRegreso}</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 /* ── Passenger list ──────────────────────────────────────────────────────── */
