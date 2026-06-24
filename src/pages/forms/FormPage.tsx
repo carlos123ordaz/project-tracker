@@ -259,9 +259,11 @@ export default function FormPage() {
 
   const visibleFields = fields.filter(f => isVisible(f))
 
+  // Pre-filter consumed fields so they never render as standalone questions
+  const renderFields = visibleFields.filter(f => !isFlightConsumed(f.field_key))
+
   // Numeración de preguntas excluyendo los campos consumidos por FlightWidget
-  const questionFields = visibleFields.filter(f => !isFlightConsumed(f.field_key))
-  const qNum = (key: string) => (questionFields.findIndex(f => f.field_key.trim() === key) + 1) || 0
+  const qNum = (key: string) => (renderFields.findIndex(f => f.field_key.trim() === key) + 1) || 0
   const showRegreso = visibleFields.some(f => f.field_key === 'fecha_regreso')
 
   return shell(
@@ -295,10 +297,7 @@ export default function FormPage() {
       </div>
 
       {/* ── Questions — single flow, separated by dividers ── */}
-      {visibleFields.map((field) => {
-        // Campos consumidos dentro del FlightWidget — no renderizar solos
-        if (isFlightConsumed(field.field_key)) return null
-
+      {renderFields.map((field) => {
         // Ciudad de salida dispara el widget de vuelo completo
         if (isFlightTrigger(field.field_key)) {
           return (
