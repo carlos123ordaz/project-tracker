@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-react'
 import { useFormBySlug } from '../../hooks/useForms'
 import { useMicrosoftAuth } from '../../hooks/useMicrosoftAuth'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import type { FormField } from '../../lib/types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -85,6 +86,8 @@ export default function FormPage() {
   const { slug = '' } = useParams<{ slug: string }>()
   const { form, fields, loading, notFound } = useFormBySlug(slug)
   const { msUser, loading: authLoading, error: authError, signIn, signOut } = useMicrosoftAuth()
+  const isMobile = useIsMobile()
+  const px = isMobile ? 16 : 56   // horizontal padding for sections
 
   const [answers,     setAnswers]     = useState<Record<string, string>>({})
   const [errors,      setErrors]      = useState<Record<string, string>>({})
@@ -191,7 +194,7 @@ export default function FormPage() {
 
   if (!msUser) return shell(
     <FormCard>
-      <div style={{ padding: '64px 48px', textAlign: 'center' }}>
+      <div style={{ padding: `64px ${isMobile ? 20 : 48}px`, textAlign: 'center' }}>
         <div style={{
           width: 56, height: 56, borderRadius: '50%', background: T.primaryLight,
           display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
@@ -269,7 +272,7 @@ export default function FormPage() {
   return shell(
     <FormCard>
       {/* ── Form header ── */}
-      <div style={{ padding: '36px 56px 20px' }}>
+      <div style={{ padding: `${isMobile ? 24 : 36}px ${px}px 20px` }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
           <h1 style={{ fontWeight: 600, fontSize: 28, lineHeight: 1.3, margin: 0 }}>
             {form.name}
@@ -302,8 +305,8 @@ export default function FormPage() {
         if (isFlightTrigger(field.field_key)) {
           return (
             <div key={field.id} id="field-ciudad_salida">
-              <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
-              <div style={{ padding: '28px 56px' }}>
+              <div style={{ height: 1, background: T.divider, margin: `0 ${px}px` }} />
+              <div style={{ padding: `28px ${px}px` }}>
                 <p style={{ fontSize: 17, color: T.text, marginBottom: 22, lineHeight: 1.45 }}>
                   {qNum(FLIGHT_TRIGGER)}. Origen, destino y fechas del vuelo
                   <span style={{ color: T.required, marginLeft: 4 }}>*</span>
@@ -337,8 +340,8 @@ export default function FormPage() {
         const n = qNum(field.field_key)
         return (
           <div key={field.id} id={`field-${field.field_key}`}>
-            <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
-            <div style={{ padding: '28px 56px' }}>
+            <div style={{ height: 1, background: T.divider, margin: `0 ${px}px` }} />
+            <div style={{ padding: `28px ${px}px` }}>
               <p style={{ fontSize: 17, color: T.text, marginBottom: field.help_text ? 8 : 22, lineHeight: 1.45 }}>
                 {n}. {field.label}
                 {field.required && <span style={{ color: T.required, marginLeft: 4 }}>*</span>}
@@ -361,8 +364,8 @@ export default function FormPage() {
       })}
 
       {/* ── Submit ── */}
-      <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
-      <div style={{ padding: '24px 56px 44px' }}>
+      <div style={{ height: 1, background: T.divider, margin: `0 ${px}px` }} />
+      <div style={{ padding: `24px ${px}px 44px` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 12 }}>
           <button
             onClick={handleSubmit}
@@ -971,6 +974,7 @@ function FlightWidget({
   onHoraLlegadaChange: (v: string) => void; onHoraSalidaChange: (v: string) => void
   errorSalida?: string; errorDestino?: string; errorFechaSalida?: string; errorFechaRegreso?: string
 }) {
+  const isMobile = useIsMobile()
   // Derivar paneles según el tipo de servicio seleccionado
   const esRegreso      = tipoServicio === 'regreso'
   const esCambioFecha  = tipoServicio === 'cambio_fecha'
@@ -1004,28 +1008,36 @@ function FlightWidget({
     }}>
       {/* ── Fila ciudades (oculta para Cambio de Fecha) ── */}
       {showCities && (
-        <div style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}>
-          <div style={{ flex: 1, borderRight: '1.5px solid #c8deda', borderRadius: '14px 0 0 0', background: errorSalida ? '#fff8f8' : '#fff' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', position: 'relative' }}>
+          <div style={{
+            flex: 1,
+            borderRight: isMobile ? 'none' : '1.5px solid #c8deda',
+            borderBottom: isMobile ? '1.5px solid #c8deda' : 'none',
+            borderRadius: isMobile ? '14px 14px 0 0' : '14px 0 0 0',
+            background: errorSalida ? '#fff8f8' : '#fff',
+          }}>
             <CitySelector value={salida} onChange={onSalidaChange} placeholder="Ciudad de salida" side="left" />
             {errorSalida && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorSalida}</div>}
           </div>
 
-          <button
-            type="button"
-            onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
-            title="Intercambiar ciudades"
-            style={{
-              position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
-              width: 34, height: 34, borderRadius: '50%',
-              background: '#fff', border: '1.5px solid #c8deda',
-              cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)' }}
-          >⇄</button>
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={() => { onSalidaChange(destino); onDestinoChange(salida) }}
+              title="Intercambiar ciudades"
+              style={{
+                position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
+                width: 34, height: 34, borderRadius: '50%',
+                background: '#fff', border: '1.5px solid #c8deda',
+                cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(180deg)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,110,98,.25)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translate(-50%, -50%) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.12)' }}
+            >⇄</button>
+          )}
 
-          <div style={{ flex: 1, borderRadius: '0 14px 0 0', background: errorDestino ? '#fff8f8' : '#fff' }}>
+          <div style={{ flex: 1, borderRadius: isMobile ? 0 : '0 14px 0 0', background: errorDestino ? '#fff8f8' : '#fff' }}>
             <CitySelector value={destino} onChange={onDestinoChange} placeholder="Ciudad de destino" side="right" />
             {errorDestino && <div style={{ padding: '0 18px 8px', fontSize: 12, color: T.required }}>{errorDestino}</div>}
           </div>
@@ -1033,15 +1045,16 @@ function FlightWidget({
       )}
 
       {/* ── Fila fechas + horas ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', borderTop: showCities ? '1.5px solid #c8deda' : 'none' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', borderTop: showCities ? '1.5px solid #c8deda' : 'none' }}>
 
         {/* Panel 1 — IDA / REGRESO / NUEVA FECHA según tipo */}
         <div style={{
           flex: 1, padding: '12px 18px 14px',
-          borderRight: showPanel2 ? '1.5px solid #c8deda' : 'none',
+          borderRight: showPanel2 && !isMobile ? '1.5px solid #c8deda' : 'none',
+          borderBottom: showPanel2 && isMobile ? '1.5px solid #c8deda' : 'none',
           background: errorFechaSalida ? '#fff8f8' : '#fafffe',
           borderRadius: showPanel2
-            ? (showCities ? '0 0 0 14px' : '14px 0 0 14px')
+            ? (isMobile ? 0 : (showCities ? '0 0 0 14px' : '14px 0 0 14px'))
             : (showCities ? '0 0 14px 14px' : '14px'),
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 6 }}>
@@ -1110,6 +1123,7 @@ function FlightWidget({
 function PassengerListField({ value, onChange, count, error }: {
   value: string; onChange: (v: string) => void; count: number; error?: string
 }) {
+  const isMobile = useIsMobile()
   const rows: PassengerRow[] = Array.from({ length: count }, (_, i) => ({
     ...EMPTY_PAX, ...(parsePax(value)[i] ?? {}),
   }))
@@ -1142,7 +1156,7 @@ function PassengerListField({ value, onChange, count, error }: {
           <div style={{ fontSize: 13, fontWeight: 600, color: T.primary, marginBottom: 14 }}>
             Pasajero {i + 1}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px 32px' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <Sub req>Nombres y apellidos completos</Sub>
               <input type="text" value={pax.nombre}
