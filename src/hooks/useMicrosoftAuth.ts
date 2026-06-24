@@ -1,82 +1,57 @@
 import { useState, useEffect } from 'react'
-import { msalInstance, LOGIN_SCOPES } from '../lib/msal'
-import type { AccountInfo } from '@azure/msal-browser'
+
+const API_BASE    = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const STORAGE_KEY = 'ms_user'
 
 export interface MSUser {
   name:  string
   email: string
-  account: AccountInfo
 }
 
-
 export function useMicrosoftAuth() {
-  const [msUser,   setMsUser]   = useState<MSUser | null>(null)
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
+  const [msUser,  setMsUser]  = useState<MSUser | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState('')
 
   useEffect(() => {
-    async function init() {
-      try {
-        await msalInstance.initialize()
+    const params   = new URLSearchParams(window.location.search)
+    const name     = params.get('ms_name')
+    const email    = params.get('ms_email')
+    const msError  = params.get('ms_error')
 
-        // Handle response from Microsoft redirect (if any)
-        const response = await msalInstance.handleRedirectPromise()
-        if (response) {
-          setMsUser({
-            name:    response.account.name  ?? response.account.username,
-            email:   response.account.username,
-            account: response.account,
-          })
-          // Restore the page the user was on before the login redirect
-          const returnPath = sessionStorage.getItem('ms_login_return')
-          if (returnPath && returnPath !== '/') {
-            sessionStorage.removeItem('ms_login_return')
-            window.history.replaceState(null, '', returnPath)
-          }
-          setLoading(false)
-          return
-        }
-
-        // Check for existing cached session
-        const accounts = msalInstance.getAllAccounts()
-        if (accounts.length > 0) {
-          const account = accounts[0]
-          setMsUser({
-            name:    account.name  ?? account.username,
-            email:   account.username,
-            account,
-          })
-        }
-      } catch (e) {
-        console.error('MSAL init error', e)
-      } finally {
-        setLoading(false)
+    if (name && email) {
+      // Recién llegamos del backend con los datos del usuario
+      const user: MSUser = { name, email }
+      setMsUser(user)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+      // Limpiar params de la URL sin recargar la página
+      params.delete('ms_name')
+      params.delete('ms_email')
+      const qs = params.toString()
+      window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''))
+    } else if (msError) {
+      setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')
+      params.delete('ms_error')
+      window.history.replaceState(null, '', window.location.pathname)
+    } else {
+      // Revisar sesión guardada
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        try { setMsUser(JSON.parse(stored)) } catch { localStorage.removeItem(STORAGE_KEY) }
       }
     }
-    init()
+    setLoading(false)
   }, [])
 
-  async function signIn() {
+  function signIn() {
     setError('')
-    try {
-      // Save the current path so we can restore it after the redirect
-      sessionStorage.setItem('ms_login_return', window.location.pathname + window.location.search)
-      await msalInstance.loginRedirect({
-        scopes:      LOGIN_SCOPES,
-        redirectUri: window.location.origin + '/auth-redirect',
-      })
-    } catch (e: unknown) {
-      setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')
-      console.error(e)
-    }
+    const returnPath = window.location.pathname + window.location.search
+    window.location.href = `${API_BASE}/auth/microsoft/login?return_path=${encodeURIComponent(returnPath)}`
   }
 
-  async function signOut() {
-    if (!msUser) return
-    await msalInstance.logoutRedirect({
-      account:               msUser.account,
-      postLogoutRedirectUri: window.location.origin,
-    })
+  function signOut() {
+    localStorage.removeItem(STORAGE_KEY)
+    setMsUser(null)
   }
 
   return { msUser, loading, error, signIn, signOut }
