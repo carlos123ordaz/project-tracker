@@ -8,11 +8,6 @@ export interface MSUser {
   account: AccountInfo
 }
 
-// Current page URL without hash — used as redirectUri so Microsoft
-// sends the user back to the same form after authentication.
-function currentRedirectUri() {
-  return window.location.origin + window.location.pathname
-}
 
 export function useMicrosoftAuth() {
   const [msUser,   setMsUser]   = useState<MSUser | null>(null)
@@ -32,6 +27,12 @@ export function useMicrosoftAuth() {
             email:   response.account.username,
             account: response.account,
           })
+          // Restore the page the user was on before the login redirect
+          const returnPath = sessionStorage.getItem('ms_login_return')
+          if (returnPath && returnPath !== '/') {
+            sessionStorage.removeItem('ms_login_return')
+            window.history.replaceState(null, '', returnPath)
+          }
           setLoading(false)
           return
         }
@@ -58,9 +59,11 @@ export function useMicrosoftAuth() {
   async function signIn() {
     setError('')
     try {
+      // Save the current path so we can restore it after the redirect
+      sessionStorage.setItem('ms_login_return', window.location.pathname + window.location.search)
       await msalInstance.loginRedirect({
         scopes:      LOGIN_SCOPES,
-        redirectUri: currentRedirectUri(),
+        redirectUri: window.location.origin,
       })
     } catch (e: unknown) {
       setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')
@@ -72,7 +75,7 @@ export function useMicrosoftAuth() {
     if (!msUser) return
     await msalInstance.logoutRedirect({
       account:               msUser.account,
-      postLogoutRedirectUri: currentRedirectUri(),
+      postLogoutRedirectUri: window.location.origin,
     })
   }
 
