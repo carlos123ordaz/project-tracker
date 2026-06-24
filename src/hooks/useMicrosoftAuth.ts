@@ -63,7 +63,7 @@ export function useMicrosoftAuth() {
       sessionStorage.setItem('ms_login_return', window.location.pathname + window.location.search)
       await msalInstance.loginRedirect({
         scopes:      LOGIN_SCOPES,
-        redirectUri: window.location.origin,
+        redirectUri: window.location.origin + '/auth-redirect',
       })
     } catch (e: unknown) {
       setError('No se pudo iniciar sesión con Microsoft. Intenta de nuevo.')

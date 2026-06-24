@@ -7,8 +7,13 @@ export default function AuthRedirectPage() {
       .then(() => msalInstance.handleRedirectPromise())
       .catch(console.error)
       .finally(() => {
-        // Close popup if MSAL hasn't done it automatically
-        if (window.opener) window.close()
+        if (window.opener) {
+          window.close()
+          return
+        }
+        const returnPath = sessionStorage.getItem('ms_login_return') ?? '/'
+        sessionStorage.removeItem('ms_login_return')
+        window.location.replace(returnPath)
       })
   }, [])
   return null
