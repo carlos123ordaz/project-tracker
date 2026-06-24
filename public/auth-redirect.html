@@ -19,7 +19,13 @@
   await msal.initialize();
   await msal.handleRedirectPromise();
 
-  if (window.opener) window.close();
+  if (window.opener) {
+    window.close();
+  } else {
+    const returnPath = sessionStorage.getItem('ms_login_return') ?? '/';
+    sessionStorage.removeItem('ms_login_return');
+    window.location.replace(returnPath);
+  }
 </script>
 </body>
 </html>
