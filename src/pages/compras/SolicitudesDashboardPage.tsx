@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Ticket, Clock, CheckCircle2, XCircle, Loader2,
@@ -92,61 +92,182 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+function UserCombobox({ users, counts, total, value, onChange }: {
+  users: string[]; counts: Record<string, number>; total: number
+  value: string; onChange: (v: string) => void
+}) {
+  const [open, setOpen]       = useState(false)
+  const [search, setSearch]   = useState('')
+  const ref                   = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const filtered = users.filter(u => u.toLowerCase().includes(search.toLowerCase()))
+  const label    = value ? `${value} (${counts[value] ?? 0})` : `Todos los usuarios (${total})`
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontSize: 12.5, color: 'var(--n-800)', padding: '5px 10px',
+          border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff',
+          cursor: 'pointer', fontFamily: 'inherit', minWidth: 240,
+          justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: 'var(--n-400)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>
+          <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200,
+          background: '#fff', border: '1px solid var(--n-200)', borderRadius: 8,
+          boxShadow: '0 4px 16px rgba(0,0,0,.1)', width: 280, overflow: 'hidden',
+        }}>
+          {/* Search input */}
+          <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--n-100)', position: 'relative' }}>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"
+              style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: 'var(--n-400)' }}>
+              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Buscar usuario…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%', fontSize: 12.5, padding: '4px 8px 4px 26px',
+                border: '1px solid var(--n-200)', borderRadius: 5, outline: 'none',
+                fontFamily: 'inherit', boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          {/* Options list */}
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            <div
+              onMouseDown={() => { onChange(''); setSearch(''); setOpen(false) }}
+              style={{
+                padding: '8px 12px', fontSize: 12.5, cursor: 'pointer',
+                background: !value ? 'var(--brand-50)' : '#fff',
+                color: !value ? 'var(--brand-700)' : 'var(--n-700)',
+                fontWeight: !value ? 600 : 400,
+                display: 'flex', justifyContent: 'space-between',
+              }}
+              onMouseEnter={e => { if (value) e.currentTarget.style.background = 'var(--n-50)' }}
+              onMouseLeave={e => { if (value) e.currentTarget.style.background = '#fff' }}
+            >
+              <span>Todos los usuarios</span>
+              <span style={{ color: 'var(--n-400)', fontSize: 11.5 }}>{total}</span>
+            </div>
+            {filtered.map(u => (
+              <div
+                key={u}
+                onMouseDown={() => { onChange(u); setSearch(''); setOpen(false) }}
+                style={{
+                  padding: '8px 12px', fontSize: 12.5, cursor: 'pointer',
+                  background: value === u ? 'var(--brand-50)' : '#fff',
+                  color: value === u ? 'var(--brand-700)' : 'var(--n-700)',
+                  fontWeight: value === u ? 600 : 400,
+                  display: 'flex', justifyContent: 'space-between',
+                  borderTop: '1px solid var(--n-50)',
+                }}
+                onMouseEnter={e => { if (value !== u) e.currentTarget.style.background = 'var(--n-50)' }}
+                onMouseLeave={e => { if (value !== u) e.currentTarget.style.background = '#fff' }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u}</span>
+                <span style={{ color: 'var(--n-400)', fontSize: 11.5, flexShrink: 0, marginLeft: 8 }}>{counts[u] ?? 0}</span>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--n-400)', textAlign: 'center' }}>
+                Sin resultados
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function SolicitudesDashboardPage() {
   const { rows, loading } = useFormStats(FORM_SLUG)
+  const [selectedUser, setSelectedUser] = useState<string>('')
+
+  const allUsers = useMemo(() =>
+    Array.from(new Set(rows.map(r => r.submitter_name ?? 'Desconocido'))).sort()
+  , [rows])
+
+  const filteredRows = useMemo(() =>
+    selectedUser ? rows.filter(r => (r.submitter_name ?? 'Desconocido') === selectedUser) : rows
+  , [rows, selectedUser])
 
   const stats = useMemo(() => {
-    const total = rows.length
+    const total = filteredRows.length
 
     // By status
     const byStatus: Record<string, number> = {}
-    rows.forEach(r => { byStatus[r.status] = (byStatus[r.status] ?? 0) + 1 })
+    filteredRows.forEach(r => { byStatus[r.status] = (byStatus[r.status] ?? 0) + 1 })
 
     // By tipo_boleto
     const byTipo: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = r.answers?.tipo_boleto ?? 'Sin datos'
       byTipo[v] = (byTipo[v] ?? 0) + 1
     })
 
     // By destino_vuelo
     const byDestino: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = r.answers?.destino_vuelo ?? 'Sin datos'
       byDestino[v] = (byDestino[v] ?? 0) + 1
     })
 
     // By tipo_servicio
     const byServicio: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = r.answers?.tipo_servicio ?? 'Sin datos'
       byServicio[v] = (byServicio[v] ?? 0) + 1
     })
 
     // By equipaje
     const byEquipaje: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = r.answers?.equipaje ?? 'Sin datos'
       byEquipaje[v] = (byEquipaje[v] ?? 0) + 1
     })
 
     // Top destinations
     const byDestCity: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = (r.answers?.ciudad_destino ?? '').trim().toUpperCase()
       if (v) byDestCity[v] = (byDestCity[v] ?? 0) + 1
     })
 
     // Top submitters
     const bySubmitter: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       const v = r.submitter_name ?? 'Desconocido'
       bySubmitter[v] = (bySubmitter[v] ?? 0) + 1
     })
 
     // Monthly trend (last 12 months)
     const byMonth: Record<string, number> = {}
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       try {
         const key = format(startOfMonth(parseISO(r.created_at)), 'yyyy-MM')
         byMonth[key] = (byMonth[key] ?? 0) + 1
@@ -175,7 +296,7 @@ export default function SolicitudesDashboardPage() {
         value: byMonth[k],
       })),
     }
-  }, [rows])
+  }, [filteredRows])
 
   if (loading) {
     return (
@@ -210,6 +331,20 @@ export default function SolicitudesDashboardPage() {
             {stats.total} solicitudes en total
           </p>
         </div>
+      </div>
+
+      {/* Filtro por usuario */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)', whiteSpace: 'nowrap' }}>
+          Filtrar por usuario:
+        </label>
+        <UserCombobox
+          users={allUsers}
+          counts={Object.fromEntries(allUsers.map(u => [u, rows.filter(r => (r.submitter_name ?? 'Desconocido') === u).length]))}
+          total={rows.length}
+          value={selectedUser}
+          onChange={setSelectedUser}
+        />
       </div>
 
       {/* KPI cards */}

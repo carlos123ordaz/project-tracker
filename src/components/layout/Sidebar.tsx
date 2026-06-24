@@ -95,7 +95,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/compras/seguimiento', label: 'Seguimiento Gestión', icon: ClipboardCheck },
         { to: '/compras/bom', label: 'Solicitud Compra BOM', icon: PackageSearch },
         { to: '/compras/solicitudes', label: 'Solicitudes Boletos', icon: Ticket },
-        { to: '/compras/solicitudes/dashboard', label: 'Boletos Dashboard', icon: LayoutDashboard },
         { to: '/compras/tareas/91', label: 'Compras Locales', icon: ListChecks },
         { to: '/compras/tareas/85', label: 'Importaciones', icon: ListChecks },
       ],
