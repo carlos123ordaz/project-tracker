@@ -24,7 +24,7 @@ const T = {
 }
 
 const TIPO_LABEL: Record<string, string> = {
-  aereo: 'Aéreo', terrestre: 'Terrestre',
+  aereo: 'Aéreo', terrestre: 'Terrestre', aereo_terrestre: 'Aéreo y Terrestre',
   nacional: 'Nacional', internacional: 'Internacional',
   ida: 'Compra de boleto de Ida',
   regreso: 'Compra de boleto de Regreso',
@@ -41,12 +41,24 @@ function displayVal(val: string) {
   return TIPO_LABEL[val] ?? val
 }
 
-function formatDate(iso: string) {
-  if (!iso) return '—'
+function formatDate(val: string) {
+  if (!val) return '—'
   try {
-    return format(new Date(iso + (iso.length === 10 ? 'T12:00:00' : '')), "d 'de' MMMM 'de' yyyy", { locale: es })
-  } catch { return iso }
+    // dd/mm/yyyy (stored by DatePicker)
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {
+      const [d, m, y] = val.split('/')
+      return format(new Date(`${y}-${m}-${d}T12:00:00`), "d 'de' MMMM 'de' yyyy", { locale: es })
+    }
+    // ISO fallback
+    return format(new Date(val + (val.length === 10 ? 'T12:00:00' : '')), "d 'de' MMMM 'de' yyyy", { locale: es })
+  } catch { return val }
 }
+
+/* ── Campos agrupados en el FlightWidget ─────────────────────────────────── */
+const FLIGHT_TRIGGER  = 'ciudad_salida'
+const FLIGHT_CONSUMED = new Set(['ciudad_destino', 'fecha_salida', 'fecha_regreso', 'hora_llegada_destino', 'hora_salida_aeropuerto'])
+const isFlightConsumed = (key: string) => FLIGHT_CONSUMED.has(key.trim())
+const isFlightTrigger  = (key: string) => key.trim() === FLIGHT_TRIGGER
 
 interface PassengerRow { nombre: string; dni: string; nacimiento: string; celular: string; correo: string }
 
@@ -202,8 +214,71 @@ export default function FormPreviewPage() {
       </div>
 
       {/* Fields */}
-      {fields.filter(f => isVisible(f)).map((field, idx) => {
+      {fields.filter(f => isVisible(f)).filter(f => !isFlightConsumed(f.field_key)).map((field, idx) => {
         const val = answers[field.field_key] ?? ''
+
+        // Ciudad de salida → render bloque de vuelo combinado
+        if (isFlightTrigger(field.field_key)) {
+          const tipoServicio = answers['tipo_servicio'] ?? ''
+          const esCambioFecha = tipoServicio === 'cambio_fecha'
+          const esIdaYRegreso = tipoServicio === 'ida_regreso'
+          const labelIda = tipoServicio === 'regreso' ? 'REGRESO' : esCambioFecha ? 'NUEVA FECHA' : 'IDA'
+          const horaLabel1 = tipoServicio === 'regreso' ? 'Hora máx. salida aeropuerto' : 'Hora máx. llegada al destino'
+          return (
+            <div key={field.id}>
+              <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
+              <div style={{ padding: '24px 56px' }}>
+                <p style={{ fontSize: 13.5, color: T.textMuted, marginBottom: 14, lineHeight: 1.4 }}>
+                  {idx + 1}. Origen, destino y fechas del vuelo
+                </p>
+                <div style={{
+                  border: '1.5px solid #c8deda', borderRadius: 12, overflow: 'hidden',
+                  boxShadow: '0 2px 8px rgba(15,110,98,.08)',
+                }}>
+                  {/* Ciudades */}
+                  {!esCambioFecha && (
+                    <div style={{ display: 'flex', borderBottom: '1.5px solid #c8deda' }}>
+                      <div style={{ flex: 1, padding: '14px 20px', borderRight: '1.5px solid #c8deda' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 4 }}>ORIGEN</div>
+                        <div style={{ fontSize: 15, color: T.text, fontWeight: 500 }}>{answers['ciudad_salida'] || '—'}</div>
+                      </div>
+                      <div style={{ flex: 1, padding: '14px 20px' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 4 }}>DESTINO</div>
+                        <div style={{ fontSize: 15, color: T.text, fontWeight: 500 }}>{answers['ciudad_destino'] || '—'}</div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Fechas y horas */}
+                  <div style={{ display: 'flex' }}>
+                    <div style={{ flex: 1, padding: '14px 20px', borderRight: esIdaYRegreso && answers['fecha_regreso'] ? '1.5px solid #c8deda' : 'none' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 4 }}>{labelIda}</div>
+                      <div style={{ fontSize: 15, color: T.text }}>{formatDate(answers['fecha_salida'] ?? '')}</div>
+                      {answers['hora_llegada_destino'] && (
+                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed #ddeae8' }}>
+                          <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: '.06em', marginBottom: 2 }}>{horaLabel1.toUpperCase()}</div>
+                          <div style={{ fontSize: 14, color: T.text }}>{answers['hora_llegada_destino']}</div>
+                        </div>
+                      )}
+                    </div>
+                    {esIdaYRegreso && answers['fecha_regreso'] && (
+                      <div style={{ flex: 1, padding: '14px 20px' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: '.08em', marginBottom: 4 }}>REGRESO</div>
+                        <div style={{ fontSize: 15, color: T.text }}>{formatDate(answers['fecha_regreso'] ?? '')}</div>
+                        {answers['hora_salida_aeropuerto'] && (
+                          <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed #ddeae8' }}>
+                            <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: '.06em', marginBottom: 2 }}>HORA MÁX. SALIDA AEROPUERTO</div>
+                            <div style={{ fontSize: 14, color: T.text }}>{answers['hora_salida_aeropuerto']}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
         if (!val && field.field_type !== 'passenger_list') return null
 
         return (

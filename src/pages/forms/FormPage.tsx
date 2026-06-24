@@ -799,8 +799,11 @@ function CitySelector({ value, onChange, placeholder, side }: {
     ? ALL_CITIES.filter(c =>
         c.city.toLowerCase().includes(inputVal.toLowerCase()) ||
         c.code.toLowerCase().includes(inputVal.toLowerCase())
-      ).slice(0, 7)
-    : ALL_CITIES.filter(c => c.country === 'Perú').slice(0, 7)
+      ).slice(0, 6)
+    : ALL_CITIES.filter(c => c.country === 'Perú').slice(0, 6)
+
+  // ¿El texto escrito coincide exactamente con alguna sugerencia?
+  const exactMatch = ALL_CITIES.some(c => c.city.toLowerCase() === inputVal.trim().toLowerCase())
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -891,9 +894,60 @@ function CitySelector({ value, onChange, placeholder, side }: {
               </div>
             </div>
           ))}
-          {suggestions.length === 0 && (
+          {/* Opción "Usar..." cuando hay sugerencias pero no hay coincidencia exacta */}
+          {suggestions.length > 0 && inputVal.trim() && !exactMatch && (
+            <div
+              onMouseDown={() => {
+                onChange(inputVal.trim())
+                setFocused(false)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 14px', cursor: 'pointer', background: '#fff',
+                borderTop: '1px solid #f0f0f0',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+            >
+              <div style={{
+                minWidth: 36, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#f3f2f1', borderRadius: 5,
+                fontSize: 11, fontWeight: 700, color: T.textSub,
+              }}>✎</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Usar "{inputVal.trim()}"</div>
+                <div style={{ fontSize: 11, color: T.textMuted }}>Ciudad personalizada</div>
+              </div>
+            </div>
+          )}
+
+          {suggestions.length === 0 && inputVal.trim() && (
+            <div
+              onMouseDown={() => {
+                onChange(inputVal.trim())
+                setFocused(false)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 14px', cursor: 'pointer', background: '#fff',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+            >
+              <div style={{
+                minWidth: 36, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#f3f2f1', borderRadius: 5,
+                fontSize: 11, fontWeight: 700, color: T.textSub,
+              }}>✎</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Usar "{inputVal.trim()}"</div>
+                <div style={{ fontSize: 11, color: T.textMuted }}>Ciudad personalizada</div>
+              </div>
+            </div>
+          )}
+          {suggestions.length === 0 && !inputVal.trim() && (
             <div style={{ padding: '12px 14px', fontSize: 13, color: T.textMuted }}>
-              Sin coincidencias — se usará el texto escrito
+              Escribe para buscar una ciudad
             </div>
           )}
         </div>
