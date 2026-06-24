@@ -77,6 +77,8 @@ const ALL_CITIES: CityOption[] = [
 /* Claves de campos que el FlightWidget consume (no se renderizan individualmente) */
 const FLIGHT_TRIGGER  = 'ciudad_salida'
 const FLIGHT_CONSUMED = new Set(['ciudad_destino', 'fecha_salida', 'fecha_regreso', 'hora_llegada_destino', 'hora_salida_aeropuerto'])
+const isFlightConsumed = (key: string) => FLIGHT_CONSUMED.has(key.trim())
+const isFlightTrigger  = (key: string) => key.trim() === FLIGHT_TRIGGER
 
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 export default function FormPage() {
@@ -258,8 +260,8 @@ export default function FormPage() {
   const visibleFields = fields.filter(f => isVisible(f))
 
   // Numeración de preguntas excluyendo los campos consumidos por FlightWidget
-  const questionFields = visibleFields.filter(f => !FLIGHT_CONSUMED.has(f.field_key))
-  const qNum = (key: string) => (questionFields.findIndex(f => f.field_key === key) + 1) || 0
+  const questionFields = visibleFields.filter(f => !isFlightConsumed(f.field_key))
+  const qNum = (key: string) => (questionFields.findIndex(f => f.field_key.trim() === key) + 1) || 0
   const showRegreso = visibleFields.some(f => f.field_key === 'fecha_regreso')
 
   return shell(
@@ -295,10 +297,10 @@ export default function FormPage() {
       {/* ── Questions — single flow, separated by dividers ── */}
       {visibleFields.map((field) => {
         // Campos consumidos dentro del FlightWidget — no renderizar solos
-        if (FLIGHT_CONSUMED.has(field.field_key)) return null
+        if (isFlightConsumed(field.field_key)) return null
 
         // Ciudad de salida dispara el widget de vuelo completo
-        if (field.field_key === FLIGHT_TRIGGER) {
+        if (isFlightTrigger(field.field_key)) {
           return (
             <div key={field.id} id="field-ciudad_salida">
               <div style={{ height: 1, background: T.divider, margin: '0 56px' }} />
