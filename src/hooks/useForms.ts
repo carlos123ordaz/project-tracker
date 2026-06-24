@@ -56,9 +56,9 @@ export const PAGE_SIZE = 50
 
 export function useFormSubmissions(
   formSlug: string,
-  opts: { status?: SubmissionStatus | 'Todos'; page?: number } = {},
+  opts: { status?: SubmissionStatus | 'Todos'; page?: number; search?: string } = {},
 ) {
-  const { status = 'Todos', page = 1 } = opts
+  const { status = 'Todos', page = 1, search = '' } = opts
 
   const [formId, setFormId] = useState<string | null>(null)
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
@@ -76,22 +76,29 @@ export function useFormSubmissions(
       .then(({ data }) => { if (data) setFormId(data.id) })
   }, [formSlug])
 
-  // Fetch page whenever formId / status / page changes
+  // Fetch whenever formId / status / page / search changes
   useEffect(() => {
     if (!formId) return
     async function load() {
       setLoading(true)
-      const from = (page - 1) * PAGE_SIZE
-      const to   = from + PAGE_SIZE - 1
+      const trimmed = search.trim()
 
       let q = supabase
         .from('form_submissions')
         .select('*', { count: 'exact' })
         .eq('form_id', formId)
         .order('created_at', { ascending: false })
-        .range(from, to)
 
       if (status !== 'Todos') q = q.eq('status', status)
+
+      if (trimmed) {
+        // Server-side filter on text columns; JSONB fields filtered client-side within the page
+        q = q.or(`submitter_name.ilike.%${trimmed}%,submitter_email.ilike.%${trimmed}%`)
+      }
+
+      const from = (page - 1) * PAGE_SIZE
+      const to   = from + PAGE_SIZE - 1
+      q = q.range(from, to)
 
       const { data, count } = await q
       setSubmissions((data ?? []) as FormSubmission[])
@@ -99,7 +106,7 @@ export function useFormSubmissions(
       setLoading(false)
     }
     load()
-  }, [formId, status, page])
+  }, [formId, status, page, search])
 
   async function updateStatus(id: string, newStatus: SubmissionStatus) {
     const { data, error } = await supabase

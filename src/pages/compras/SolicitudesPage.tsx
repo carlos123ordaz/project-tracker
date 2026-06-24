@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Ticket, Search, Copy, Check,
   Clock, CheckCircle2, XCircle, Loader2, FileDown,
@@ -48,19 +48,23 @@ export default function SolicitudesPage() {
   const { submissions, total, loading, updateStatus } = useFormSubmissions(FORM_SLUG, {
     status: filterStatus,
     page,
+    search,
   })
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  // Client-side text search within current page
+  // Server filters name/email; additionally narrow by JSONB fields within the current page
   const filtered = submissions.filter(s => {
-    const q = search.toLowerCase()
+    const q = search.toLowerCase().trim()
     return !q ||
       (s.submitter_name  ?? '').toLowerCase().includes(q) ||
       (s.submitter_email ?? '').toLowerCase().includes(q) ||
       (s.answers?.ciudad_destino ?? '').toLowerCase().includes(q) ||
       (s.answers?.numero_task    ?? '').toLowerCase().includes(q)
   })
+
+  // Reset to page 1 whenever search term changes
+  useEffect(() => { setPage(1) }, [search])
 
   function changeStatus(newStatus: SubmissionStatus | 'Todos') {
     setFilterStatus(newStatus)
@@ -244,7 +248,7 @@ export default function SolicitudesPage() {
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <td style={{ padding: '8px 12px', fontSize: 11.5, color: 'var(--n-400)', fontWeight: 500 }}>
-                        {pageStart + idx}
+                          {pageStart + idx}
                       </td>
                       <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-900)' }}>
