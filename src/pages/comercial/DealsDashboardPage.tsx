@@ -149,6 +149,18 @@ function filterBySub(deals: Deal[], sub: SubTab): Deal[] {
   return deals
 }
 
+// ── responsive hook ────────────────────────────────────────────────────────────
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < breakpoint)
+  React.useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < breakpoint)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [breakpoint])
+  return isMobile
+}
+
 // ── table styles ───────────────────────────────────────────────────────────────
 
 const TH: React.CSSProperties = {
@@ -243,8 +255,8 @@ function MetricCard({ label, value, sub, accent = C_NAVY }: {
 }) {
   return (
     <div style={{
-      flex: 1,
-      minWidth: 110,
+      flex: '1 1 140px',
+      minWidth: 0,
       background: 'var(--n-0)',
       border: '1px solid var(--n-150)',
       borderRadius: 10,
@@ -367,7 +379,7 @@ function SettingsModal({ targets, saving, onSave, onClose }: {
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '24px 28px', minWidth: 420, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
+      <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 16px', width: 'min(95vw, 480px)', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C_NAVY }}>Configurar Metas por Unidad</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--n-400)', lineHeight: 1 }}>×</button>
@@ -556,6 +568,7 @@ export default function DealsDashboardPage() {
   const { deals: allDeals, lastSync, loading: dealsLoading, syncing, sync } = useDeals()
   const { activities } = useActivities()
   const { targets, saving: targetsSaving, upsert } = useUnitTargets()
+  const isMobile = useIsMobile()
 
   const [activeUnit, setActiveUnit]     = useState<UnitTab>('PROSER')
   const [activeSub, setActiveSub]       = useState<SubTab>('Todos')
@@ -866,22 +879,45 @@ export default function DealsDashboardPage() {
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 24px', background: 'var(--n-0)',
+        display: 'flex',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 10 : 0,
+        padding: isMobile ? '10px 14px' : '10px 24px',
+        background: 'var(--n-0)',
         borderBottom: '1px solid var(--n-150)', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 12, color: 'var(--n-600)', textTransform: 'capitalize' }}>{today}</span>
-          <button
-            onClick={sync} disabled={syncing}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: 'var(--n-500)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            <RefreshCw size={11} className={syncing ? 'spin' : ''} />
-            {syncing ? 'Sincronizando…' : 'Sincronizar'}
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: isMobile ? '100%' : 'auto', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 12, color: 'var(--n-600)', textTransform: 'capitalize' }}>{today}</span>
+            <button
+              onClick={sync} disabled={syncing}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: 'var(--n-500)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              <RefreshCw size={11} className={syncing ? 'spin' : ''} />
+              {syncing ? 'Sincronizando…' : 'Sincronizar'}
+            </button>
+          </div>
+          {isMobile && (
+            <button
+              onClick={() => setShowSettings(true)}
+              title="Configurar metas"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}
+            >
+              <Settings size={18} />
+            </button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+        <div style={{
+          display: 'flex',
+          gap: isMobile ? 8 : 20,
+          alignItems: 'center',
+          overflowX: isMobile ? 'auto' : 'visible',
+          width: isMobile ? '100%' : 'auto',
+          paddingBottom: isMobile ? 4 : 0,
+        }}>
           <SemiCircleGauge
             label={`Meta Mensual · ${activeUnit}`}
             value={mtdWon}
@@ -905,26 +941,28 @@ export default function DealsDashboardPage() {
           />
         </div>
 
-        <button
-          onClick={() => setShowSettings(true)}
-          title="Configurar metas"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}
-        >
-          <Settings size={18} />
-        </button>
+        {!isMobile && (
+          <button
+            onClick={() => setShowSettings(true)}
+            title="Configurar metas"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}
+          >
+            <Settings size={18} />
+          </button>
+        )}
       </div>
 
       {/* ── Unit tabs ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', background: '#1e293b', flexShrink: 0, padding: '0 16px' }}>
+      <div style={{ display: 'flex', background: '#1e293b', flexShrink: 0, padding: '0 16px', overflowX: 'auto' }}>
         {UNIT_TABS.map(u => (
           <button
             key={u}
             onClick={() => { setActiveUnit(u); setActiveSub('Todos'); setSelectedRep('Todos') }}
             style={{
-              height: 36, padding: '0 20px',
+              height: 36, padding: '0 16px', flexShrink: 0,
               background: activeUnit === u ? '#334155' : 'transparent',
               color: '#fff', fontSize: 12.5, fontWeight: 600,
-              border: 'none', cursor: 'pointer',
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
               borderBottom: activeUnit === u ? '2px solid #60a5fa' : '2px solid transparent',
               transition: 'background .15s',
             }}
@@ -935,13 +973,13 @@ export default function DealsDashboardPage() {
       </div>
 
       {/* ── Sub-tabs ───────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', background: 'var(--n-100)', flexShrink: 0, padding: '4px 16px', gap: 4, borderBottom: '1px solid var(--n-200)' }}>
+      <div style={{ display: 'flex', background: 'var(--n-100)', flexShrink: 0, padding: '4px 16px', gap: 4, borderBottom: '1px solid var(--n-200)', overflowX: 'auto' }}>
         {SUB_TABS.map(s => (
           <button
             key={s}
             onClick={() => setActiveSub(s)}
             style={{
-              padding: '3px 14px', borderRadius: 6,
+              padding: '3px 14px', borderRadius: 6, flexShrink: 0, whiteSpace: 'nowrap',
               background: activeSub === s ? '#1d4ed8' : 'transparent',
               color: activeSub === s ? '#fff' : 'var(--n-700)',
               fontSize: 12, fontWeight: activeSub === s ? 600 : 500,
@@ -957,7 +995,7 @@ export default function DealsDashboardPage() {
       {/* ── Filter bar ─────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8,
-        padding: '8px 20px', background: 'var(--n-0)',
+        padding: isMobile ? '8px 12px' : '8px 20px', background: 'var(--n-0)',
         borderBottom: '1px solid var(--n-150)', flexShrink: 0,
       }}>
         {/* Date presets */}
@@ -996,7 +1034,7 @@ export default function DealsDashboardPage() {
         )}
 
         {/* Responsable */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ marginLeft: isMobile ? 0 : 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Users size={13} style={{ color: 'var(--n-500)' }} />
           <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--n-500)' }}>RESPONSABLE</span>
           <SearchableSelect value={selectedRep} options={allReps} onChange={setSelectedRep} />
@@ -1004,10 +1042,10 @@ export default function DealsDashboardPage() {
       </div>
 
       {/* ── Dashboard content ──────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px 10px' : '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* ── KPI row ── */}
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <MetricCard
             label="Opps Creadas"
             value={kpiCreados}
@@ -1041,7 +1079,7 @@ export default function DealsDashboardPage() {
         </div>
 
         {/* ── Charts row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           <Card title={`Actividades por responsable · ${dateRange.label}`} accent={C_NAVY}>
             <ActivityBarChart data={activityChartData} />
           </Card>
@@ -1065,7 +1103,7 @@ export default function DealsDashboardPage() {
         </div>
 
         {/* ── Analytics row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           <Card title={`Cantidad de Opps creadas · ${dateRange.label}`} accent={C_AMBER}>
             {oppCountData.length === 0 ? <NoData /> : (
               <div style={{ height: 200 }}>
@@ -1123,7 +1161,7 @@ export default function DealsDashboardPage() {
         </div>
 
         {/* ── Progress tables row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           <Card title="Avance de Ventas Mensual (MTD)" accent={C_SKY}>
             <div style={{ overflowX: 'auto', maxHeight: 220, overflowY: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -1224,16 +1262,16 @@ export default function DealsDashboardPage() {
         </div>
 
         {/* ── Forecast + Win rate ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
 
           <Card title="Forecast del mes (pipeline ponderado)" accent="#7c3aed">
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid #7c3aed` }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid #7c3aed` }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Forecast ponderado</div>
                 <div style={{ fontSize: 26, fontWeight: 700, color: '#7c3aed', lineHeight: 1.1, marginTop: 2 }}>{fmtMoney(forecastData.ponderado)}</div>
                 <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 2 }}>{forecastData.deals} deal{forecastData.deals !== 1 ? 's' : ''} · pipeline bruto {fmtMoney(forecastData.sinPonderar)}</div>
               </div>
-              <div style={{ flex: 1, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid ${C_SKY}` }}>
+              <div style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid ${C_SKY}` }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cobertura vs Meta Mensual</div>
                 <div style={{ fontSize: 26, fontWeight: 700, color: pctColor(pct(forecastData.ponderado, monthlyTarget)), lineHeight: 1.1, marginTop: 2 }}>
                   {pctStr(forecastData.ponderado, monthlyTarget)}
@@ -1320,7 +1358,7 @@ export default function DealsDashboardPage() {
         </div>
 
         {/* ── Tendencia 12 meses + Embudo ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '3fr 2fr', gap: 14 }}>
 
           <Card title="Tendencia de ventas — últimos 12 meses" accent={C_SKY}>
             {tendenciaData.every(d => d.ganado === 0) ? <NoData msg="Sin ventas ganadas en los últimos 12 meses" /> : (
