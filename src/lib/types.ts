@@ -106,6 +106,7 @@ export interface BudgetResource {
   unit: string
   price: number
   sort_order: number
+  categoria: string | null
   created_at: string
 }
 

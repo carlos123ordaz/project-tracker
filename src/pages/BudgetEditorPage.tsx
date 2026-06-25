@@ -913,6 +913,7 @@ function InlineResourceForm({ initial, onSave, onClose }: {
   const [name, setName] = useState(initial?.name ?? '')
   const [unit, setUnit] = useState(initial?.unit ?? 'und')
   const [price, setPrice] = useState(initial?.price ?? 0)
+  const [categoria, setCategoria] = useState(initial?.categoria ?? '')
   const [saving, setSaving] = useState(false)
 
   const INP: React.CSSProperties = { height: 32, padding: '0 10px', fontSize: 12.5, width: '100%', border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', outline: 'none', boxSizing: 'border-box' }
@@ -923,7 +924,7 @@ function InlineResourceForm({ initial, onSave, onClose }: {
     if (!name.trim()) return
     setSaving(true)
     try {
-      await onSave({ kind, name: name.trim(), unit: unit.trim() || 'und', price: Number(price), sort_order: initial?.sort_order ?? 0 })
+      await onSave({ kind, name: name.trim(), unit: unit.trim() || 'und', price: Number(price), sort_order: initial?.sort_order ?? 0, categoria: categoria.trim() || null })
       onClose()
     } finally { setSaving(false) }
   }
@@ -948,6 +949,10 @@ function InlineResourceForm({ initial, onSave, onClose }: {
         <div>
           <label style={LBL}>Precio unitario</label>
           <input type="number" step="0.01" min="0" style={INP} value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} />
+        </div>
+        <div>
+          <label style={LBL}>Categoría</label>
+          <input style={INP} value={categoria} onChange={e => setCategoria(e.target.value)} placeholder="Ej. Estructura, Acabados…" />
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -1628,6 +1633,7 @@ export default function BudgetEditorPage() {
                       <tr style={{ background: 'var(--n-25)' }}>
                         <th style={{ ...TH, minWidth: 280 }}>Nombre</th>
                         <th style={{ ...TH, width: 140 }}>Tipo</th>
+                        <th style={{ ...TH, width: 140 }}>Categoría</th>
                         <th style={{ ...TH, width: 80, textAlign: 'center' }}>Unidad</th>
                         <th style={{ ...TH, width: 140, textAlign: 'right' }}>Precio</th>
                         <th style={{ ...TH, width: 80 }}></th>
@@ -1649,6 +1655,7 @@ export default function BudgetEditorPage() {
                                 {kindLabel}
                               </span>
                             </td>
+                            <td style={{ ...TD, color: 'var(--n-600)' }}>{r.categoria ?? <span style={{ color: 'var(--n-300)' }}>—</span>}</td>
                             <td style={{ ...TD, textAlign: 'center', color: 'var(--n-600)' }} className="mono">{r.unit}</td>
                             <td style={{ ...TD, textAlign: 'right', fontWeight: 600, color: 'var(--n-900)' }} className="mono tnum">
                               {fmtCurrency(r.price)}

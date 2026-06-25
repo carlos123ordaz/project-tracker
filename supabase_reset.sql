@@ -223,6 +223,7 @@ CREATE TABLE budget_resources (
   unit       TEXT    NOT NULL DEFAULT 'und',
   price      NUMERIC(14,4) NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
+  categoria  TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
