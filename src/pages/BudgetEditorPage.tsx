@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useBudget, useBudgets } from '../hooks/useBudgets'
 import { useBudgetItems } from '../hooks/useBudgetItems'
@@ -81,7 +82,7 @@ function ResourcePicker({ value, onChange, options }: {
 }) {
   const [open,   setOpen]   = useState(false)
   const [search, setSearch] = useState('')
-  const [dropPos, setDropPos] = useState({ bottom: 0, left: 0, width: 0 })
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0, openUp: false })
   const inputRef   = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
   const dropRef    = useRef<HTMLDivElement>(null)
@@ -109,7 +110,15 @@ function ResourcePicker({ value, onChange, options }: {
   const handleOpen = () => {
     if (triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect()
-      setDropPos({ bottom: window.innerHeight - r.top + 4, left: r.left, width: r.width })
+      const dropH = 280
+      const spaceBelow = window.innerHeight - r.bottom
+      const openUp = spaceBelow < dropH && r.top > spaceBelow
+      setDropPos({
+        top:    openUp ? r.top - dropH - 4 : r.bottom + 4,
+        left:   r.left,
+        width:  r.width,
+        openUp,
+      })
     }
     setOpen(true)
     setTimeout(() => inputRef.current?.focus(), 0)
@@ -136,10 +145,10 @@ function ResourcePicker({ value, onChange, options }: {
         }
       </div>
 
-      {/* dropdown — fixed positioning escapes overflow:hidden on parent panels */}
-      {open && (
+      {/* dropdown — portal to body escapes modal transform containing block */}
+      {open && createPortal(
         <div ref={dropRef} style={{
-          position: 'fixed', bottom: dropPos.bottom, left: dropPos.left, width: dropPos.width, zIndex: 9999,
+          position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999,
           background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8,
           boxShadow: '0 8px 24px rgba(0,0,0,.13)', maxHeight: 280, overflowY: 'auto',
         }}>
@@ -174,7 +183,8 @@ function ResourcePicker({ value, onChange, options }: {
                 )
               })
           }
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
