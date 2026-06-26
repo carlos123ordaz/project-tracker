@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 
 export type ProcesoBOM = 'Fabricación' | 'Compra'
 export type EstadoCotBOM = 'COMPRADO' | 'PENDIENTE' | 'EN PROCESO'
+export type SortFieldBOM = 'sort_order' | 'item' | 'descripcion' | 'estado_cot' | 'proceso' | 'created_at'
+export type SortDirBOM = 'asc' | 'desc'
 
 export interface ComprasBOMItem {
   id: string
@@ -24,6 +26,7 @@ export interface ComprasBOMItem {
   imagen: string | null
   estado_cot: EstadoCotBOM
   observaciones: string
+  custom_fields: Record<string, string | number>
   sort_order: number
   created_at: string
   updated_at: string
@@ -37,14 +40,18 @@ export interface ComprasBOMParams {
   search?: string
   estado?: EstadoCotBOM | 'TODOS'
   proceso?: ProcesoBOM | 'TODOS'
+  sortField?: SortFieldBOM
+  sortDir?: SortDirBOM
 }
 
 export function useComprasBOM(params?: ComprasBOMParams) {
-  const page     = params?.page    ?? 1
-  const pageSize = params?.pageSize ?? 0
-  const search   = params?.search  ?? ''
-  const estado   = params?.estado  ?? 'TODOS'
-  const proceso  = params?.proceso ?? 'TODOS'
+  const page      = params?.page      ?? 1
+  const pageSize  = params?.pageSize  ?? 0
+  const search    = params?.search    ?? ''
+  const estado    = params?.estado    ?? 'TODOS'
+  const proceso   = params?.proceso   ?? 'TODOS'
+  const sortField = params?.sortField ?? 'sort_order'
+  const sortDir   = params?.sortDir   ?? 'asc'
 
   const [items, setItems]               = useState<ComprasBOMItem[]>([])
   const [total, setTotal]               = useState(0)
@@ -61,7 +68,9 @@ export function useComprasBOM(params?: ComprasBOMParams) {
     if (search)              q = q.or(`descripcion.ilike.%${search}%,item.ilike.%${search}%,tipo.ilike.%${search}%,material.ilike.%${search}%`)
     if (estado !== 'TODOS')  q = q.eq('estado_cot', estado)
     if (proceso !== 'TODOS') q = q.eq('proceso', proceso)
-    q = q.order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    const asc = sortDir === 'asc'
+    q = q.order(sortField, { ascending: asc, nullsFirst: false })
+    if (sortField !== 'created_at') q = q.order('created_at', { ascending: true })
     if (pageSize > 0) q = q.range((page - 1) * pageSize, page * pageSize - 1)
 
     const { data, error: err, count } = await q
@@ -92,7 +101,7 @@ export function useComprasBOM(params?: ComprasBOMParams) {
     }
 
     setLoading(false)
-  }, [page, pageSize, search, estado, proceso])
+  }, [page, pageSize, search, estado, proceso, sortField, sortDir])
 
   useEffect(() => { fetchData() }, [fetchData])
 

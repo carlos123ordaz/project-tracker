@@ -28,6 +28,15 @@ DROP FUNCTION IF EXISTS public.handle_new_user()   CASCADE;
 -- 3. ELIMINAR TABLAS (orden por dependencias FK)
 -- ============================================================
 
+-- Módulo Formularios
+DROP TABLE IF EXISTS form_submissions CASCADE;
+DROP TABLE IF EXISTS form_fields      CASCADE;
+DROP TABLE IF EXISTS forms            CASCADE;
+
+-- Compras: BOM y Seguimiento
+DROP TABLE IF EXISTS compras_bom          CASCADE;
+DROP TABLE IF EXISTS compras_seguimiento  CASCADE;
+
 -- Módulo Cotizaciones
 DROP TABLE IF EXISTS cotizacion_cashflow_ingresos  CASCADE;
 DROP TABLE IF EXISTS cotizacion_cashflow_egresos   CASCADE;
@@ -456,6 +465,93 @@ CREATE TABLE libro_insumos (
   CONSTRAINT libro_insumos_nombre_unidad_libro_key UNIQUE (nombre, unidad, libro_nombre)
 );
 
+-- ── Compras: Seguimiento de Gestión ───────────────────────
+
+CREATE TABLE compras_seguimiento (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  solicitante   TEXT        NOT NULL,
+  tarea         TEXT        NOT NULL,
+  prioridad     TEXT        NOT NULL DEFAULT 'ALTO' CHECK (prioridad IN ('ALTO','MEDIO','BAJO')),
+  responsable   TEXT        NOT NULL DEFAULT '',
+  asignado      DATE,
+  vence         DATE,
+  status        NUMERIC(4,2) NOT NULL DEFAULT 0 CHECK (status >= 0 AND status <= 1),
+  status_final  TEXT        NOT NULL DEFAULT 'PENDIENTE' CHECK (status_final IN ('PENDIENTE','EN PROCESO','CULMINADO')),
+  nota          TEXT        NOT NULL DEFAULT '',
+  sort_order    INT         NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Compras: BOM ───────────────────────────────────────────
+
+CREATE TABLE compras_bom (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  item            TEXT        NOT NULL DEFAULT '',
+  proceso         TEXT        NOT NULL DEFAULT 'Compra' CHECK (proceso IN ('Compra','Fabricación')),
+  tipo            TEXT        NOT NULL DEFAULT '',
+  cantidad        TEXT        NOT NULL DEFAULT '',
+  descripcion     TEXT        NOT NULL,
+  codigo          TEXT        NOT NULL DEFAULT '',
+  material        TEXT        NOT NULL DEFAULT '',
+  masa            TEXT        NOT NULL DEFAULT '',
+  dxf             TEXT        NOT NULL DEFAULT 'NO',
+  comentarios     TEXT        NOT NULL DEFAULT '',
+  polimetales     NUMERIC(12,4) NOT NULL DEFAULT 0,
+  othero          NUMERIC(12,4) NOT NULL DEFAULT 0,
+  pernos_y_pernos NUMERIC(12,4) NOT NULL DEFAULT 0,
+  ducasse         NUMERIC(12,4) NOT NULL DEFAULT 0,
+  em_metal        NUMERIC(12,4) NOT NULL DEFAULT 0,
+  imagen          TEXT,
+  estado_cot      TEXT        NOT NULL DEFAULT 'PENDIENTE' CHECK (estado_cot IN ('COMPRADO','PENDIENTE','EN PROCESO')),
+  observaciones   TEXT        NOT NULL DEFAULT '',
+  sort_order      INT         NOT NULL DEFAULT 0,
+  custom_fields   JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Módulo Formularios ─────────────────────────────────────
+
+CREATE TABLE forms (
+  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  name        TEXT        NOT NULL,
+  slug        TEXT        UNIQUE NOT NULL,
+  description TEXT,
+  is_active   BOOLEAN     DEFAULT true,
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE form_fields (
+  id                   UUID    DEFAULT gen_random_uuid() PRIMARY KEY,
+  form_id              UUID    REFERENCES forms(id) ON DELETE CASCADE,
+  order_index          INTEGER NOT NULL,
+  label                TEXT    NOT NULL,
+  field_key            TEXT    NOT NULL,
+  field_type           TEXT    NOT NULL,  -- radio | checkbox | text | textarea | date | time | select | passenger_list
+  options              JSONB   DEFAULT '[]',
+  required             BOOLEAN DEFAULT true,
+  placeholder          TEXT,
+  help_text            TEXT,
+  conditional_on_key   TEXT    DEFAULT NULL,
+  conditional_on_value TEXT    DEFAULT NULL,
+  UNIQUE(form_id, field_key)
+);
+
+CREATE TABLE form_submissions (
+  id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  form_id         UUID        REFERENCES forms(id),
+  submitted_by    UUID        REFERENCES auth.users(id),
+  submitter_name  TEXT,
+  submitter_email TEXT,
+  answers         JSONB       NOT NULL DEFAULT '{}',
+  status          TEXT        DEFAULT 'Pendiente',  -- Pendiente | En proceso | Completado | Cancelado
+  notes           TEXT,
+  created_at      TIMESTAMPTZ DEFAULT now(),
+  updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
 -- ── Pie de Presupuesto (config global) ────────────────────
 
 CREATE TABLE budget_pie_rows (
@@ -662,6 +758,16 @@ CREATE INDEX idx_libro_partidas_libro      ON libro_partidas(libro_nombre);
 CREATE INDEX idx_libro_partidas_codigo     ON libro_partidas(codigo);
 CREATE INDEX idx_libro_insumos_libro       ON libro_insumos(libro_nombre);
 
+-- Compras BOM y Seguimiento
+CREATE INDEX idx_compras_seguimiento_status ON compras_seguimiento(status_final);
+CREATE INDEX idx_compras_seguimiento_vence  ON compras_seguimiento(vence);
+CREATE INDEX idx_compras_bom_estado         ON compras_bom(estado_cot);
+CREATE INDEX idx_compras_bom_proceso        ON compras_bom(proceso);
+
+-- Formularios
+CREATE INDEX idx_form_fields_form       ON form_fields(form_id);
+CREATE INDEX idx_form_submissions_form  ON form_submissions(form_id);
+
 -- Cotizaciones
 CREATE INDEX idx_cotizacion_disciplinas_cot ON cotizacion_disciplinas(cotizacion_id);
 CREATE INDEX idx_cotizacion_secciones_disc  ON cotizacion_secciones(disciplina_id);
@@ -748,6 +854,22 @@ CREATE TRIGGER trg_valuations_updated_at
 
 CREATE TRIGGER trg_budget_pie_rows_updated_at
   BEFORE UPDATE ON budget_pie_rows
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_compras_seguimiento_updated
+  BEFORE UPDATE ON compras_seguimiento
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_compras_bom_updated
+  BEFORE UPDATE ON compras_bom
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_forms_updated
+  BEFORE UPDATE ON forms
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_form_submissions_updated
+  BEFORE UPDATE ON form_submissions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Cotizaciones
@@ -848,6 +970,11 @@ ALTER TABLE cotizacion_gastos_generales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cotizacion_cronograma       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cotizacion_cashflow_egresos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cotizacion_cashflow_ingresos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compras_seguimiento          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compras_bom                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE forms                        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_fields                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_submissions             ENABLE ROW LEVEL SECURITY;
 
 -- Políticas: acceso total para usuarios autenticados
 CREATE POLICY "Allow all on task_statuses"        ON task_statuses        FOR ALL USING (true) WITH CHECK (true);
@@ -886,6 +1013,15 @@ CREATE POLICY "auth all on cotizacion_gastos_generales" ON cotizacion_gastos_gen
 CREATE POLICY "auth all on cotizacion_cronograma"       ON cotizacion_cronograma       FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "auth all on cotizacion_cashflow_egresos"  ON cotizacion_cashflow_egresos  FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "auth all on cotizacion_cashflow_ingresos" ON cotizacion_cashflow_ingresos FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on compras_seguimiento"          ON compras_seguimiento          FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all on compras_bom"                  ON compras_bom                  FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "auth read forms"                          ON forms            FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all forms"                           ON forms            FOR ALL    USING (auth.role() = 'authenticated');
+CREATE POLICY "auth read form_fields"                    ON form_fields      FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth all form_fields"                     ON form_fields      FOR ALL    USING (auth.role() = 'authenticated');
+CREATE POLICY "auth read form_submissions"               ON form_submissions FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth insert form_submissions"             ON form_submissions FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "auth update form_submissions"             ON form_submissions FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- user_profiles
 CREATE POLICY "Authenticated read user_profiles"
@@ -904,6 +1040,24 @@ CREATE POLICY "Authenticated read attendance"
   ON attendance_records FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "Authenticated write attendance"
   ON attendance_records FOR ALL USING (auth.uid() IS NOT NULL) WITH CHECK (auth.uid() IS NOT NULL);
+
+
+-- ============================================================
+-- 10. STORAGE BUCKETS
+-- ============================================================
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('bom-images', 'bom-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "public read bom-images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'bom-images');
+
+CREATE POLICY "auth upload bom-images" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'bom-images' AND auth.role() = 'authenticated');
+
+CREATE POLICY "auth delete bom-images" ON storage.objects
+  FOR DELETE USING (bucket_id = 'bom-images' AND auth.role() = 'authenticated');
 
 
 -- ============================================================
