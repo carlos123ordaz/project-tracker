@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FolderOpen, Kanban, CalendarRange,
   List, Calendar, Gauge, Settings, ChevronLeft, ChevronRight,
@@ -34,10 +34,28 @@ interface NavGroupDef {
   items: NavItem[]
 }
 
+function getGroupFromPath(pathname: string): string {
+  if (pathname.startsWith('/almacen'))                                          return 'almacen'
+  if (pathname.startsWith('/rrhh') || pathname.startsWith('/schedule'))        return 'rrhh'
+  if (pathname.startsWith('/comercial'))                                        return 'comercial'
+  if (pathname.startsWith('/compras'))                                          return 'compras'
+  if (pathname.startsWith('/libro') || pathname.startsWith('/budgets') ||
+      pathname.startsWith('/cotizaciones') || pathname.startsWith('/consolidated')) return 'ventas'
+  return 'proyectos'
+}
+
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const { isSuperAdmin, hasPermission } = useAuth()
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['proyectos']))
+  const location = useLocation()
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    () => new Set([getGroupFromPath(location.pathname)])
+  )
   const W = collapsed ? 64 : 232
+
+  // Sincroniza el grupo abierto con la ruta activa
+  useEffect(() => {
+    setOpenGroups(new Set([getGroupFromPath(location.pathname)]))
+  }, [location.pathname])
 
   const toggleGroup = (key: string) => {
     setOpenGroups(prev =>
@@ -55,13 +73,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
     rrhhItems.push({ to: '/rrhh/usuarios', label: 'Usuarios', icon: UserCheck })
   }
 
+  const INICIO_ITEM: NavItem = { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true }
+
   const GROUPS: NavGroupDef[] = [
     {
       key: 'proyectos',
       label: 'Proyectos',
       icon: FolderOpen,
       items: [
-        { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
         { to: '/dashboard', label: 'Dashboard', icon: Gauge },
         { to: '/projects', label: 'Catálogo', icon: FolderOpen },
         { to: '/kanban', label: 'Kanban', icon: Kanban },
@@ -130,7 +149,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
     },
   ]
 
-  const ALL_ITEMS = GROUPS.flatMap(g => g.items)
+  const ALL_ITEMS = [INICIO_ITEM, ...GROUPS.flatMap(g => g.items)]
 
   return (
     <aside
@@ -194,7 +213,42 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             </NavLink>
           ))
         ) : (
-          GROUPS.filter(g => g.items.length > 0).map(group => {
+          <>
+          {/* Inicio — ítem suelto */}
+          <NavLink
+            to={INICIO_ITEM.to}
+            end={INICIO_ITEM.end}
+            onClick={onMobileClose}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center',
+              gap: 9, padding: '0 10px',
+              height: 32, borderRadius: 7,
+              cursor: 'pointer',
+              background: isActive ? 'var(--brand-50)' : 'transparent',
+              color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
+              fontWeight: isActive ? 600 : 500,
+              fontSize: 12.5, letterSpacing: '-0.005em',
+              position: 'relative',
+              transition: 'background .15s, color .15s',
+              textDecoration: 'none',
+              marginBottom: 8,
+            })}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span style={{
+                    position: 'absolute', left: -8, top: 6, bottom: 6, width: 2,
+                    background: 'var(--brand-600)', borderRadius: 2,
+                  }} />
+                )}
+                <INICIO_ITEM.icon size={15} />
+                <span>{INICIO_ITEM.label}</span>
+              </>
+            )}
+          </NavLink>
+
+          {GROUPS.filter(g => g.items.length > 0).map(group => {
             const isOpen = openGroups.has(group.key)
             return (
               <div key={group.key} style={{ marginBottom: 2 }}>
@@ -280,7 +334,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                 )}
               </div>
             )
-          })
+          })}
+          </>
         )}
       </nav>
 
