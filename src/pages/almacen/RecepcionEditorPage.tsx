@@ -10,8 +10,8 @@ import { ALMACEN_RECEPCION_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenRecepcionEstado, { bg: string; color: string }> = {
   'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
-  'Parcial':    { bg: '#fffbeb', color: '#d97706' },
-  'Completada': { bg: '#f0fdf4', color: '#16a34a' },
+  'Parcial':    { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
+  'Completada': { bg: 'var(--green-50)', color: 'var(--green-600)' },
 }
 
 const EMPTY_ITEM = {
@@ -149,11 +149,11 @@ export default function RecepcionEditorPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   if (loading) return <div style={{ padding: 24, color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
-  if (error || !recepcion) return <div style={{ padding: 24, color: '#dc2626', fontSize: 13 }}>{error ?? 'No encontrado'}</div>
+  if (error || !recepcion) return <div style={{ padding: 24, color: 'var(--red-600)', fontSize: 13 }}>{error ?? 'No encontrado'}</div>
 
   const ec = estadoColor[recepcion.estado]
   const totalValor = items.reduce((s, it) => s + it.cantidad * it.precio_unitario, 0)
@@ -204,7 +204,7 @@ export default function RecepcionEditorPage() {
       </div>
 
       {/* Info */}
-      <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+      <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
         {[
           { label: 'Proveedor', value: recepcion.proveedor ?? '—' },
           { label: 'Nro. Factura', value: recepcion.nro_factura ?? '—' },
@@ -225,7 +225,7 @@ export default function RecepcionEditorPage() {
       </div>
 
       {recepcion.estado === 'Completada' && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: 'var(--green-50)', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: 'var(--green-600)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <CheckCircle size={15} /> Recepción completada. El stock fue actualizado y el kardex registrado.
         </div>
       )}
@@ -246,11 +246,11 @@ export default function RecepcionEditorPage() {
       </div>
 
       {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
           <p style={{ fontSize: 13 }}>Sin ítems. Agrega los materiales recibidos.</p>
         </div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
@@ -275,7 +275,7 @@ export default function RecepcionEditorPage() {
                     {recepcion.estado !== 'Completada' && (
                       <div style={{ display: 'flex', gap: 4 }}>
                         <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}>✏️</button>
-                        <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626' }}><Trash2 size={13} /></button>
+                        <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }}><Trash2 size={13} /></button>
                       </div>
                     )}
                   </td>
@@ -296,7 +296,7 @@ export default function RecepcionEditorPage() {
       {/* Modal ítem */}
       {showItemModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 500, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 500, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{editingItem ? 'Editar ítem' : 'Agregar ítem'}</h2>
               <button onClick={() => setShowItemModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -326,7 +326,7 @@ export default function RecepcionEditorPage() {
                       <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: `translateY(-50%) rotate(${comboOpen ? '180deg' : '0deg'})`, color: 'var(--n-400)', transition: 'transform .2s', pointerEvents: 'none' }} />
                     </div>
                     {comboOpen && (
-                      <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 300, background: '#fff', border: '1px solid var(--n-200)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.12)', maxHeight: 220, overflowY: 'auto' }}>
+                      <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 300, background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.12)', maxHeight: 220, overflowY: 'auto' }}>
                         {/* Opción vacía */}
                         <button
                           onMouseDown={() => { setItemForm(f => ({ ...f, equipo_id: null, pedido_item_id: null })); setComboSearch(''); setComboOpen(false) }}
@@ -351,7 +351,7 @@ export default function RecepcionEditorPage() {
                                 <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--brand-700)' : 'var(--n-900)' }}>{e.nombre}</div>
                                 <div style={{ fontSize: 11.5, color: 'var(--n-400)', marginTop: 1 }}>
                                   {e.codigo && <span style={{ fontFamily: 'monospace', marginRight: 8 }}>{e.codigo}</span>}
-                                  {pedidoItem && <span style={{ color: '#d97706' }}>Pedido: {pedidoItem.cantidad} {e.unidad}</span>}
+                                  {pedidoItem && <span style={{ color: 'var(--amber-600)' }}>Pedido: {pedidoItem.cantidad} {e.unidad}</span>}
                                 </div>
                               </div>
                               <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-600)', whiteSpace: 'nowrap' }}>
@@ -401,9 +401,9 @@ export default function RecepcionEditorPage() {
               </div>
             </div>
 
-            {itemError && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
+            {itemError && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleSaveItem} disabled={savingItem} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: savingItem ? .6 : 1 }}>
                 {savingItem ? 'Guardando…' : editingItem ? 'Guardar' : 'Agregar'}
               </button>
@@ -415,13 +415,13 @@ export default function RecepcionEditorPage() {
       {/* Confirm completar */}
       {confirmComplete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmComplete(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Completar recepción?</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--n-600)' }}>
               Se actualizará el stock de <strong>{items.filter(i => i.equipo_id).length}</strong> equipo(s) y se registrará el kardex. Esta acción no se puede deshacer.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmComplete(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setConfirmComplete(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleCompletar} disabled={completing} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: '#16a34a', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: completing ? .6 : 1 }}>
                 {completing ? 'Procesando…' : 'Completar y actualizar stock'}
               </button>

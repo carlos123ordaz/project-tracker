@@ -1,30 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Package, AlertTriangle, Edit2, Trash2, X, ChevronRight } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+import { Plus, Search, Package, AlertTriangle, Edit2, Trash2, X, ChevronRight, Download } from 'lucide-react'
 import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
 import { useAlmacenUbicaciones } from '../../hooks/useAlmacenUbicaciones'
 import type { AlmacenEquipo, AlmacenEquipoEstado } from '../../lib/types'
 import { ALMACEN_EQUIPO_ESTADOS } from '../../lib/types'
 import { Pagination } from '../../components/ui/Pagination'
+import { exportMateriales } from '../../lib/exportAlmacenExcel'
 
 const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Vehículo', 'Otro']
 
 const estadoColor: Record<AlmacenEquipoEstado, { bg: string; color: string }> = {
-  'Activo': { bg: '#f0fdf4', color: '#16a34a' },
+  'Activo': { bg: 'var(--green-50)', color: 'var(--green-600)' },
   'Inactivo': { bg: 'var(--n-100)', color: 'var(--n-500)' },
-  'En Reparación': { bg: '#fffbeb', color: '#d97706' },
-  'Dado de Baja': { bg: '#fef2f2', color: '#dc2626' },
-}
-
-const EMPTY: Omit<AlmacenEquipo, 'id' | 'sort_order' | 'created_at' | 'updated_at'> = {
-  codigo: '', nombre: '', descripcion: null, categoria: null,
-  marca: null, modelo: null, serie: null,
-  estado: 'Activo', ubicacion: null,
-  stock_actual: 0, stock_minimo: 0, unidad: 'UND', precio_unitario: 0,
+  'En Reparación': { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
+  'Dado de Baja': { bg: 'var(--red-50)', color: 'var(--red-600)' },
 }
 
 export default function EquiposAlmacenPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [filterEstado, setFilterEstado] = useState<AlmacenEquipoEstado | 'Todos'>('Todos')
   const [filterBajoStock, setFilterBajoStock] = useState(false)
@@ -36,9 +32,19 @@ export default function EquiposAlmacenPage() {
   )
   const { ubicaciones } = useAlmacenUbicaciones()
 
+  type FormState = Omit<AlmacenEquipo, 'id' | 'sort_order' | 'created_at' | 'updated_at'>
+
+  const emptyForm = (): FormState => ({
+    codigo: '', nombre: '', descripcion: null, categoria: null,
+    marca: null, modelo: null, serie: null,
+    estado: 'Activo', ubicacion: null,
+    stock_actual: 0, stock_minimo: 0, unidad: 'UND', precio_unitario: 0,
+    created_by: user?.id ?? null,
+  })
+
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<AlmacenEquipo | null>(null)
-  const [form, setForm] = useState<typeof EMPTY>(EMPTY)
+  const [form, setForm] = useState<FormState>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AlmacenEquipo | null>(null)
@@ -50,7 +56,7 @@ export default function EquiposAlmacenPage() {
 
   const openNew = () => {
     setEditing(null)
-    setForm(EMPTY)
+    setForm(emptyForm())
     setError(null)
     setShowModal(true)
   }
@@ -63,6 +69,7 @@ export default function EquiposAlmacenPage() {
       estado: e.estado, ubicacion: e.ubicacion,
       stock_actual: e.stock_actual, stock_minimo: e.stock_minimo,
       unidad: e.unidad, precio_unitario: e.precio_unitario,
+      created_by: e.created_by,
     })
     setError(null)
     setShowModal(true)
@@ -95,7 +102,8 @@ export default function EquiposAlmacenPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box',
+    background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   return (
@@ -108,17 +116,30 @@ export default function EquiposAlmacenPage() {
             {filtered.length} ítem{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={openNew}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', borderRadius: 8, padding: '8px 14px',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          <Plus size={15} /> Nuevo material
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => exportMateriales(equipos)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--n-0)', color: 'var(--n-700)',
+              border: '1px solid var(--n-200)', borderRadius: 8, padding: '8px 14px',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Download size={14} /> Exportar Excel
+          </button>
+          <button
+            onClick={openNew}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', borderRadius: 8, padding: '8px 14px',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Plus size={15} /> Nuevo material
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -146,9 +167,9 @@ export default function EquiposAlmacenPage() {
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '7px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 500,
             border: '1px solid',
-            borderColor: filterBajoStock ? '#dc2626' : 'var(--n-200)',
-            background: filterBajoStock ? '#fef2f2' : '#fff',
-            color: filterBajoStock ? '#dc2626' : 'var(--n-600)',
+            borderColor: filterBajoStock ? 'var(--red-600)' : 'var(--n-200)',
+            background: filterBajoStock ? 'var(--red-50)' : 'var(--n-0)',
+            color: filterBajoStock ? 'var(--red-600)' : 'var(--n-600)',
             cursor: 'pointer',
           }}
         >
@@ -168,7 +189,7 @@ export default function EquiposAlmacenPage() {
           </button>
         </div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
@@ -186,14 +207,14 @@ export default function EquiposAlmacenPage() {
                     key={e.id}
                     style={{ borderBottom: '1px solid var(--n-100)', cursor: 'pointer' }}
                     onMouseEnter={ev => (ev.currentTarget.style.background = 'var(--n-25)')}
-                    onMouseLeave={ev => (ev.currentTarget.style.background = '#fff')}
+                    onMouseLeave={ev => (ev.currentTarget.style.background = 'var(--n-0)')}
                     onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)}
                   >
                     <td style={{ padding: '10px 14px', color: 'var(--n-500)', fontFamily: 'monospace', fontSize: 12 }}>{e.codigo ?? '—'}</td>
                     <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--n-900)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {e.nombre}
-                        {bajStock && <AlertTriangle size={13} color="#dc2626" />}
+                        {bajStock && <AlertTriangle size={13} color="var(--red-600)" />}
                       </div>
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--n-600)' }}>{e.categoria ?? '—'}</td>
@@ -202,7 +223,7 @@ export default function EquiposAlmacenPage() {
                         {e.estado}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 14px', fontWeight: 700, color: bajStock ? '#dc2626' : 'var(--n-900)' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 700, color: bajStock ? 'var(--red-600)' : 'var(--n-900)' }}>
                       {e.stock_actual}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--n-500)' }}>{e.stock_minimo}</td>
@@ -213,7 +234,7 @@ export default function EquiposAlmacenPage() {
                         <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar">
                           <Edit2 size={14} />
                         </button>
-                        <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626', borderRadius: 5 }} title="Eliminar">
+                        <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }} title="Eliminar">
                           <Trash2 size={14} />
                         </button>
                         <button onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-600)', borderRadius: 5 }} title="Ver kardex">
@@ -233,7 +254,7 @@ export default function EquiposAlmacenPage() {
       {/* Modal crear/editar */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{editing ? 'Editar equipo' : 'Nuevo material'}</h2>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}>
@@ -306,10 +327,10 @@ export default function EquiposAlmacenPage() {
               </div>
             </div>
 
-            {error && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 12 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 12 }}>{error}</p>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>
                 Cancelar
               </button>
               <button onClick={handleSave} disabled={saving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: saving ? .6 : 1 }}>
@@ -323,13 +344,13 @@ export default function EquiposAlmacenPage() {
       {/* Confirm delete */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmDelete(null)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Eliminar equipo?</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--n-600)' }}>
               Se eliminará <strong>{confirmDelete.nombre}</strong> y todo su historial de kardex.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleDelete} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Eliminar</button>
             </div>
           </div>

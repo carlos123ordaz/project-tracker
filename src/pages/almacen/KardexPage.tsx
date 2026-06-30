@@ -7,10 +7,10 @@ import { Pagination } from '../../components/ui/Pagination'
 import type { AlmacenEquipo, KardexTipo } from '../../lib/types'
 
 const tipoMeta: Record<KardexTipo, { label: string; color: string; bg: string; icon: React.ComponentType<{ size?: number }> }> = {
-  Entrada:       { label: 'Entrada',       color: '#16a34a', bg: '#f0fdf4', icon: TrendingUp },
-  Salida:        { label: 'Salida',        color: '#dc2626', bg: '#fef2f2', icon: TrendingDown },
-  Ajuste:        { label: 'Ajuste',        color: '#d97706', bg: '#fffbeb', icon: RefreshCw },
-  Transferencia: { label: 'Transferencia', color: '#7c3aed', bg: '#f5f3ff', icon: ArrowRightLeft },
+  Entrada:       { label: 'Entrada',       color: 'var(--green-600)', bg: 'var(--green-50)', icon: TrendingUp },
+  Salida:        { label: 'Salida',        color: 'var(--red-600)', bg: 'var(--red-50)', icon: TrendingDown },
+  Ajuste:        { label: 'Ajuste',        color: 'var(--amber-600)', bg: 'var(--amber-50)', icon: RefreshCw },
+  Transferencia: { label: 'Transferencia', color: 'var(--purple-600)', bg: 'var(--purple-50)', icon: ArrowRightLeft },
 }
 
 export default function KardexPage() {
@@ -138,7 +138,7 @@ export default function KardexPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   const modoTodo = !equipoId
@@ -172,7 +172,7 @@ export default function KardexPage() {
       </div>
 
       {/* Filtros */}
-      <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+      <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
         {/* Combo equipo */}
         <div style={{ flex: '1 1 260px', minWidth: 220 }}>
           <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 5 }}>
@@ -198,7 +198,7 @@ export default function KardexPage() {
             {comboOpen && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
-                background: '#fff', border: '1px solid var(--n-200)', borderRadius: 8,
+                background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8,
                 boxShadow: '0 8px 24px rgba(0,0,0,.12)', maxHeight: 260, overflowY: 'auto',
               }}>
                 <button
@@ -226,14 +226,14 @@ export default function KardexPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--brand-700)' : 'var(--n-900)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           {e.nombre}
-                          {bajStock && <span style={{ fontSize: 10.5, fontWeight: 600, color: '#dc2626', background: '#fef2f2', padding: '1px 6px', borderRadius: 3 }}>Bajo stock</span>}
+                          {bajStock && <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--red-600)', background: 'var(--red-50)', padding: '1px 6px', borderRadius: 3 }}>Bajo stock</span>}
                         </div>
                         <div style={{ fontSize: 11.5, color: 'var(--n-400)', marginTop: 1 }}>
                           {e.codigo && <span style={{ fontFamily: 'monospace', marginRight: 8 }}>{e.codigo}</span>}
                           {e.categoria && <span>{e.categoria}</span>}
                         </div>
                       </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: bajStock ? '#dc2626' : 'var(--n-700)', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: bajStock ? 'var(--red-600)' : 'var(--n-700)', whiteSpace: 'nowrap' }}>
                         {e.stock_actual} {e.unidad}
                       </div>
                     </button>
@@ -304,7 +304,7 @@ export default function KardexPage() {
         {hayFiltrosActivos && (
           <button
             onClick={() => { setFilterTipo('Todos'); setFilterDesde(''); setFilterHasta(''); setFilterSearch('') }}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 12.5, color: 'var(--n-600)', whiteSpace: 'nowrap' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 12.5, color: 'var(--n-600)', whiteSpace: 'nowrap' }}
           >
             <Filter size={13} /> Limpiar
           </button>
@@ -315,7 +315,7 @@ export default function KardexPage() {
       {selectedEquipo && (
         <div style={{
           display: 'flex', gap: 16, marginBottom: 16,
-          background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16,
+          background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16,
         }}>
           {[
             { label: 'Stock actual', value: `${selectedEquipo.stock_actual} ${selectedEquipo.unidad}`, highlight: selectedEquipo.stock_minimo > 0 && selectedEquipo.stock_actual <= selectedEquipo.stock_minimo },
@@ -325,7 +325,7 @@ export default function KardexPage() {
           ].map(stat => (
             <div key={stat.label} style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'var(--n-500)', marginBottom: 2 }}>{stat.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: stat.highlight ? '#dc2626' : 'var(--n-900)' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: stat.highlight ? 'var(--red-600)' : 'var(--n-900)' }}>
                 {stat.value}
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function KardexPage() {
         </div>
       ) : (
         <>
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
@@ -384,7 +384,7 @@ export default function KardexPage() {
                         <Icon size={12} /> {m.tipo}
                       </span>
                     </td>
-                    <td style={{ ...td(), fontWeight: 700, color: m.tipo === 'Entrada' ? '#16a34a' : m.tipo === 'Salida' ? '#dc2626' : m.tipo === 'Transferencia' ? '#7c3aed' : '#d97706' }}>
+                    <td style={{ ...td(), fontWeight: 700, color: m.tipo === 'Entrada' ? 'var(--green-600)' : m.tipo === 'Salida' ? 'var(--red-600)' : m.tipo === 'Transferencia' ? 'var(--purple-600)' : 'var(--amber-600)' }}>
                       {m.tipo === 'Entrada' ? '+' : m.tipo === 'Salida' ? '-' : m.tipo === 'Transferencia' ? '↔' : '±'}{m.cantidad}
                     </td>
                     <td style={td('var(--n-500)')}>{m.stock_anterior}</td>
@@ -410,7 +410,7 @@ export default function KardexPage() {
       {/* Modal movimiento manual */}
       {showModal && selectedEquipo && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 520, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Registrar movimiento</h2>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -497,10 +497,10 @@ export default function KardexPage() {
               </div>
             </div>
 
-            {error && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleAddMovimiento} disabled={saving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: saving ? .6 : 1 }}>
                 {saving ? 'Guardando…' : 'Registrar'}
               </button>

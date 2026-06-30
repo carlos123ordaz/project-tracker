@@ -6,10 +6,10 @@ import { ALMACEN_UBICACION_TIPOS } from '../../lib/types'
 
 const tipoColor: Record<AlmacenUbicacionTipo, { bg: string; color: string }> = {
   'Almacén': { bg: 'var(--brand-50)', color: 'var(--brand-700)' },
-  'Estante':  { bg: '#eff6ff', color: '#2563eb' },
-  'Bin':      { bg: '#f0fdf4', color: '#16a34a' },
-  'Obra':     { bg: '#fffbeb', color: '#d97706' },
-  'Taller':   { bg: '#fdf4ff', color: '#9333ea' },
+  'Estante':  { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
+  'Bin':      { bg: 'var(--green-50)', color: 'var(--green-600)' },
+  'Obra':     { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
+  'Taller':   { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
   'Externo':  { bg: 'var(--n-100)', color: 'var(--n-600)' },
 }
 
@@ -71,7 +71,7 @@ export default function UbicacionesPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   const activas  = ubicaciones.filter(u => u.activa)
@@ -132,7 +132,7 @@ export default function UbicacionesPage() {
       {/* Modal crear/editar */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{editing ? 'Editar ubicación' : 'Nueva ubicación'}</h2>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -169,9 +169,9 @@ export default function UbicacionesPage() {
               </div>
             </div>
 
-            {error && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleSave} disabled={saving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: saving ? .6 : 1 }}>
                 {saving ? 'Guardando…' : editing ? 'Guardar' : 'Crear'}
               </button>
@@ -183,13 +183,13 @@ export default function UbicacionesPage() {
       {/* Confirm delete */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmDelete(null)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Eliminar ubicación?</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--n-600)' }}>
               Se eliminará <strong>{confirmDelete.nombre}</strong>. El stock asignado a esta ubicación se perderá.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleDelete} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Eliminar</button>
             </div>
           </div>
@@ -252,7 +252,7 @@ function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onD
   const tc = tipoColor[u.tipo]
 
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', opacity: dimmed ? .6 : 1 }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', opacity: dimmed ? .6 : 1 }}>
       <div
         style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
         onClick={onToggleExpand}
@@ -270,7 +270,7 @@ function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onD
         </div>
         <div style={{ display: 'flex', gap: 4 }} onClick={e => e.stopPropagation()}>
           <button title={u.activa ? 'Desactivar' : 'Activar'} onClick={onToggleActiva}
-            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: u.activa ? '#16a34a' : 'var(--n-400)', borderRadius: 5 }}>
+            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: u.activa ? 'var(--green-600)' : 'var(--n-400)', borderRadius: 5 }}>
             <Power size={14} />
           </button>
           <button title="Editar" onClick={onEdit}
@@ -278,7 +278,7 @@ function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onD
             <Pencil size={14} />
           </button>
           <button title="Eliminar" onClick={onDelete}
-            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626', borderRadius: 5 }}>
+            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }}>
             <Trash2 size={14} />
           </button>
         </div>
@@ -298,7 +298,7 @@ function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onD
               {stock.map(s => {
                 const eq = s.equipo as { id: string; nombre: string; codigo: string | null; unidad: string; categoria: string | null } | null
                 return (
-                  <div key={s.id} style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 7, padding: '8px 12px' }}>
+                  <div key={s.id} style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 7, padding: '8px 12px' }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-900)' }}>{eq?.nombre ?? '—'}</div>
                     {eq?.codigo && <div style={{ fontSize: 11, color: 'var(--n-400)', fontFamily: 'monospace' }}>{eq.codigo}</div>}
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-700)', marginTop: 4 }}>

@@ -9,9 +9,9 @@ import { ALMACEN_DESPACHO_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenDespachoEstado, { bg: string; color: string }> = {
   'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
-  'Despachado': { bg: '#f5f3ff', color: '#7c3aed' },
-  'Entregado':  { bg: '#f0fdf4', color: '#16a34a' },
-  'Cancelado':  { bg: '#fef2f2', color: '#dc2626' },
+  'Despachado': { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
+  'Entregado':  { bg: 'var(--green-50)', color: 'var(--green-600)' },
+  'Cancelado':  { bg: 'var(--red-50)', color: 'var(--red-600)' },
 }
 
 const EMPTY_ITEM = {
@@ -120,11 +120,11 @@ export default function DespachoEditorPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   if (loading) return <div style={{ padding: 24, color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
-  if (error || !despacho) return <div style={{ padding: 24, color: '#dc2626', fontSize: 13 }}>{error ?? 'No encontrado'}</div>
+  if (error || !despacho) return <div style={{ padding: 24, color: 'var(--red-600)', fontSize: 13 }}>{error ?? 'No encontrado'}</div>
 
   const ec = estadoColor[despacho.estado]
   const isEditable = despacho.estado === 'Borrador'
@@ -175,7 +175,7 @@ export default function DespachoEditorPage() {
       </div>
 
       {/* Info del despacho */}
-      <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+      <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: despacho.observaciones ? 16 : 0 }}>
           {[
             { label: 'Destinatario', value: despacho.destinatario ?? '—' },
@@ -201,7 +201,7 @@ export default function DespachoEditorPage() {
       </div>
 
       {despacho.estado === 'Despachado' && (
-        <div style={{ background: '#f5f3ff', border: '1px solid #c4b5fd', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: 'var(--purple-50)', border: '1px solid #c4b5fd', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: 'var(--purple-600)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Truck size={15} /> Despacho confirmado. El stock fue descontado y el kardex registrado.
         </div>
       )}
@@ -222,11 +222,11 @@ export default function DespachoEditorPage() {
       </div>
 
       {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
           <p style={{ fontSize: 13 }}>Sin ítems. Agrega los materiales a despachar.</p>
         </div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
@@ -242,9 +242,9 @@ export default function DespachoEditorPage() {
                 return (
                   <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)' }}>
                     <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--n-900)' }}>{it.descripcion}</td>
-                    <td style={{ padding: '9px 12px', fontWeight: 700, color: sinStock ? '#dc2626' : 'var(--n-900)' }}>{it.cantidad}</td>
+                    <td style={{ padding: '9px 12px', fontWeight: 700, color: sinStock ? 'var(--red-600)' : 'var(--n-900)' }}>{it.cantidad}</td>
                     <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
-                    <td style={{ padding: '9px 12px', color: sinStock ? '#dc2626' : 'var(--n-600)' }}>
+                    <td style={{ padding: '9px 12px', color: sinStock ? 'var(--red-600)' : 'var(--n-600)' }}>
                       {stockActual !== null ? (
                         <span>{stockActual} {sinStock && '⚠️'}</span>
                       ) : '—'}
@@ -257,7 +257,7 @@ export default function DespachoEditorPage() {
                       {isEditable && (
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}>✏️</button>
-                          <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626' }}><Trash2 size={13} /></button>
+                          <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }}><Trash2 size={13} /></button>
                         </div>
                       )}
                     </td>
@@ -272,7 +272,7 @@ export default function DespachoEditorPage() {
       {/* Modal ítem */}
       {showItemModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{editingItem ? 'Editar ítem' : 'Agregar ítem'}</h2>
               <button onClick={() => setShowItemModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -292,7 +292,7 @@ export default function DespachoEditorPage() {
                     />
                   </div>
                   {comboOpen && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, maxHeight: 200, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 7, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, maxHeight: 200, overflowY: 'auto' }}>
                       <div
                         onMouseDown={() => { handleEquipoSelect(''); setComboSearch(''); setComboOpen(false) }}
                         style={{ padding: '7px 10px', fontSize: 13, color: 'var(--n-400)', cursor: 'pointer' }}
@@ -345,9 +345,9 @@ export default function DespachoEditorPage() {
                 <input value={itemForm.observacion ?? ''} onChange={e => setItemForm(f => ({ ...f, observacion: e.target.value || null }))} style={inp({ marginTop: 4 })} />
               </div>
             </div>
-            {itemError && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
+            {itemError && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleSaveItem} disabled={savingItem} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: savingItem ? .6 : 1 }}>
                 {savingItem ? 'Guardando…' : editingItem ? 'Guardar' : 'Agregar'}
               </button>
@@ -359,18 +359,18 @@ export default function DespachoEditorPage() {
       {/* Confirm despacho */}
       {confirmDispatch && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmDispatch(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 420, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Confirmar despacho?</h3>
             <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--n-600)' }}>
               Se descontará el stock de <strong>{items.filter(i => i.equipo_id).length}</strong> equipo(s) y se registrará en el kardex.
             </p>
             {items.some(it => it.equipo_id && it.equipo && (it.equipo as { stock_actual: number }).stock_actual < it.cantidad) && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 7, padding: '8px 12px', marginBottom: 12, fontSize: 12.5, color: '#dc2626' }}>
+              <div style={{ background: 'var(--red-50)', border: '1px solid #fca5a5', borderRadius: 7, padding: '8px 12px', marginBottom: 12, fontSize: 12.5, color: 'var(--red-600)' }}>
                 ⚠️ Algunos ítems tienen stock insuficiente. El stock no bajará de 0.
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-              <button onClick={() => setConfirmDispatch(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setConfirmDispatch(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleConfirmarDespacho} disabled={confirming} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: confirming ? .6 : 1 }}>
                 {confirming ? 'Procesando…' : 'Confirmar y descontar stock'}
               </button>

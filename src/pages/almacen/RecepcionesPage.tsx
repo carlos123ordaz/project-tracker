@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import { Plus, ArrowDownToLine, ChevronRight, Trash2, X } from 'lucide-react'
 import { useAlmacenRecepciones } from '../../hooks/useAlmacenMovimientos'
 import { useAlmacenPedidos } from '../../hooks/useAlmacenPedidos'
@@ -9,12 +10,13 @@ import { Pagination } from '../../components/ui/Pagination'
 
 const estadoColor: Record<AlmacenRecepcionEstado, { bg: string; color: string }> = {
   'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
-  'Parcial':    { bg: '#fffbeb', color: '#d97706' },
-  'Completada': { bg: '#f0fdf4', color: '#16a34a' },
+  'Parcial':    { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
+  'Completada': { bg: 'var(--green-50)', color: 'var(--green-600)' },
 }
 
 export default function RecepcionesPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [filterEstado, setFilterEstado] = useState<AlmacenRecepcionEstado | 'Todos'>('Todos')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(50)
@@ -30,7 +32,7 @@ export default function RecepcionesPage() {
     fecha_recepcion: new Date().toISOString().split('T')[0],
     estado: 'Borrador' as AlmacenRecepcionEstado,
     observaciones: '',
-    created_by: null as string | null,
+    created_by: user?.id ?? null,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -63,7 +65,7 @@ export default function RecepcionesPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   return (
@@ -121,7 +123,7 @@ export default function RecepcionesPage() {
                 key={r.id}
                 onClick={() => navigate(`/almacen/recepciones/${r.id}`)}
                 style={{
-                  background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10,
+                  background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10,
                   padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 16,
                   cursor: 'pointer', transition: 'box-shadow .15s',
                 }}
@@ -146,7 +148,7 @@ export default function RecepcionesPage() {
                   {new Date(r.fecha_recepcion).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setConfirmDelete(r)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626', borderRadius: 5 }}><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmDelete(r)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }}><Trash2 size={14} /></button>
                   <button onClick={() => navigate(`/almacen/recepciones/${r.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}><ChevronRight size={15} /></button>
                 </div>
               </div>
@@ -160,7 +162,7 @@ export default function RecepcionesPage() {
       {/* Modal nueva recepción */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 480, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 480, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Nueva recepción</h2>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -200,10 +202,10 @@ export default function RecepcionesPage() {
               </div>
             </div>
 
-            {error && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{error}</p>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleCreate} disabled={saving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: saving ? .6 : 1 }}>
                 {saving ? 'Creando…' : 'Crear y editar'}
               </button>
@@ -214,13 +216,13 @@ export default function RecepcionesPage() {
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmDelete(null)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 360, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Eliminar recepción?</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--n-600)' }}>
               Se eliminará la recepción <strong>#{String(confirmDelete.numero).padStart(4, '0')}</strong>.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={async () => { await deleteRecepcion(confirmDelete.id); setConfirmDelete(null) }} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Eliminar</button>
             </div>
           </div>

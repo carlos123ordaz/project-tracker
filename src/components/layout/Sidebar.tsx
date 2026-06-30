@@ -8,7 +8,7 @@ import {
   ShoppingCart, Building2, TrendingDown, Receipt, ListChecks,
   FileText, Users2, TrendingUp, ClipboardCheck, PackageSearch, Ticket,
   Warehouse, Package, RefreshCw, ArrowDownToLine, Truck,
-  MapPin, ArrowRightLeft,
+  MapPin,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -141,7 +141,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/almacen/equipos', label: 'Materiales', icon: Package },
         { to: '/almacen/kardex', label: 'Kardex', icon: RefreshCw },
         { to: '/almacen/ubicaciones', label: 'Ubicaciones', icon: MapPin },
-        { to: '/almacen/transferencia', label: 'Transferencia', icon: ArrowRightLeft },
         { to: '/almacen/pedidos', label: 'Pedidos', icon: ShoppingCart },
         { to: '/almacen/recepciones', label: 'Recepciones', icon: ArrowDownToLine },
         { to: '/almacen/despachos', label: 'Despachos', icon: Truck },

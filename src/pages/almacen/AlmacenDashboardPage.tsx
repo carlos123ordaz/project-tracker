@@ -136,18 +136,18 @@ export default function AlmacenDashboardPage() {
 
   const kpis = [
     { label: 'Equipos activos', value: stats.totalEquipos, icon: Package, color: 'var(--brand-600)', bg: 'var(--brand-50)', action: () => navigate('/almacen/equipos') },
-    { label: 'Bajo stock', value: stats.equiposBajoStock, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2', action: () => navigate('/almacen/equipos') },
-    { label: 'Pedidos pendientes', value: stats.pedidosPendientes, icon: ShoppingCart, color: '#d97706', bg: '#fffbeb', action: () => navigate('/almacen/pedidos') },
-    { label: 'Recepciones hoy', value: stats.recepcionesHoy, icon: ArrowDownToLine, color: '#16a34a', bg: '#f0fdf4', action: () => navigate('/almacen/recepciones') },
-    { label: 'Despachos hoy', value: stats.despachosHoy, icon: Truck, color: '#7c3aed', bg: '#f5f3ff', action: () => navigate('/almacen/despachos') },
+    { label: 'Bajo stock', value: stats.equiposBajoStock, icon: AlertTriangle, color: 'var(--red-600)', bg: 'var(--red-50)', action: () => navigate('/almacen/equipos') },
+    { label: 'Pedidos pendientes', value: stats.pedidosPendientes, icon: ShoppingCart, color: 'var(--amber-600)', bg: 'var(--amber-50)', action: () => navigate('/almacen/pedidos') },
+    { label: 'Recepciones hoy', value: stats.recepcionesHoy, icon: ArrowDownToLine, color: 'var(--green-600)', bg: 'var(--green-50)', action: () => navigate('/almacen/recepciones') },
+    { label: 'Despachos hoy', value: stats.despachosHoy, icon: Truck, color: 'var(--purple-600)', bg: 'var(--purple-50)', action: () => navigate('/almacen/despachos') },
     { label: 'Movimientos (7d)', value: stats.movimientosSemana, icon: TrendingUp, color: 'var(--n-600)', bg: 'var(--n-100)', action: () => navigate('/almacen/kardex') },
   ]
 
   const tipoColor: Record<string, string> = {
-    Entrada: '#16a34a', Salida: '#dc2626', Ajuste: '#d97706',
+    Entrada: 'var(--green-600)', Salida: 'var(--red-600)', Ajuste: 'var(--amber-600)',
   }
   const tipoBg: Record<string, string> = {
-    Entrada: '#f0fdf4', Salida: '#fef2f2', Ajuste: '#fffbeb',
+    Entrada: 'var(--green-50)', Salida: 'var(--red-50)', Ajuste: 'var(--amber-50)',
   }
 
   return (
@@ -168,7 +168,7 @@ export default function AlmacenDashboardPage() {
                 key={k.label}
                 onClick={k.action}
                 style={{
-                  background: '#fff', border: '1px solid var(--n-150)',
+                  background: 'var(--n-0)', border: '1px solid var(--n-150)',
                   borderRadius: 10, padding: '16px', textAlign: 'left',
                   cursor: 'pointer', transition: 'box-shadow .15s',
                 }}
@@ -185,7 +185,7 @@ export default function AlmacenDashboardPage() {
           </div>
 
           {/* Pedidos por mes — gráfico */}
-          <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 20, marginBottom: 20 }}>
+          <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 20, marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-800)', margin: 0 }}>Pedidos por mes</h3>
@@ -197,7 +197,7 @@ export default function AlmacenDashboardPage() {
                   onChange={e => setSelectedYear(Number(e.target.value))}
                   style={{
                     padding: '5px 28px 5px 10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600,
-                    border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-700)',
+                    border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-700)',
                     cursor: 'pointer', appearance: 'none', outline: 'none',
                   }}
                 >
@@ -243,7 +243,7 @@ export default function AlmacenDashboardPage() {
           </div>
 
           {/* Últimos movimientos */}
-          <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 20 }}>
+          <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-800)', margin: '0 0 16px' }}>
               Últimos movimientos de kardex
             </h3>

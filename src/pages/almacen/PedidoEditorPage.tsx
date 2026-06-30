@@ -8,11 +8,11 @@ import { ALMACEN_PEDIDO_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = {
   'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
-  'Pendiente':  { bg: '#fffbeb', color: '#d97706' },
-  'Aprobado':   { bg: '#eff6ff', color: '#2563eb' },
-  'Enviado':    { bg: '#f5f3ff', color: '#7c3aed' },
-  'Completado': { bg: '#f0fdf4', color: '#16a34a' },
-  'Cancelado':  { bg: '#fef2f2', color: '#dc2626' },
+  'Pendiente':  { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
+  'Aprobado':   { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
+  'Enviado':    { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
+  'Completado': { bg: 'var(--green-50)', color: 'var(--green-600)' },
+  'Cancelado':  { bg: 'var(--red-50)', color: 'var(--red-600)' },
 }
 
 const EMPTY_ITEM = {
@@ -121,11 +121,11 @@ export default function PedidoEditorPage() {
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
     border: '1px solid var(--n-200)', borderRadius: 7,
-    outline: 'none', boxSizing: 'border-box', ...style,
+    outline: 'none', boxSizing: 'border-box', background: 'var(--n-0)', color: 'var(--n-900)', ...style,
   })
 
   if (loading) return <div style={{ padding: 24, color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
-  if (error || !pedido) return <div style={{ padding: 24, color: '#dc2626', fontSize: 13 }}>{error ?? 'Pedido no encontrado'}</div>
+  if (error || !pedido) return <div style={{ padding: 24, color: 'var(--red-600)', fontSize: 13 }}>{error ?? 'Pedido no encontrado'}</div>
 
   const ec = estadoColor[pedido.estado]
 
@@ -163,7 +163,7 @@ export default function PedidoEditorPage() {
       </div>
 
       {/* Info cabecera */}
-      <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+      <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
         {[
           { label: 'Solicitado por', value: pedido.solicitado_por ?? '—' },
           { label: 'Proveedor sugerido', value: pedido.proveedor_sugerido ?? '—' },
@@ -202,11 +202,11 @@ export default function PedidoEditorPage() {
       </div>
 
       {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
           <p style={{ fontSize: 13 }}>Sin ítems. Agrega materiales o equipos al pedido.</p>
         </div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
@@ -220,7 +220,7 @@ export default function PedidoEditorPage() {
                 <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)' }}>
                   <td style={{ padding: '9px 12px', color: 'var(--n-900)', fontWeight: 500 }}>{it.descripcion}</td>
                   <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>{it.cantidad}</td>
-                  <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? '#16a34a' : 'var(--n-400)' }}>
+                  <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? 'var(--green-600)' : 'var(--n-400)' }}>
                     {it.cantidad_aprobada ?? '—'}
                   </td>
                   <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
@@ -234,7 +234,7 @@ export default function PedidoEditorPage() {
                       <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }} title="Editar">
                         <Save size={13} />
                       </button>
-                      <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: '#dc2626' }} title="Eliminar">
+                      <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }} title="Eliminar">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -258,7 +258,7 @@ export default function PedidoEditorPage() {
       {/* Modal ítem */}
       {showItemModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 500, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 500, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{editingItem ? 'Editar ítem' : 'Agregar ítem'}</h2>
               <button onClick={() => setShowItemModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
@@ -279,7 +279,7 @@ export default function PedidoEditorPage() {
                     />
                   </div>
                   {comboOpen && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, maxHeight: 200, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 7, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, maxHeight: 200, overflowY: 'auto' }}>
                       <div
                         onMouseDown={() => { handleEquipoSelect(''); setComboSearch(''); setComboOpen(false) }}
                         style={{ padding: '7px 10px', fontSize: 13, color: 'var(--n-400)', cursor: 'pointer' }}
@@ -329,10 +329,10 @@ export default function PedidoEditorPage() {
               </div>
             </div>
 
-            {itemError && <p style={{ color: '#dc2626', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
+            {itemError && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{itemError}</p>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleSaveItem} disabled={savingItem} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: savingItem ? .6 : 1 }}>
                 {savingItem ? 'Guardando…' : editingItem ? 'Guardar' : 'Agregar'}
               </button>

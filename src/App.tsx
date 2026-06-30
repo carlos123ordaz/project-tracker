@@ -57,7 +57,6 @@ import RecepcionEditorPage from './pages/almacen/RecepcionEditorPage'
 import DespachosPage from './pages/almacen/DespachosPage'
 import DespachoEditorPage from './pages/almacen/DespachoEditorPage'
 import UbicacionesPage from './pages/almacen/UbicacionesPage'
-import TransferenciaPage from './pages/almacen/TransferenciaPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function AuthenticatedApp() {
@@ -165,7 +164,6 @@ function AuthenticatedApp() {
           <Route path="/almacen/despachos"              element={<DespachosPage />} />
           <Route path="/almacen/despachos/:id"          element={<DespachoEditorPage />} />
           <Route path="/almacen/ubicaciones"            element={<UbicacionesPage />} />
-          <Route path="/almacen/transferencia"          element={<TransferenciaPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

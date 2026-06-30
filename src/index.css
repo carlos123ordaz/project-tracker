@@ -49,6 +49,8 @@
   --blue-100:  #dbeafe;
   --blue-500:  #3b82f6;
   --blue-600:  #2563eb;
+  --purple-50:  #f5f3ff;
+  --purple-600: #7c3aed;
 
   /* Shadows */
   --shadow-xs: 0 1px 1px rgba(15,17,22,0.04);
@@ -93,6 +95,7 @@
   --green-100: #123520;
   --blue-50:   #0e1f3a;
   --blue-100:  #132847;
+  --purple-50:  #1e1433;
 
   --shadow-xs: 0 1px 1px rgba(0,0,0,.30);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.30), 0 1px 1px rgba(0,0,0,.22);

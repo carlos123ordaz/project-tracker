@@ -615,6 +615,7 @@ export interface AlmacenEquipo {
   unidad: string
   precio_unitario: number
   sort_order: number
+  created_by: string | null
   created_at: string
   updated_at: string
 }
