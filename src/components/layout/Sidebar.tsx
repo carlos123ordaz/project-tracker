@@ -138,7 +138,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: Warehouse,
       items: [
         { to: '/almacen', label: 'Dashboard', icon: Warehouse, end: true },
-        { to: '/almacen/equipos', label: 'Materiales', icon: Package },
+        { to: '/almacen/equipos', label: 'Equipos/Consumibles', icon: Package },
         { to: '/almacen/kardex', label: 'Kardex', icon: RefreshCw },
         { to: '/almacen/ubicaciones', label: 'Ubicaciones', icon: MapPin },
         { to: '/almacen/pedidos', label: 'Pedidos', icon: ShoppingCart },
