@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { Plus, Search, Package, AlertTriangle, Edit2, Trash2, X, ChevronRight, Download } from 'lucide-react'
+import { useRef } from 'react'
+import { Plus, Search, Package, AlertTriangle, Edit2, Trash2, X, ChevronRight, Download, FileText, Upload } from 'lucide-react'
 import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
 import { useAlmacenUbicaciones } from '../../hooks/useAlmacenUbicaciones'
+import { supabase } from '../../lib/supabase'
 import type { AlmacenEquipo, AlmacenEquipoEstado } from '../../lib/types'
 import { ALMACEN_EQUIPO_ESTADOS } from '../../lib/types'
 import { Pagination } from '../../components/ui/Pagination'
@@ -39,6 +41,7 @@ export default function EquiposAlmacenPage() {
     marca: null, modelo: null, serie: null,
     estado: 'Activo', ubicacion: null,
     stock_actual: 0, stock_minimo: 0, unidad: 'UND', precio_unitario: 0,
+    ficha_tecnica_url: null,
     created_by: user?.id ?? null,
   })
 
@@ -48,6 +51,8 @@ export default function EquiposAlmacenPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AlmacenEquipo | null>(null)
+  const [fichaFile, setFichaFile] = useState<File | null>(null)
+  const fichaRef = useRef<HTMLInputElement>(null)
 
   const filtered = equipos // filters now applied server-side
 
@@ -57,6 +62,7 @@ export default function EquiposAlmacenPage() {
   const openNew = () => {
     setEditing(null)
     setForm(emptyForm())
+    setFichaFile(null)
     setError(null)
     setShowModal(true)
   }
@@ -69,10 +75,23 @@ export default function EquiposAlmacenPage() {
       estado: e.estado, ubicacion: e.ubicacion,
       stock_actual: e.stock_actual, stock_minimo: e.stock_minimo,
       unidad: e.unidad, precio_unitario: e.precio_unitario,
+      ficha_tecnica_url: e.ficha_tecnica_url,
       created_by: e.created_by,
     })
+    setFichaFile(null)
     setError(null)
     setShowModal(true)
+  }
+
+  const uploadFicha = async (equipoId: string, file: File): Promise<string> => {
+    const ext = file.name.split('.').pop() ?? 'pdf'
+    const path = `${equipoId}/ficha_tecnica.${ext}`
+    const { error: upErr } = await supabase.storage
+      .from('almacen-fichas')
+      .upload(path, file, { upsert: true, contentType: file.type })
+    if (upErr) throw new Error(upErr.message)
+    const { data } = supabase.storage.from('almacen-fichas').getPublicUrl(path)
+    return data.publicUrl
   }
 
   const handleSave = async () => {
@@ -81,8 +100,18 @@ export default function EquiposAlmacenPage() {
     setError(null)
     try {
       const payload = { ...form, codigo: form.codigo || null }
-      if (editing) await updateEquipo(editing.id, payload)
-      else await createEquipo(payload)
+
+      if (editing) {
+        let url = form.ficha_tecnica_url
+        if (fichaFile) url = await uploadFicha(editing.id, fichaFile)
+        await updateEquipo(editing.id, { ...payload, ficha_tecnica_url: url })
+      } else {
+        const equipo = await createEquipo({ ...payload, ficha_tecnica_url: null })
+        if (fichaFile) {
+          const url = await uploadFicha(equipo.id, fichaFile)
+          await updateEquipo(equipo.id, { ficha_tecnica_url: url })
+        }
+      }
       setShowModal(false)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error al guardar')
@@ -111,7 +140,7 @@ export default function EquiposAlmacenPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Equipos, Materiales & Consumibles</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Equipos & Consumibles</h1>
           <p style={{ fontSize: 12.5, color: 'var(--n-500)', margin: '3px 0 0' }}>
             {filtered.length} ítem{filtered.length !== 1 ? 's' : ''}
           </p>
@@ -193,7 +222,7 @@ export default function EquiposAlmacenPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
-                {['Código', 'Nombre', 'Categoría', 'Estado', 'Stock', 'Mín.', 'Unidad', 'Ubicación', ''].map(h => (
+                {['Código', 'Nombre', 'Categoría', 'Estado', 'Stock', 'Mín.', 'Unidad', 'Ubicación', 'Ficha', ''].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: 'var(--n-500)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -229,6 +258,14 @@ export default function EquiposAlmacenPage() {
                     <td style={{ padding: '10px 14px', color: 'var(--n-500)' }}>{e.stock_minimo}</td>
                     <td style={{ padding: '10px 14px', color: 'var(--n-600)' }}>{e.unidad}</td>
                     <td style={{ padding: '10px 14px', color: 'var(--n-500)' }}>{e.ubicacion ?? '—'}</td>
+                    <td style={{ padding: '10px 14px' }} onClick={ev => ev.stopPropagation()}>
+                      {e.ficha_tecnica_url
+                        ? <a href={e.ficha_tecnica_url} target="_blank" rel="noreferrer" title="Descargar ficha técnica" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, background: 'var(--blue-50)', color: 'var(--blue-600)', fontSize: 11.5, fontWeight: 600, textDecoration: 'none' }}>
+                            <FileText size={12} /> PDF
+                          </a>
+                        : <span style={{ color: 'var(--n-300)', fontSize: 12 }}>—</span>
+                      }
+                    </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 4 }} onClick={ev => ev.stopPropagation()}>
                         <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar">
@@ -324,6 +361,31 @@ export default function EquiposAlmacenPage() {
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Precio unitario (S/)</label>
                 <input type="number" min={0} step={0.01} value={form.precio_unitario} onChange={e => setForm(f => ({ ...f, precio_unitario: Number(e.target.value) }))} style={inp({ marginTop: 4 })} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Ficha técnica (PDF)</label>
+                <input
+                  ref={fichaRef}
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={e => setFichaFile(e.target.files?.[0] ?? null)}
+                />
+                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => fichaRef.current?.click()}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', color: 'var(--n-700)', fontSize: 12.5, cursor: 'pointer' }}
+                  >
+                    <Upload size={13} /> {fichaFile ? 'Cambiar archivo' : 'Subir PDF'}
+                  </button>
+                  {fichaFile
+                    ? <span style={{ fontSize: 12, color: 'var(--green-600)', display: 'flex', alignItems: 'center', gap: 4 }}><FileText size={13} />{fichaFile.name}</span>
+                    : form.ficha_tecnica_url
+                      ? <a href={form.ficha_tecnica_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--blue-600)', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}><FileText size={13} /> Ver ficha actual</a>
+                      : <span style={{ fontSize: 12, color: 'var(--n-400)' }}>Sin ficha cargada</span>
+                  }
+                </div>
               </div>
             </div>
 
