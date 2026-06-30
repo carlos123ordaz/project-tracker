@@ -25,8 +25,7 @@ export function useAlmacenEquipos(
     let q = supabase
       .from('almacen_equipos')
       .select('*', { count: 'exact' })
-      .order('sort_order')
-      .order('nombre')
+      .order('created_at', { ascending: false })
     if (search) q = q.or(`nombre.ilike.%${search}%,codigo.ilike.%${search}%,categoria.ilike.%${search}%`)
     if (opts?.estado && opts.estado !== 'Todos') q = q.eq('estado', opts.estado)
     // bajoStock needs column comparison → handled client-side after fetch
