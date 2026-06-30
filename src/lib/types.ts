@@ -615,6 +615,7 @@ export interface AlmacenEquipo {
   unidad: string
   precio_unitario: number
   ficha_tecnica_url: string | null
+  custom_fields: Record<string, unknown> | null
   sort_order: number
   created_by: string | null
   created_at: string
