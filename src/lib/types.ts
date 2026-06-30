@@ -558,6 +558,187 @@ export interface FormField {
 
 export type SubmissionStatus = 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado'
 
+// ── Almacén ───────────────────────────────────────────────────────────────────
+
+export type AlmacenEquipoEstado = 'Activo' | 'Inactivo' | 'En Reparación' | 'Dado de Baja'
+export const ALMACEN_EQUIPO_ESTADOS: AlmacenEquipoEstado[] = ['Activo', 'Inactivo', 'En Reparación', 'Dado de Baja']
+
+export type AlmacenPedidoEstado = 'Borrador' | 'Pendiente' | 'Aprobado' | 'Enviado' | 'Completado' | 'Cancelado'
+export const ALMACEN_PEDIDO_ESTADOS: AlmacenPedidoEstado[] = ['Borrador', 'Pendiente', 'Aprobado', 'Enviado', 'Completado', 'Cancelado']
+
+export type AlmacenRecepcionEstado = 'Borrador' | 'Parcial' | 'Completada'
+export const ALMACEN_RECEPCION_ESTADOS: AlmacenRecepcionEstado[] = ['Borrador', 'Parcial', 'Completada']
+
+export type AlmacenDespachoEstado = 'Borrador' | 'Despachado' | 'Entregado' | 'Cancelado'
+export const ALMACEN_DESPACHO_ESTADOS: AlmacenDespachoEstado[] = ['Borrador', 'Despachado', 'Entregado', 'Cancelado']
+
+export type KardexTipo = 'Entrada' | 'Salida' | 'Ajuste' | 'Transferencia'
+
+// ── WMS: Ubicaciones ──────────────────────────────────────────
+export type AlmacenUbicacionTipo = 'Almacén' | 'Estante' | 'Bin' | 'Obra' | 'Taller' | 'Externo'
+export const ALMACEN_UBICACION_TIPOS: AlmacenUbicacionTipo[] = ['Almacén', 'Estante', 'Bin', 'Obra', 'Taller', 'Externo']
+
+export interface AlmacenUbicacion {
+  id: string
+  codigo: string | null
+  nombre: string
+  descripcion: string | null
+  tipo: AlmacenUbicacionTipo
+  activa: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface AlmacenStockUbicacion {
+  id: string
+  equipo_id: string
+  ubicacion_id: string
+  stock_actual: number
+  updated_at: string
+  equipo?: AlmacenEquipo | null
+  ubicacion?: AlmacenUbicacion | null
+}
+
+export interface AlmacenEquipo {
+  id: string
+  codigo: string | null
+  nombre: string
+  descripcion: string | null
+  categoria: string | null
+  marca: string | null
+  modelo: string | null
+  serie: string | null
+  estado: AlmacenEquipoEstado
+  ubicacion: string | null
+  stock_actual: number
+  stock_minimo: number
+  unidad: string
+  precio_unitario: number
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AlmacenKardex {
+  id: string
+  equipo_id: string
+  tipo: KardexTipo
+  cantidad: number
+  stock_anterior: number
+  stock_nuevo: number
+  motivo: string | null
+  referencia_tipo: string | null
+  referencia_id: string | null
+  observacion: string | null
+  ubicacion_origen_id: string | null
+  ubicacion_destino_id: string | null
+  fecha: string
+  created_by: string | null
+  created_at: string
+  equipo?: AlmacenEquipo
+  ubicacion_origen?: { id: string; nombre: string } | null
+  ubicacion_destino?: { id: string; nombre: string } | null
+}
+
+export interface AlmacenPedido {
+  id: string
+  numero: number
+  proyecto_id: string | null
+  solicitado_por: string | null
+  proveedor_sugerido: string | null
+  estado: AlmacenPedidoEstado
+  fecha_pedido: string
+  fecha_requerida: string | null
+  observaciones: string | null
+  sort_order: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AlmacenPedidoItem {
+  id: string
+  pedido_id: string
+  equipo_id: string | null
+  descripcion: string
+  cantidad: number
+  cantidad_aprobada: number | null
+  unidad: string
+  precio_unitario: number
+  observacion: string | null
+  sort_order: number
+  created_at: string
+  equipo?: AlmacenEquipo | null
+}
+
+export interface AlmacenRecepcion {
+  id: string
+  numero: number
+  pedido_id: string | null
+  proveedor: string | null
+  nro_factura: string | null
+  guia_remision: string | null
+  fecha_recepcion: string
+  estado: AlmacenRecepcionEstado
+  observaciones: string | null
+  sort_order: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  pedido?: AlmacenPedido | null
+}
+
+export interface AlmacenRecepcionItem {
+  id: string
+  recepcion_id: string
+  equipo_id: string | null
+  pedido_item_id: string | null
+  descripcion: string
+  cantidad: number
+  unidad: string
+  precio_unitario: number
+  observacion: string | null
+  ubicacion_destino_id: string | null
+  sort_order: number
+  created_at: string
+  equipo?: AlmacenEquipo | null
+  ubicacion_destino?: AlmacenUbicacion | null
+}
+
+export interface AlmacenDespacho {
+  id: string
+  numero: number
+  proyecto_id: string | null
+  destinatario: string | null
+  direccion: string | null
+  movilidad: string | null
+  conductor: string | null
+  placa: string | null
+  guia_remision: string | null
+  fecha_despacho: string
+  estado: AlmacenDespachoEstado
+  observaciones: string | null
+  sort_order: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AlmacenDespachoItem {
+  id: string
+  despacho_id: string
+  equipo_id: string | null
+  descripcion: string
+  cantidad: number
+  unidad: string
+  observacion: string | null
+  ubicacion_origen_id: string | null
+  sort_order: number
+  created_at: string
+  equipo?: AlmacenEquipo | null
+  ubicacion_origen?: AlmacenUbicacion | null
+}
+
 export interface FormSubmission {
   id: string
   form_id: string

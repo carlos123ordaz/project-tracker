@@ -4,10 +4,12 @@ import { useProjects } from '../hooks/useProjects'
 import { useMemo } from 'react'
 import {
   FolderOpen, ShoppingCart, Users, BookOpen,
-  HardHat, Kanban, CalendarRange, TrendingUp,
+  Kanban, CalendarRange, TrendingUp,
   ChevronRight, BarChart3, ClipboardList, TrendingDown,
   Building2, ListChecks, UserCheck, BarChart2,
+  Package, ArrowDownToLine, Truck, ArrowRightLeft,
 } from 'lucide-react'
+import { useAlmacenEquipos } from '../hooks/useAlmacenEquipos'
 import { MONTHS_FULL, DAYS_ES, TODAY } from '../lib/helpers'
 
 // ── Paleta por módulo ─────────────────────────────────────────────────────────
@@ -16,9 +18,9 @@ const PALETTES = {
   proyectos:  { from: '#4f46e5', to: '#6366f1', glow: 'rgba(99,102,241,.5)'   },
   comercial:  { from: '#059669', to: '#10b981', glow: 'rgba(16,185,129,.5)'   },
   compras:    { from: '#d97706', to: '#f59e0b', glow: 'rgba(245,158,11,.5)'   },
-  ingenieria: { from: '#0369a1', to: '#0ea5e9', glow: 'rgba(14,165,233,.5)'   },
-  rrhh:       { from: '#7c3aed', to: '#a78bfa', glow: 'rgba(167,139,250,.5)'  },
+rrhh:       { from: '#7c3aed', to: '#a78bfa', glow: 'rgba(167,139,250,.5)'  },
   ventas:     { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,.5)'   },
+  almacen:    { from: '#c2410c', to: '#f97316', glow: 'rgba(249,115,22,.5)'   },
 }
 
 // ── Definición de módulos ─────────────────────────────────────────────────────
@@ -77,20 +79,6 @@ const MODULES: Module[] = [
     ],
   },
   {
-    key: 'ingenieria',
-    icon: HardHat,
-    title: 'Ingeniería',
-    description: 'Seguimiento de proyectos en ejecución y cotizaciones mediante Bitrix24.',
-    to: '/ingenieria/tareas/362',
-    cta: 'Ir a Ingeniería',
-    links: [
-      { label: 'Proy. Ejecución',     to: '/ingenieria/tareas/362',            icon: ListChecks },
-      { label: 'Dashboard Ejecución', to: '/ingenieria/tareas/362/dashboard',  icon: BarChart2  },
-      { label: 'Proy. Cotizaciones',  to: '/ingenieria/tareas/316',            icon: ListChecks },
-      { label: 'Dashboard Cotiz.',    to: '/ingenieria/tareas/316/dashboard',  icon: BarChart2  },
-    ],
-  },
-  {
     key: 'rrhh',
     icon: Users,
     title: 'RRHH',
@@ -116,6 +104,21 @@ const MODULES: Module[] = [
       { label: 'Consolidado',      to: '/consolidated', icon: BarChart3 },
     ],
   },
+  {
+    key: 'almacen',
+    icon: Package,
+    title: 'Almacén',
+    description: 'Control de stock, kardex de movimientos, pedidos, recepciones y despachos logísticos.',
+    to: '/almacen',
+    cta: 'Ir a Almacén',
+    links: [
+      { label: 'Equipos',      to: '/almacen/equipos',      icon: Package          },
+      { label: 'Kardex',       to: '/almacen/kardex',       icon: ArrowRightLeft   },
+      { label: 'Pedidos',      to: '/almacen/pedidos',      icon: ShoppingCart     },
+      { label: 'Recepciones',  to: '/almacen/recepciones',  icon: ArrowDownToLine  },
+      { label: 'Despachos',    to: '/almacen/despachos',    icon: Truck            },
+    ],
+  },
 ]
 
 // ── Portal ────────────────────────────────────────────────────────────────────
@@ -123,6 +126,7 @@ const MODULES: Module[] = [
 export default function PortalPage() {
   const { user }     = useAuth()
   const { projects } = useProjects()
+  const { equipos }  = useAlmacenEquipos()
   const navigate     = useNavigate()
 
   const firstName = useMemo(() => {
@@ -131,11 +135,14 @@ export default function PortalPage() {
   }, [user])
 
   const activeProjects = projects.filter(p => !p.end_date || new Date(p.end_date) >= new Date()).length
+  const bajoStockCount = equipos.filter(e => e.stock_minimo > 0 && e.stock_actual <= e.stock_minimo).length
   const dayLabel = `${DAYS_ES[(TODAY.getDay() + 6) % 7]}, ${TODAY.getDate()} de ${MONTHS_FULL[TODAY.getMonth()]} ${TODAY.getFullYear()}`
 
-  const modulesWithStats: Module[] = MODULES.map(m =>
-    m.key === 'proyectos' ? { ...m, stat: { label: 'proyectos activos', value: activeProjects } } : m
-  )
+  const modulesWithStats: Module[] = MODULES.map(m => {
+    if (m.key === 'proyectos') return { ...m, stat: { label: 'proyectos activos', value: activeProjects } }
+    if (m.key === 'almacen')   return { ...m, stat: { label: 'ítems bajo stock',  value: bajoStockCount } }
+    return m
+  })
 
   return (
     <div style={{
@@ -244,7 +251,8 @@ export default function PortalPage() {
           {/* Stats en línea */}
           <div style={{ display: 'flex', gap: 12 }}>
             <HeroStat label="Proyectos activos" value={activeProjects} />
-            <HeroStat label="Módulos" value={MODULES.length} />
+            <HeroStat label="Ítems en almacén"  value={equipos.length} />
+            <HeroStat label="Módulos"            value={MODULES.length} />
           </div>
         </div>
 

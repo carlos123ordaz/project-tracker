@@ -7,6 +7,8 @@ import {
   Users, UserCheck, ClipboardList, BarChart3,
   ShoppingCart, Building2, TrendingDown, Receipt, ListChecks,
   FileText, Users2, TrendingUp, ClipboardCheck, PackageSearch, Ticket,
+  Warehouse, Package, RefreshCw, ArrowDownToLine, Truck,
+  MapPin, ArrowRightLeft,
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
@@ -38,12 +40,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const W = collapsed ? 64 : 232
 
   const toggleGroup = (key: string) => {
-    setOpenGroups(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
+    setOpenGroups(prev =>
+      prev.has(key) ? new Set<string>() : new Set([key])
+    )
   }
 
   const rrhhItems: NavItem[] = []
@@ -112,6 +111,21 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       items: [
         { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp, end: true },
         { to: '/comercial/deals/dashboard', label: 'Dashboard', icon: BarChart3 },
+      ],
+    },
+    {
+      key: 'almacen',
+      label: 'Almacén',
+      icon: Warehouse,
+      items: [
+        { to: '/almacen', label: 'Dashboard', icon: Warehouse, end: true },
+        { to: '/almacen/equipos', label: 'Equipos', icon: Package },
+        { to: '/almacen/kardex', label: 'Kardex', icon: RefreshCw },
+        { to: '/almacen/ubicaciones', label: 'Ubicaciones', icon: MapPin },
+        { to: '/almacen/transferencia', label: 'Transferencia', icon: ArrowRightLeft },
+        { to: '/almacen/pedidos', label: 'Pedidos', icon: ShoppingCart },
+        { to: '/almacen/recepciones', label: 'Recepciones', icon: ArrowDownToLine },
+        { to: '/almacen/despachos', label: 'Despachos', icon: Truck },
       ],
     },
   ]

@@ -47,6 +47,17 @@ import CotizacionEditorPage from './pages/cotizaciones/CotizacionEditorPage'
 import DealsPage from './pages/comercial/DealsPage'
 import DealsDashboardPage from './pages/comercial/DealsDashboardPage'
 import DealsGanttPage from './pages/comercial/DealsGanttPage'
+import AlmacenDashboardPage from './pages/almacen/AlmacenDashboardPage'
+import EquiposAlmacenPage from './pages/almacen/EquiposAlmacenPage'
+import KardexPage from './pages/almacen/KardexPage'
+import PedidosPage from './pages/almacen/PedidosPage'
+import PedidoEditorPage from './pages/almacen/PedidoEditorPage'
+import RecepcionesPage from './pages/almacen/RecepcionesPage'
+import RecepcionEditorPage from './pages/almacen/RecepcionEditorPage'
+import DespachosPage from './pages/almacen/DespachosPage'
+import DespachoEditorPage from './pages/almacen/DespachoEditorPage'
+import UbicacionesPage from './pages/almacen/UbicacionesPage'
+import TransferenciaPage from './pages/almacen/TransferenciaPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function AuthenticatedApp() {
@@ -143,6 +154,18 @@ function AuthenticatedApp() {
           <Route path="/comercial/deals"            element={<DealsPage />} />
           <Route path="/comercial/deals/dashboard"  element={<DealsDashboardPage />} />
           <Route path="/comercial/deals/gantt"      element={<DealsGanttPage />} />
+          {/* Almacén */}
+          <Route path="/almacen"                        element={<AlmacenDashboardPage />} />
+          <Route path="/almacen/equipos"                element={<EquiposAlmacenPage />} />
+          <Route path="/almacen/kardex"                 element={<KardexPage />} />
+          <Route path="/almacen/pedidos"                element={<PedidosPage />} />
+          <Route path="/almacen/pedidos/:id"            element={<PedidoEditorPage />} />
+          <Route path="/almacen/recepciones"            element={<RecepcionesPage />} />
+          <Route path="/almacen/recepciones/:id"        element={<RecepcionEditorPage />} />
+          <Route path="/almacen/despachos"              element={<DespachosPage />} />
+          <Route path="/almacen/despachos/:id"          element={<DespachoEditorPage />} />
+          <Route path="/almacen/ubicaciones"            element={<UbicacionesPage />} />
+          <Route path="/almacen/transferencia"          element={<TransferenciaPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
