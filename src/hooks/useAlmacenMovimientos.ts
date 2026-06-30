@@ -11,7 +11,7 @@ import { upsertStockUbicacion } from './useAlmacenUbicaciones'
 // ── Recepciones ────────────────────────────────────────────────
 const RECEPCIONES_PAGE_SIZE = 50
 
-export function useAlmacenRecepciones(opts?: { estado?: string; page?: number; pageSize?: number }) {
+export function useAlmacenRecepciones(opts?: { estado?: string; page?: number; pageSize?: number; search?: string }) {
   const [recepciones, setRecepciones] = useState<AlmacenRecepcion[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -29,12 +29,13 @@ export function useAlmacenRecepciones(opts?: { estado?: string; page?: number; p
       .select('*, pedido:almacen_pedidos(id,numero,solicitado_por)', { count: 'exact' })
       .order('numero', { ascending: false })
     if (opts?.estado && opts.estado !== 'Todos') q = q.eq('estado', opts.estado)
+    if (opts?.search?.trim()) q = q.or(`proveedor.ilike.%${opts.search.trim()}%,nro_factura.ilike.%${opts.search.trim()}%,guia_remision.ilike.%${opts.search.trim()}%`)
     if (paginate) q = q.range(page * pageSize, (page + 1) * pageSize - 1)
     const { data, count, error: err } = await q
     if (err) setError(err.message)
     else { setRecepciones(data || []); setTotal(count ?? 0) }
     setLoading(false)
-  }, [opts?.estado, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [opts?.estado, opts?.search, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchRecepciones() }, [fetchRecepciones])
 
@@ -197,7 +198,7 @@ export function useAlmacenRecepcionDetail(id: string) {
 // ── Despachos ──────────────────────────────────────────────────
 const DESPACHOS_PAGE_SIZE = 50
 
-export function useAlmacenDespachos(opts?: { estado?: string; page?: number; pageSize?: number }) {
+export function useAlmacenDespachos(opts?: { estado?: string; page?: number; pageSize?: number; search?: string }) {
   const [despachos, setDespachos] = useState<AlmacenDespacho[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -215,12 +216,13 @@ export function useAlmacenDespachos(opts?: { estado?: string; page?: number; pag
       .select('*', { count: 'exact' })
       .order('numero', { ascending: false })
     if (opts?.estado && opts.estado !== 'Todos') q = q.eq('estado', opts.estado)
+    if (opts?.search?.trim()) q = q.or(`destinatario.ilike.%${opts.search.trim()}%,guia_remision.ilike.%${opts.search.trim()}%,conductor.ilike.%${opts.search.trim()}%`)
     if (paginate) q = q.range(page * pageSize, (page + 1) * pageSize - 1)
     const { data, count, error: err } = await q
     if (err) setError(err.message)
     else { setDespachos(data || []); setTotal(count ?? 0) }
     setLoading(false)
-  }, [opts?.estado, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [opts?.estado, opts?.search, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchDespachos() }, [fetchDespachos])
 

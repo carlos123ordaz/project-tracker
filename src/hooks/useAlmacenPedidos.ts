@@ -5,7 +5,7 @@ import type { AlmacenPedido, AlmacenPedidoItem, AlmacenPedidoEstado } from '../l
 
 const PEDIDOS_PAGE_SIZE = 50
 
-export function useAlmacenPedidos(estado?: AlmacenPedidoEstado | 'Todos', page?: number, pageSize?: number) {
+export function useAlmacenPedidos(estado?: AlmacenPedidoEstado | 'Todos', page?: number, pageSize?: number, search?: string) {
   const [pedidos, setPedidos] = useState<AlmacenPedido[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -23,12 +23,13 @@ export function useAlmacenPedidos(estado?: AlmacenPedidoEstado | 'Todos', page?:
       .select('*', { count: 'exact' })
       .order('numero', { ascending: false })
     if (estado && estado !== 'Todos') q = q.eq('estado', estado)
+    if (search?.trim()) q = q.or(`solicitado_por.ilike.%${search.trim()}%,proveedor_sugerido.ilike.%${search.trim()}%`)
     if (paginate) q = q.range(currentPage * currentPageSize, (currentPage + 1) * currentPageSize - 1)
     const { data, count, error: err } = await q
     if (err) setError(err.message)
     else { setPedidos(data || []); setTotal(count ?? 0) }
     setLoading(false)
-  }, [estado, currentPage, paginate, currentPageSize])
+  }, [estado, currentPage, paginate, currentPageSize, search])
 
   useEffect(() => { fetchPedidos() }, [fetchPedidos])
 
