@@ -2,17 +2,17 @@
 
 /* ─── Design tokens ──────────────────────────────────────────────────────── */
 :root {
-  /* Brand — refined indigo */
-  --brand-50:  #eef0ff;
-  --brand-100: #e0e3ff;
-  --brand-200: #c6cbff;
-  --brand-300: #a3aaff;
-  --brand-400: #7d83fb;
-  --brand-500: #5b5ef0;
-  --brand-600: #4f46e5;
-  --brand-700: #4338ca;
-  --brand-800: #3730a3;
-  --brand-900: #312e81;
+  /* Brand — corporate blue */
+  --brand-50:  #e6eef8;
+  --brand-100: #c0d4f0;
+  --brand-200: #93b5e5;
+  --brand-300: #5e92d8;
+  --brand-400: #2d73cb;
+  --brand-500: #0059c8;
+  --brand-600: #0047BA;
+  --brand-700: #003a96;
+  --brand-800: #002d74;
+  --brand-900: #001f52;
 
   /* Neutrals — cool gray */
   --n-0:   #ffffff;
@@ -59,7 +59,7 @@
   --shadow-md: 0 8px 24px -4px rgba(15,17,22,0.10), 0 4px 8px -4px rgba(15,17,22,0.06);
   --shadow-lg: 0 16px 40px -8px rgba(15,17,22,0.14), 0 6px 12px -6px rgba(15,17,22,0.08);
 
-  --ring: 0 0 0 3px rgba(79,70,229,0.18);
+  --ring: 0 0 0 3px rgba(0,71,186,0.18);
 
   --radius-sm: 6px;
   --radius:    8px;
@@ -84,8 +84,8 @@
   --n-800: #d1d9e4;
   --n-900: #e8ecf2;
 
-  --brand-50:  #1a1f3d;
-  --brand-100: #1e2549;
+  --brand-50:  #001433;
+  --brand-100: #001d4a;
 
   --red-50:    #2a1414;
   --red-100:   #3b1c1c;
