@@ -10,10 +10,10 @@ import { Pagination } from '../../components/ui/Pagination'
 const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Vehículo', 'Otro']
 
 const estadoColor: Record<AlmacenEquipoEstado, { bg: string; color: string }> = {
-  'Activo':        { bg: '#f0fdf4', color: '#16a34a' },
-  'Inactivo':      { bg: 'var(--n-100)', color: 'var(--n-500)' },
+  'Activo': { bg: '#f0fdf4', color: '#16a34a' },
+  'Inactivo': { bg: 'var(--n-100)', color: 'var(--n-500)' },
   'En Reparación': { bg: '#fffbeb', color: '#d97706' },
-  'Dado de Baja':  { bg: '#fef2f2', color: '#dc2626' },
+  'Dado de Baja': { bg: '#fef2f2', color: '#dc2626' },
 }
 
 const EMPTY: Omit<AlmacenEquipo, 'id' | 'sort_order' | 'created_at' | 'updated_at'> = {
@@ -88,7 +88,7 @@ export default function EquiposAlmacenPage() {
     if (!confirmDelete) return
     try {
       await deleteEquipo(confirmDelete.id)
-    } catch {}
+    } catch { }
     setConfirmDelete(null)
   }
 
@@ -103,7 +103,7 @@ export default function EquiposAlmacenPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Equipos & Materiales</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Equipos, Materiales & Consumibles</h1>
           <p style={{ fontSize: 12.5, color: 'var(--n-500)', margin: '3px 0 0' }}>
             {filtered.length} ítem{filtered.length !== 1 ? 's' : ''}
           </p>
@@ -117,7 +117,7 @@ export default function EquiposAlmacenPage() {
             fontSize: 13, fontWeight: 600, cursor: 'pointer',
           }}
         >
-          <Plus size={15} /> Nuevo equipo
+          <Plus size={15} /> Nuevo material
         </button>
       </div>
 
@@ -235,7 +235,7 @@ export default function EquiposAlmacenPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{editing ? 'Editar equipo' : 'Nuevo equipo'}</h2>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{editing ? 'Editar equipo' : 'Nuevo material'}</h2>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}>
                 <X size={18} />
               </button>
@@ -313,7 +313,7 @@ export default function EquiposAlmacenPage() {
                 Cancelar
               </button>
               <button onClick={handleSave} disabled={saving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: saving ? .6 : 1 }}>
-                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear equipo'}
+                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear material'}
               </button>
             </div>
           </div>

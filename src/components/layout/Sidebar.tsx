@@ -35,12 +35,12 @@ interface NavGroupDef {
 }
 
 function getGroupFromPath(pathname: string): string {
-  if (pathname.startsWith('/almacen'))                                          return 'almacen'
-  if (pathname.startsWith('/rrhh') || pathname.startsWith('/schedule'))        return 'rrhh'
-  if (pathname.startsWith('/comercial'))                                        return 'comercial'
-  if (pathname.startsWith('/compras'))                                          return 'compras'
+  if (pathname.startsWith('/almacen')) return 'almacen'
+  if (pathname.startsWith('/rrhh') || pathname.startsWith('/schedule')) return 'rrhh'
+  if (pathname.startsWith('/comercial')) return 'comercial'
+  if (pathname.startsWith('/compras')) return 'compras'
   if (pathname.startsWith('/libro') || pathname.startsWith('/budgets') ||
-      pathname.startsWith('/cotizaciones') || pathname.startsWith('/consolidated')) return 'ventas'
+    pathname.startsWith('/cotizaciones') || pathname.startsWith('/consolidated')) return 'ventas'
   return 'proyectos'
 }
 
@@ -138,7 +138,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: Warehouse,
       items: [
         { to: '/almacen', label: 'Dashboard', icon: Warehouse, end: true },
-        { to: '/almacen/equipos', label: 'Equipos', icon: Package },
+        { to: '/almacen/equipos', label: 'Materiales', icon: Package },
         { to: '/almacen/kardex', label: 'Kardex', icon: RefreshCw },
         { to: '/almacen/ubicaciones', label: 'Ubicaciones', icon: MapPin },
         { to: '/almacen/transferencia', label: 'Transferencia', icon: ArrowRightLeft },
@@ -214,127 +214,127 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           ))
         ) : (
           <>
-          {/* Inicio — ítem suelto */}
-          <NavLink
-            to={INICIO_ITEM.to}
-            end={INICIO_ITEM.end}
-            onClick={onMobileClose}
-            style={({ isActive }) => ({
-              display: 'flex', alignItems: 'center',
-              gap: 9, padding: '0 10px',
-              height: 32, borderRadius: 7,
-              cursor: 'pointer',
-              background: isActive ? 'var(--brand-50)' : 'transparent',
-              color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
-              fontWeight: isActive ? 600 : 500,
-              fontSize: 12.5, letterSpacing: '-0.005em',
-              position: 'relative',
-              transition: 'background .15s, color .15s',
-              textDecoration: 'none',
-              marginBottom: 8,
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span style={{
-                    position: 'absolute', left: -8, top: 6, bottom: 6, width: 2,
-                    background: 'var(--brand-600)', borderRadius: 2,
-                  }} />
-                )}
-                <INICIO_ITEM.icon size={15} />
-                <span>{INICIO_ITEM.label}</span>
-              </>
-            )}
-          </NavLink>
+            {/* Inicio — ítem suelto */}
+            <NavLink
+              to={INICIO_ITEM.to}
+              end={INICIO_ITEM.end}
+              onClick={onMobileClose}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center',
+                gap: 9, padding: '0 10px',
+                height: 32, borderRadius: 7,
+                cursor: 'pointer',
+                background: isActive ? 'var(--brand-50)' : 'transparent',
+                color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: 12.5, letterSpacing: '-0.005em',
+                position: 'relative',
+                transition: 'background .15s, color .15s',
+                textDecoration: 'none',
+                marginBottom: 8,
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span style={{
+                      position: 'absolute', left: -8, top: 6, bottom: 6, width: 2,
+                      background: 'var(--brand-600)', borderRadius: 2,
+                    }} />
+                  )}
+                  <INICIO_ITEM.icon size={15} />
+                  <span>{INICIO_ITEM.label}</span>
+                </>
+              )}
+            </NavLink>
 
-          {GROUPS.filter(g => g.items.length > 0).map(group => {
-            const isOpen = openGroups.has(group.key)
-            return (
-              <div key={group.key} style={{ marginBottom: 2 }}>
-                <button
-                  onClick={() => toggleGroup(group.key)}
-                  style={{
-                    display: 'flex', alignItems: 'center', width: '100%',
-                    gap: 7, padding: '0 10px',
-                    height: 28, borderRadius: 6,
-                    color: 'var(--n-500)', fontSize: 10.5, fontWeight: 700,
-                    cursor: 'pointer', background: 'transparent',
-                    transition: 'background .15s, color .15s',
-                    letterSpacing: '0.07em', textTransform: 'uppercase',
-                    border: 'none',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'var(--n-100)'
-                    e.currentTarget.style.color = 'var(--n-700)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = 'var(--n-500)'
-                  }}
-                >
-                  <group.icon size={12} />
-                  <span style={{ flex: 1, textAlign: 'left' }}>{group.label}</span>
-                  <ChevronDown
-                    size={11}
+            {GROUPS.filter(g => g.items.length > 0).map(group => {
+              const isOpen = openGroups.has(group.key)
+              return (
+                <div key={group.key} style={{ marginBottom: 2 }}>
+                  <button
+                    onClick={() => toggleGroup(group.key)}
                     style={{
-                      transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      transition: 'transform .2s',
+                      display: 'flex', alignItems: 'center', width: '100%',
+                      gap: 7, padding: '0 10px',
+                      height: 28, borderRadius: 6,
+                      color: 'var(--n-500)', fontSize: 10.5, fontWeight: 700,
+                      cursor: 'pointer', background: 'transparent',
+                      transition: 'background .15s, color .15s',
+                      letterSpacing: '0.07em', textTransform: 'uppercase',
+                      border: 'none',
                     }}
-                  />
-                </button>
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'var(--n-100)'
+                      e.currentTarget.style.color = 'var(--n-700)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.color = 'var(--n-500)'
+                    }}
+                  >
+                    <group.icon size={12} />
+                    <span style={{ flex: 1, textAlign: 'left' }}>{group.label}</span>
+                    <ChevronDown
+                      size={11}
+                      style={{
+                        transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                        transition: 'transform .2s',
+                      }}
+                    />
+                  </button>
 
-                {isOpen && (
-                  <div style={{ paddingLeft: 6, marginTop: 1, marginBottom: 2 }}>
-                    {group.items.length > 0 ? (
-                      group.items.map(item => (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          end={item.end}
-                          onClick={onMobileClose}
-                          title={item.label}
-                          style={({ isActive }) => ({
-                            display: 'flex', alignItems: 'center',
-                            gap: 9, padding: '0 10px',
-                            height: 32, borderRadius: 7,
-                            cursor: 'pointer',
-                            background: isActive ? 'var(--brand-50)' : 'transparent',
-                            color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
-                            fontWeight: isActive ? 600 : 500,
-                            fontSize: 12.5, letterSpacing: '-0.005em',
-                            position: 'relative',
-                            transition: 'background .15s, color .15s',
-                            textDecoration: 'none',
-                          })}
-                        >
-                          {({ isActive }) => (
-                            <>
-                              {isActive && (
-                                <span style={{
-                                  position: 'absolute', left: -14, top: 6, bottom: 6, width: 2,
-                                  background: 'var(--brand-600)', borderRadius: 2,
-                                }} />
-                              )}
-                              <item.icon size={15} />
-                              <span>{item.label}</span>
-                            </>
-                          )}
-                        </NavLink>
-                      ))
-                    ) : (
-                      <div style={{
-                        padding: '6px 10px', fontSize: 11.5,
-                        color: 'var(--n-400)', fontStyle: 'italic',
-                      }}>
-                        Próximamente
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                  {isOpen && (
+                    <div style={{ paddingLeft: 6, marginTop: 1, marginBottom: 2 }}>
+                      {group.items.length > 0 ? (
+                        group.items.map(item => (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.end}
+                            onClick={onMobileClose}
+                            title={item.label}
+                            style={({ isActive }) => ({
+                              display: 'flex', alignItems: 'center',
+                              gap: 9, padding: '0 10px',
+                              height: 32, borderRadius: 7,
+                              cursor: 'pointer',
+                              background: isActive ? 'var(--brand-50)' : 'transparent',
+                              color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
+                              fontWeight: isActive ? 600 : 500,
+                              fontSize: 12.5, letterSpacing: '-0.005em',
+                              position: 'relative',
+                              transition: 'background .15s, color .15s',
+                              textDecoration: 'none',
+                            })}
+                          >
+                            {({ isActive }) => (
+                              <>
+                                {isActive && (
+                                  <span style={{
+                                    position: 'absolute', left: -14, top: 6, bottom: 6, width: 2,
+                                    background: 'var(--brand-600)', borderRadius: 2,
+                                  }} />
+                                )}
+                                <item.icon size={15} />
+                                <span>{item.label}</span>
+                              </>
+                            )}
+                          </NavLink>
+                        ))
+                      ) : (
+                        <div style={{
+                          padding: '6px 10px', fontSize: 11.5,
+                          color: 'var(--n-400)', fontStyle: 'italic',
+                        }}>
+                          Próximamente
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </>
         )}
       </nav>
