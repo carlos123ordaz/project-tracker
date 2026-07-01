@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, X, Save, ChevronDown, Search, Mail } from 'lucide-react'
 import { useAlmacenPedidoDetail, usePedidoEstadoHistorial } from '../../hooks/useAlmacenPedidos'
-import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
 import { useAuth } from '../../hooks/useAuth'
+import { supabase } from '../../lib/supabase'
 
 const API_BASE   = import.meta.env.VITE_API_URL   ?? 'http://localhost:8000'
 const LS_DESTINATARIOS_KEY = 'almacen_pedido_email_destinatarios'
@@ -37,7 +37,6 @@ export default function PedidoEditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { pedido, items, loading, error, updatePedido, addItem, updateItem, removeItem } = useAlmacenPedidoDetail(id!)
-  const { equipos } = useAlmacenEquipos()
   const { historial } = usePedidoEstadoHistorial(id!)
   const { user, profile } = useAuth()
 
@@ -58,19 +57,43 @@ export default function PedidoEditorPage() {
   const [savingEstado, setSavingEstado] = useState(false)
   const [comboSearch, setComboSearch] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
+  const [equipoOptions, setEquipoOptions] = useState<{ id: string; nombre: string; codigo: string | null; unidad: string; precio_unitario: number }[]>([])
+  const [comboLoading, setComboLoading] = useState(false)
   const comboRef = useRef<HTMLDivElement>(null)
+  const comboTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  // Server-side search: fetch matching equipos from Supabase
+  useEffect(() => {
+    if (!comboOpen) return
+    clearTimeout(comboTimerRef.current)
+    comboTimerRef.current = setTimeout(async () => {
+      setComboLoading(true)
+      let q = supabase
+        .from('almacen_equipos')
+        .select('id,nombre,codigo,unidad,precio_unitario')
+        .order('nombre')
+        .limit(50)
+      if (comboSearch.trim()) {
+        q = q.or(`nombre.ilike.%${comboSearch.trim()}%,codigo.ilike.%${comboSearch.trim()}%`)
+      }
+      const { data } = await q
+      setEquipoOptions(data || [])
+      setComboLoading(false)
+    }, 200)
+    return () => clearTimeout(comboTimerRef.current)
+  }, [comboSearch, comboOpen])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (comboRef.current && !comboRef.current.contains(e.target as Node)) {
         setComboOpen(false)
-        const sel = equipos.find(eq => eq.id === itemForm.equipo_id)
-        setComboSearch(sel ? sel.nombre : '')
+        const sel = equipoOptions.find(eq => eq.id === itemForm.equipo_id)
+        setComboSearch(sel ? sel.nombre : itemForm.equipo_id ? comboSearch : '')
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [equipos, itemForm.equipo_id])
+  }, [equipoOptions, itemForm.equipo_id, comboSearch])
 
   const openEmailModal = () => {
     const savedDestinatarios = localStorage.getItem(LS_DESTINATARIOS_KEY) ?? ''
@@ -128,9 +151,19 @@ export default function PedidoEditorPage() {
 
   const openEditItem = (it: AlmacenPedidoItem) => {
     setEditingItem(it)
-    const sel = equipos.find(eq => eq.id === it.equipo_id)
-    setComboSearch(sel ? sel.nombre : '')
     setComboOpen(false)
+    if (it.equipo_id) {
+      supabase
+        .from('almacen_equipos')
+        .select('id,nombre,codigo,unidad,precio_unitario')
+        .eq('id', it.equipo_id)
+        .single()
+        .then(({ data }) => {
+          if (data) { setComboSearch(data.nombre); setEquipoOptions([data]) }
+        })
+    } else {
+      setComboSearch('')
+    }
     setItemForm({
       equipo_id: it.equipo_id,
       descripcion: it.descripcion,
@@ -164,7 +197,7 @@ export default function PedidoEditorPage() {
   }
 
   const handleEquipoSelect = (equipoId: string) => {
-    const eq = equipos.find(e => e.id === equipoId)
+    const eq = equipoOptions.find(e => e.id === equipoId)
     setItemForm(f => ({
       ...f,
       equipo_id: equipoId || null,
@@ -515,7 +548,10 @@ export default function PedidoEditorPage() {
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-50)')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                       >— Descripción libre —</div>
-                      {equipos.filter(e => `${e.codigo ?? ''} ${e.nombre}`.toLowerCase().includes(comboSearch.toLowerCase())).map(e => (
+                      {comboLoading && (
+                        <div style={{ padding: '7px 10px', fontSize: 12, color: 'var(--n-400)' }}>Buscando…</div>
+                      )}
+                      {equipoOptions.map(e => (
                         <div
                           key={e.id}
                           onMouseDown={() => { handleEquipoSelect(e.id); setComboSearch(e.nombre); setComboOpen(false) }}
