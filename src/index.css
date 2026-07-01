@@ -51,6 +51,10 @@
   --blue-600:  #2563eb;
   --purple-50:  #f5f3ff;
   --purple-600: #7c3aed;
+  --indigo-50:  #eef2ff;
+  --indigo-600: #4f46e5;
+  --orange-50:  #fff7ed;
+  --orange-600: #ea580c;
 
   /* Shadows */
   --shadow-xs: 0 1px 1px rgba(15,17,22,0.04);
@@ -96,6 +100,8 @@
   --blue-50:   #0e1f3a;
   --blue-100:  #132847;
   --purple-50:  #1e1433;
+  --indigo-50:  #181c3a;
+  --orange-50:  #2a1a0e;
 
   --shadow-xs: 0 1px 1px rgba(0,0,0,.30);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.30), 0 1px 1px rgba(0,0,0,.22);

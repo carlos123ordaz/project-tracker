@@ -1,7 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/audit'
+import { registrarEstadoPedido } from '../lib/almacenHistorial'
 import type { AlmacenPedido, AlmacenPedidoItem, AlmacenPedidoEstado } from '../lib/types'
+
+export interface PedidoEstadoHistorial {
+  id: string
+  pedido_id: string
+  estado_anterior: string | null
+  estado_nuevo: string
+  usuario_email: string | null
+  usuario_nombre: string | null
+  created_at: string
+}
 
 const PEDIDOS_PAGE_SIZE = 50
 
@@ -79,6 +90,7 @@ export function useAlmacenPedidoDetail(id: string) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchAll = useCallback(async () => {
+    if (!id) { setLoading(false); return }
     setLoading(true)
     setError(null)
     const [pedidoRes, itemsRes] = await Promise.all([
@@ -127,6 +139,7 @@ export function useAlmacenPedidoDetail(id: string) {
   }
 
   const updatePedido = async (updates: Partial<AlmacenPedido>) => {
+    const estadoAnterior = pedido?.estado
     const { data, error: err } = await supabase
       .from('almacen_pedidos')
       .update(updates)
@@ -136,8 +149,33 @@ export function useAlmacenPedidoDetail(id: string) {
     if (err) throw new Error(err.message)
     setPedido(data)
     logAction({ action: 'actualizar', entityType: 'almacen_pedido', entityId: id })
+    if (updates.estado && updates.estado !== estadoAnterior) {
+      await registrarEstadoPedido(id, estadoAnterior, updates.estado)
+    }
     return data as AlmacenPedido
   }
 
   return { pedido, items, loading, error, refetch: fetchAll, addItem, updateItem, removeItem, updatePedido }
+}
+
+// ── Historial de estados ────────────────────────────────────────
+export function usePedidoEstadoHistorial(pedidoId: string) {
+  const [historial, setHistorial] = useState<PedidoEstadoHistorial[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!pedidoId) { setLoading(false); return }
+    setLoading(true)
+    supabase
+      .from('almacen_pedido_estado_historial')
+      .select('*')
+      .eq('pedido_id', pedidoId)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        setHistorial((data as PedidoEstadoHistorial[]) || [])
+        setLoading(false)
+      })
+  }, [pedidoId])
+
+  return { historial, loading }
 }

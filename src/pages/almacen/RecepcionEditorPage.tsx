@@ -52,6 +52,9 @@ export default function RecepcionEditorPage() {
   const [itemError, setItemError] = useState<string | null>(null)
   const [completing, setCompleting] = useState(false)
   const [confirmComplete, setConfirmComplete] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importUbicacionId, setImportUbicacionId] = useState<string | null>(null)
 
   // ── Combo buscador ──
   const [comboSearch, setComboSearch] = useState('')
@@ -135,6 +138,29 @@ export default function RecepcionEditorPage() {
     } finally {
       setSavingItem(false)
     }
+  }
+
+  const handleImportarDesdePedido = async () => {
+    setImporting(true)
+    setShowImportModal(false)
+    try {
+      const yaAgregados = new Set(items.map(i => i.pedido_item_id).filter(Boolean))
+      const pendientes = pedidoItems.filter(pi => !yaAgregados.has(pi.id))
+      for (const pi of pendientes) {
+        await addItem({
+          equipo_id: pi.equipo_id,
+          pedido_item_id: pi.id,
+          descripcion: pi.descripcion,
+          cantidad: pi.cantidad_aprobada ?? pi.cantidad,
+          unidad: pi.unidad,
+          precio_unitario: pi.precio_unitario,
+          observacion: null,
+          ubicacion_destino_id: importUbicacionId,
+        })
+      }
+    } catch {}
+    setImporting(false)
+    setImportUbicacionId(null)
   }
 
   const handleCompletar = async () => {
@@ -234,14 +260,32 @@ export default function RecepcionEditorPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--n-800)' }}>Ítems recibidos ({items.length})</h3>
         {recepcion.estado !== 'Completada' && (
-          <button onClick={openNewItem} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', borderRadius: 7, padding: '7px 12px',
-            fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          }}>
-            <Plus size={13} /> Agregar ítem
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {pedidoId && pedidoItems.length > 0 && pedidoItems.some(pi => !items.map(i => i.pedido_item_id).includes(pi.id)) && (
+              <button
+                onClick={() => setShowImportModal(true)}
+                disabled={importing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'var(--n-0)', color: 'var(--brand-600)',
+                  border: '1px solid var(--brand-200)', borderRadius: 7, padding: '7px 12px',
+                  fontSize: 12.5, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer',
+                  opacity: importing ? 0.6 : 1,
+                }}
+              >
+                <CheckCircle size={13} />
+                {importing ? 'Importando…' : 'Importar ítems del pedido'}
+              </button>
+            )}
+            <button onClick={openNewItem} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', borderRadius: 7, padding: '7px 12px',
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            }}>
+              <Plus size={13} /> Agregar ítem
+            </button>
+          </div>
         )}
       </div>
 
@@ -406,6 +450,42 @@ export default function RecepcionEditorPage() {
               <button onClick={() => setShowItemModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
               <button onClick={handleSaveItem} disabled={savingItem} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: savingItem ? .6 : 1 }}>
                 {savingItem ? 'Guardando…' : editingItem ? 'Guardar' : 'Agregar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal importar desde pedido */}
+      {showImportModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowImportModal(false)}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Importar ítems del pedido</h3>
+              <button onClick={() => setShowImportModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)' }}><X size={16} /></button>
+            </div>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--n-600)' }}>
+              Se agregarán <strong>{pedidoItems.filter(pi => !items.map(i => i.pedido_item_id).includes(pi.id)).length}</strong> ítem(s) pendientes del pedido.
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)', display: 'block', marginBottom: 4 }}>
+                Ubicación destino
+              </label>
+              <select
+                value={importUbicacionId ?? ''}
+                onChange={e => setImportUbicacionId(e.target.value || null)}
+                style={{ width: '100%', padding: '7px 10px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', color: 'var(--n-900)' }}
+              >
+                <option value="">— Sin especificar —</option>
+                {ubicaciones.filter(u => u.activa).map(u => (
+                  <option key={u.id} value={u.id}>{u.nombre}{u.codigo ? ` [${u.codigo}]` : ''} · {u.tipo}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={() => setShowImportModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={handleImportarDesdePedido} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                Importar
               </button>
             </div>
           </div>

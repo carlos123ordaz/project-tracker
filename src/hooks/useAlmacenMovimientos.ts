@@ -4,9 +4,10 @@ import { logAction } from '../lib/audit'
 import type {
   AlmacenRecepcion, AlmacenRecepcionItem,
   AlmacenDespacho, AlmacenDespachoItem,
-  AlmacenEquipo,
+  AlmacenEquipo, AlmacenPedidoEstado,
 } from '../lib/types'
 import { upsertStockUbicacion } from './useAlmacenUbicaciones'
+import { registrarEstadoPedido } from '../lib/almacenHistorial'
 
 // ── Recepciones ────────────────────────────────────────────────
 const RECEPCIONES_PAGE_SIZE = 50
@@ -185,7 +186,66 @@ export function useAlmacenRecepcionDetail(id: string) {
       }
     }
 
-    return updateRecepcion({ estado: 'Completada' })
+    const result = await updateRecepcion({ estado: 'Completada' })
+
+    // Auto-actualizar estado del pedido si está vinculado
+    if (recepcion.pedido_id) {
+      await sincronizarEstadoPedido(recepcion.pedido_id)
+    }
+
+    return result
+  }
+
+  /** Compara lo recibido vs lo pedido y actualiza el estado del pedido */
+  const sincronizarEstadoPedido = async (pedidoId: string) => {
+    // No sobreescribir si el pedido está cancelado
+    const { data: pedido } = await supabase
+      .from('almacen_pedidos').select('estado').eq('id', pedidoId).single()
+    const estadoActual = pedido?.estado ?? null
+    if (estadoActual === 'Cancelado') return
+
+    // Items del pedido con equipo vinculado
+    const { data: pedidoItems } = await supabase
+      .from('almacen_pedido_items')
+      .select('equipo_id, cantidad')
+      .eq('pedido_id', pedidoId)
+      .not('equipo_id', 'is', null)
+
+    if (!pedidoItems || pedidoItems.length === 0) return
+
+    // Todas las recepciones completadas de este pedido
+    const { data: recepciones } = await supabase
+      .from('almacen_recepciones')
+      .select('id')
+      .eq('pedido_id', pedidoId)
+      .eq('estado', 'Completada')
+
+    if (!recepciones || recepciones.length === 0) return
+
+    // Sumar cantidades recibidas por equipo
+    const { data: recibidoItems } = await supabase
+      .from('almacen_recepcion_items')
+      .select('equipo_id, cantidad')
+      .in('recepcion_id', recepciones.map(r => r.id))
+      .not('equipo_id', 'is', null)
+
+    const receivedMap: Record<string, number> = {}
+    for (const ri of recibidoItems ?? []) {
+      if (ri.equipo_id) receivedMap[ri.equipo_id] = (receivedMap[ri.equipo_id] ?? 0) + ri.cantidad
+    }
+
+    const allReceived = pedidoItems.every(
+      pi => pi.equipo_id && (receivedMap[pi.equipo_id] ?? 0) >= pi.cantidad,
+    )
+    const anyReceived = pedidoItems.some(
+      pi => pi.equipo_id && (receivedMap[pi.equipo_id] ?? 0) > 0,
+    )
+
+    if (!anyReceived) return
+
+    const nuevoEstado: AlmacenPedidoEstado = allReceived ? 'Recibido' : 'Recibido Parcialmente'
+    await supabase.from('almacen_pedidos').update({ estado: nuevoEstado }).eq('id', pedidoId)
+    await registrarEstadoPedido(pedidoId, estadoActual, nuevoEstado)
   }
 
   return {
@@ -331,6 +391,19 @@ export function useAlmacenDespachoDetail(id: string) {
     if (err) throw new Error(err.message)
     setDespacho(data)
     logAction({ action: 'actualizar', entityType: 'almacen_despacho', entityId: id })
+
+    // Auto-cambiar pedido vinculado a "Completado" cuando el despacho pasa a Entregado
+    if (updates.estado === 'Entregado' && data.pedido_id) {
+      const { data: pedido } = await supabase
+        .from('almacen_pedidos').select('estado').eq('id', data.pedido_id).single()
+      if (pedido && pedido.estado !== 'Cancelado' && pedido.estado !== 'Completado') {
+        await supabase.from('almacen_pedidos')
+          .update({ estado: 'Completado' as AlmacenPedidoEstado })
+          .eq('id', data.pedido_id)
+        await registrarEstadoPedido(data.pedido_id, pedido.estado, 'Completado')
+      }
+    }
+
     return data as AlmacenDespacho
   }
 
@@ -368,7 +441,21 @@ export function useAlmacenDespachoDetail(id: string) {
       }
     }
 
-    return updateDespacho({ estado: 'Despachado' })
+    const result = await updateDespacho({ estado: 'Despachado' })
+
+    // Auto-cambiar pedido vinculado a "Enviado"
+    if (despacho.pedido_id) {
+      const { data: pedido } = await supabase
+        .from('almacen_pedidos').select('estado').eq('id', despacho.pedido_id).single()
+      if (pedido && pedido.estado !== 'Cancelado' && pedido.estado !== 'Completado') {
+        await supabase.from('almacen_pedidos')
+          .update({ estado: 'Enviado' as AlmacenPedidoEstado })
+          .eq('id', despacho.pedido_id)
+        await registrarEstadoPedido(despacho.pedido_id, pedido.estado, 'Enviado')
+      }
+    }
+
+    return result
   }
 
   return {

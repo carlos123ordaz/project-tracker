@@ -563,8 +563,22 @@ export type SubmissionStatus = 'Pendiente' | 'En proceso' | 'Completado' | 'Canc
 export type AlmacenEquipoEstado = 'Activo' | 'Inactivo' | 'En Reparación' | 'Dado de Baja'
 export const ALMACEN_EQUIPO_ESTADOS: AlmacenEquipoEstado[] = ['Activo', 'Inactivo', 'En Reparación', 'Dado de Baja']
 
-export type AlmacenPedidoEstado = 'Borrador' | 'Pendiente' | 'Aprobado' | 'Enviado' | 'Completado' | 'Cancelado'
-export const ALMACEN_PEDIDO_ESTADOS: AlmacenPedidoEstado[] = ['Borrador', 'Pendiente', 'Aprobado', 'Enviado', 'Completado', 'Cancelado']
+export type AlmacenPedidoEstado =
+  | 'En Revisión'
+  | 'En Cotización'
+  | 'Pendiente de Aprobación'
+  | 'OC Emitida'
+  | 'En Tránsito'
+  | 'Recibido Parcialmente'
+  | 'Recibido'
+  | 'Enviado'
+  | 'Completado'
+  | 'Cancelado'
+export const ALMACEN_PEDIDO_ESTADOS: AlmacenPedidoEstado[] = [
+  'En Revisión', 'En Cotización', 'Pendiente de Aprobación',
+  'OC Emitida', 'En Tránsito', 'Recibido Parcialmente', 'Recibido',
+  'Enviado', 'Completado', 'Cancelado',
+]
 
 export type AlmacenRecepcionEstado = 'Borrador' | 'Parcial' | 'Completada'
 export const ALMACEN_RECEPCION_ESTADOS: AlmacenRecepcionEstado[] = ['Borrador', 'Parcial', 'Completada']
@@ -648,6 +662,7 @@ export interface AlmacenPedido {
   numero: number
   proyecto_id: string | null
   solicitado_por: string | null
+  asunto: string | null
   proveedor_sugerido: string | null
   estado: AlmacenPedidoEstado
   fecha_pedido: string
@@ -711,6 +726,7 @@ export interface AlmacenRecepcionItem {
 export interface AlmacenDespacho {
   id: string
   numero: number
+  pedido_id: string | null
   proyecto_id: string | null
   destinatario: string | null
   direccion: string | null

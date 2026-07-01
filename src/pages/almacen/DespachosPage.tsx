@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { Plus, Truck, Trash2, X, Search } from 'lucide-react'
 import { useAlmacenDespachos } from '../../hooks/useAlmacenMovimientos'
+import { useAlmacenPedidos } from '../../hooks/useAlmacenPedidos'
 import type { AlmacenDespacho, AlmacenDespachoEstado } from '../../lib/types'
 import { ALMACEN_DESPACHO_ESTADOS } from '../../lib/types'
 import { Pagination } from '../../components/ui/Pagination'
@@ -34,11 +35,13 @@ export default function DespachosPage() {
   const { despachos, total, loading, createDespacho, deleteDespacho } = useAlmacenDespachos({
     estado: filterEstado, page, pageSize, search,
   })
+  const { pedidos } = useAlmacenPedidos()
 
   useEffect(() => { setPage(0) }, [filterEstado, search])
 
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({
+    pedido_id: null as string | null,
     destinatario: '', direccion: '', movilidad: '', conductor: '', placa: '', guia_remision: '',
     fecha_despacho: new Date().toISOString().split('T')[0],
     estado: 'Borrador' as AlmacenDespachoEstado,
@@ -85,7 +88,7 @@ export default function DespachosPage() {
           <p style={{ fontSize: 11.5, color: 'var(--n-500)', margin: '2px 0 0' }}>Salida de materiales con guía de remisión</p>
         </div>
         <button
-          onClick={() => { setForm(f => ({ ...f, destinatario: '', direccion: '', movilidad: '', conductor: '', placa: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
+          onClick={() => { setForm(f => ({ ...f, pedido_id: null, destinatario: '', direccion: '', movilidad: '', conductor: '', placa: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '6px 14px', borderRadius: 7,
@@ -226,6 +229,15 @@ export default function DespachosPage() {
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Pedido asociado (opcional)</label>
+                <select value={form.pedido_id ?? ''} onChange={e => setForm(f => ({ ...f, pedido_id: e.target.value || null }))} style={inp({ marginTop: 4 })}>
+                  <option value="">— Sin pedido —</option>
+                  {pedidos.filter(p => ['Recibido', 'Recibido Parcialmente', 'Enviado'].includes(p.estado)).map(p => (
+                    <option key={p.id} value={p.id}>#{String(p.numero).padStart(4, '0')} — {p.solicitado_por ?? 'Sin solicitante'} · {p.estado}</option>
+                  ))}
+                </select>
+              </div>
               <div style={{ gridColumn: '1/-1' }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Destinatario</label>
                 <input value={form.destinatario} onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))} style={inp({ marginTop: 4 })} placeholder="Nombre / empresa" />

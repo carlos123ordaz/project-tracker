@@ -44,7 +44,20 @@ function download(wb: ExcelJS.Workbook, filename: string) {
 }
 
 // ── 1. EXPORTAR MATERIALES ────────────────────────────────────────────────────
-export async function exportMateriales(equipos: AlmacenEquipo[]): Promise<void> {
+export async function exportMateriales(
+  _equipos: AlmacenEquipo[],
+  opts?: { search?: string; estado?: string; bajoStock?: boolean },
+): Promise<void> {
+  // Traer TODOS los registros sin paginación, respetando los filtros activos
+  let q = supabase
+    .from('almacen_equipos')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (opts?.search) q = q.or(`nombre.ilike.%${opts.search}%,codigo.ilike.%${opts.search}%,categoria.ilike.%${opts.search}%`)
+  if (opts?.estado && opts.estado !== 'Todos') q = q.eq('estado', opts.estado)
+  const { data } = await q
+  let equipos = (data ?? []) as AlmacenEquipo[]
+  if (opts?.bajoStock) equipos = equipos.filter(e => e.stock_minimo > 0 && e.stock_actual <= e.stock_minimo)
   const wb = new ExcelJS.Workbook()
   wb.creator = 'CORSUSA'
   wb.created = new Date()

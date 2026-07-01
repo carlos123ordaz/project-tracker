@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, X, Truck, ChevronDown, Search } from 'lucide-react'
 import { useAlmacenDespachoDetail } from '../../hooks/useAlmacenMovimientos'
+import { useAlmacenPedidoDetail } from '../../hooks/useAlmacenPedidos'
 import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
 import { useAlmacenUbicaciones } from '../../hooks/useAlmacenUbicaciones'
 import type { AlmacenDespachoEstado, AlmacenDespachoItem } from '../../lib/types'
@@ -32,6 +33,7 @@ export default function DespachoEditorPage() {
   } = useAlmacenDespachoDetail(id!)
   const { equipos } = useAlmacenEquipos()
   const { ubicaciones } = useAlmacenUbicaciones()
+  const { items: pedidoItems } = useAlmacenPedidoDetail(despacho?.pedido_id ?? '')
 
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<AlmacenDespachoItem | null>(null)
@@ -40,6 +42,7 @@ export default function DespachoEditorPage() {
   const [itemError, setItemError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [confirmDispatch, setConfirmDispatch] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [comboSearch, setComboSearch] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
   const comboRef = useRef<HTMLDivElement>(null)
@@ -106,6 +109,30 @@ export default function DespachoEditorPage() {
     } finally {
       setSavingItem(false)
     }
+  }
+
+  const pedidoId = despacho?.pedido_id ?? ''
+  const equiposYaAgregados = new Set(items.map(i => i.equipo_id).filter(Boolean))
+  const descYaAgregadas = new Set(items.map(i => i.descripcion))
+  const pedidoItemsPendientes = pedidoItems.filter(pi =>
+    pi.equipo_id ? !equiposYaAgregados.has(pi.equipo_id) : !descYaAgregadas.has(pi.descripcion)
+  )
+
+  const handleImportarDesdePedido = async () => {
+    setImporting(true)
+    try {
+      for (const pi of pedidoItemsPendientes) {
+        await addItem({
+          equipo_id: pi.equipo_id,
+          descripcion: pi.descripcion,
+          cantidad: pi.cantidad_aprobada ?? pi.cantidad,
+          unidad: pi.unidad,
+          observacion: null,
+          ubicacion_origen_id: null,
+        })
+      }
+    } catch {}
+    setImporting(false)
   }
 
   const handleConfirmarDespacho = async () => {
@@ -210,6 +237,23 @@ export default function DespachoEditorPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--n-800)' }}>Ítems a despachar ({items.length})</h3>
         {isEditable && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {pedidoId && pedidoItemsPendientes.length > 0 && (
+              <button
+                onClick={handleImportarDesdePedido}
+                disabled={importing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'var(--n-0)', color: 'var(--brand-600)',
+                  border: '1px solid var(--brand-200)', borderRadius: 7, padding: '7px 12px',
+                  fontSize: 12.5, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer',
+                  opacity: importing ? 0.6 : 1,
+                }}
+              >
+                <Truck size={13} />
+                {importing ? 'Importando…' : 'Importar ítems del pedido'}
+              </button>
+            )}
           <button onClick={openNewItem} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'var(--brand-600)', color: '#fff',
@@ -218,6 +262,7 @@ export default function DespachoEditorPage() {
           }}>
             <Plus size={13} /> Agregar ítem
           </button>
+          </div>
         )}
       </div>
 

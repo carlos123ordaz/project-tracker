@@ -289,7 +289,7 @@ export default function EquiposAlmacenPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
-            onClick={() => exportMateriales(equipos)}
+            onClick={() => exportMateriales(equipos, { search, estado: filterEstado, bajoStock: filterBajoStock })}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--n-0)', color: 'var(--n-700)', border: '1px solid var(--n-200)', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
           >
             <Download size={14} /> Exportar Excel

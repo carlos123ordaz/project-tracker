@@ -231,7 +231,7 @@ export default function RecepcionesPage() {
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Pedido asociado (opcional)</label>
                 <select value={form.pedido_id ?? ''} onChange={e => setForm(f => ({ ...f, pedido_id: e.target.value || null }))} style={inp({ marginTop: 4 })}>
                   <option value="">— Sin pedido —</option>
-                  {pedidos.filter(p => ['Aprobado', 'Enviado'].includes(p.estado)).map(p => (
+                  {pedidos.filter(p => ['OC Emitida', 'En Tránsito', 'Recibido Parcialmente'].includes(p.estado)).map(p => (
                     <option key={p.id} value={p.id}>#{String(p.numero).padStart(4, '0')} — {p.solicitado_por ?? 'Sin solicitante'}</option>
                   ))}
                 </select>

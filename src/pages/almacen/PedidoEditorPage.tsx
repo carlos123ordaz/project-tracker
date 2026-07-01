@@ -1,18 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, X, Save, ChevronDown, Search } from 'lucide-react'
-import { useAlmacenPedidoDetail } from '../../hooks/useAlmacenPedidos'
+import { ArrowLeft, Plus, Trash2, X, Save, ChevronDown, Search, Mail } from 'lucide-react'
+import { useAlmacenPedidoDetail, usePedidoEstadoHistorial } from '../../hooks/useAlmacenPedidos'
 import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
+import { useAuth } from '../../hooks/useAuth'
+
+const API_BASE   = import.meta.env.VITE_API_URL   ?? 'http://localhost:8000'
+const LS_DESTINATARIOS_KEY = 'almacen_pedido_email_destinatarios'
 import type { AlmacenPedidoEstado, AlmacenPedidoItem } from '../../lib/types'
 import { ALMACEN_PEDIDO_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = {
-  'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
-  'Pendiente':  { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
-  'Aprobado':   { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
-  'Enviado':    { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
-  'Completado': { bg: 'var(--green-50)', color: 'var(--green-600)' },
-  'Cancelado':  { bg: 'var(--red-50)', color: 'var(--red-600)' },
+  'En Revisión':            { bg: 'var(--n-100)',     color: 'var(--n-600)'     },
+  'En Cotización':          { bg: 'var(--blue-50)',   color: 'var(--blue-600)'  },
+  'Pendiente de Aprobación':{ bg: 'var(--amber-50)',  color: 'var(--amber-600)' },
+  'OC Emitida':             { bg: 'var(--purple-50)', color: 'var(--purple-600)'},
+  'En Tránsito':            { bg: 'var(--indigo-50)', color: 'var(--indigo-600)'},
+  'Recibido Parcialmente':  { bg: 'var(--orange-50)', color: 'var(--orange-600)'},
+  'Recibido':               { bg: 'var(--green-50)',  color: 'var(--green-600)' },
+  'Enviado':                { bg: 'var(--brand-50)',  color: 'var(--brand-700)' },
+  'Completado':             { bg: 'var(--green-50)',  color: 'var(--green-700)' },
+  'Cancelado':              { bg: 'var(--red-50)',    color: 'var(--red-600)'   },
 }
 
 const EMPTY_ITEM = {
@@ -30,6 +38,17 @@ export default function PedidoEditorPage() {
   const navigate = useNavigate()
   const { pedido, items, loading, error, updatePedido, addItem, updateItem, removeItem } = useAlmacenPedidoDetail(id!)
   const { equipos } = useAlmacenEquipos()
+  const { historial } = usePedidoEstadoHistorial(id!)
+  const { user, profile } = useAuth()
+
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailForm, setEmailForm] = useState({
+    destinatarios: '',
+    firma: '',
+  })
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
 
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<AlmacenPedidoItem | null>(null)
@@ -52,6 +71,45 @@ export default function PedidoEditorPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [equipos, itemForm.equipo_id])
+
+  const openEmailModal = () => {
+    const savedDestinatarios = localStorage.getItem(LS_DESTINATARIOS_KEY) ?? ''
+    setEmailForm({ destinatarios: savedDestinatarios, firma: profile?.full_name || user?.email || '' })
+    setEmailError(null)
+    setEmailSent(false)
+    setShowEmailModal(true)
+  }
+
+  const handleSendEmail = async () => {
+    const destinatarios = emailForm.destinatarios.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+    if (destinatarios.length === 0) { setEmailError('Ingresa al menos un destinatario'); return }
+    localStorage.setItem(LS_DESTINATARIOS_KEY, emailForm.destinatarios)
+    setSendingEmail(true)
+    setEmailError(null)
+    try {
+      const res = await fetch(`${API_BASE}/almacen/pedidos/notificar-seguimiento`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numero: pedido!.numero,
+          asunto: pedido!.asunto,
+          estado: pedido!.estado,
+          from_email: user?.email ?? null,
+          firma: emailForm.firma || null,
+          destinatarios,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail ?? 'Error al enviar')
+      }
+      setEmailSent(true)
+    } catch (e: unknown) {
+      setEmailError(e instanceof Error ? e.message : 'Error al enviar')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
 
   const handleEstado = async (estado: AlmacenPedidoEstado) => {
     setSavingEstado(true)
@@ -127,7 +185,7 @@ export default function PedidoEditorPage() {
   if (loading) return <div style={{ padding: 24, color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
   if (error || !pedido) return <div style={{ padding: 24, color: 'var(--red-600)', fontSize: 13 }}>{error ?? 'Pedido no encontrado'}</div>
 
-  const ec = estadoColor[pedido.estado]
+  const ec = estadoColor[pedido.estado] ?? { bg: 'var(--n-100)', color: 'var(--n-600)' }
 
   return (
     <div style={{ padding: '20px 24px' }}>
@@ -144,6 +202,18 @@ export default function PedidoEditorPage() {
             {pedido.solicitado_por || 'Sin solicitante'} · {new Date(pedido.fecha_pedido).toLocaleDateString('es-PE')}
           </p>
         </div>
+        <button
+          onClick={openEmailModal}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 14px', borderRadius: 7, fontSize: 12.5, fontWeight: 600,
+            background: 'var(--n-0)', color: 'var(--n-700)',
+            border: '1px solid var(--n-200)', cursor: 'pointer',
+          }}
+        >
+          <Mail size={14} /> Enviar correo
+        </button>
+
         {/* Estado selector */}
         <div style={{ position: 'relative' }}>
           <select
@@ -164,6 +234,12 @@ export default function PedidoEditorPage() {
 
       {/* Info cabecera */}
       <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: 16, marginBottom: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+        {pedido.asunto && (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <div style={{ fontSize: 11, color: 'var(--n-400)', marginBottom: 2 }}>Asunto</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--n-800)' }}>{pedido.asunto}</div>
+          </div>
+        )}
         {[
           { label: 'Solicitado por', value: pedido.solicitado_por ?? '—' },
           { label: 'Proveedor sugerido', value: pedido.proveedor_sugerido ?? '—' },
@@ -252,6 +328,144 @@ export default function PedidoEditorPage() {
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+
+      {/* Historial de estados */}
+      {historial.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: 'var(--n-800)' }}>
+            Historial de estados
+          </h3>
+          <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '20px 24px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, minWidth: 'max-content' }}>
+              {historial.map((h, i) => {
+                const ec = estadoColor[h.estado_nuevo as AlmacenPedidoEstado] ?? { bg: 'var(--n-100)', color: 'var(--n-600)' }
+                const fecha = new Date(h.created_at)
+                const esUltimo = i === historial.length - 1
+                return (
+                  <div key={h.id} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                    {/* Paso */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 120, maxWidth: 150 }}>
+                      {/* dot + badge */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                        <div style={{
+                          width: 14, height: 14, borderRadius: '50%',
+                          background: ec.color,
+                          border: '2px solid var(--n-0)',
+                          boxShadow: `0 0 0 2px ${ec.color}`,
+                          flexShrink: 0,
+                        }} />
+                        <span style={{
+                          fontSize: 11.5, fontWeight: 600, textAlign: 'center',
+                          background: ec.bg, color: ec.color,
+                          padding: '3px 8px', borderRadius: 5, lineHeight: 1.3,
+                        }}>
+                          {h.estado_nuevo}
+                        </span>
+                      </div>
+                      {/* fecha y usuario */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 11, color: 'var(--n-500)' }}>
+                          {fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--n-400)' }}>
+                          {fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        {h.usuario_nombre && (
+                          <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 2 }}>
+                            {h.usuario_nombre}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* conector */}
+                    {!esUltimo && (
+                      <div style={{ display: 'flex', alignItems: 'center', paddingTop: 6, flexShrink: 0 }}>
+                        <div style={{ width: 40, height: 2, background: 'var(--n-200)' }} />
+                        <div style={{ width: 0, height: 0, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: '6px solid var(--n-200)' }} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal enviar correo */}
+      {showEmailModal && pedido && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowEmailModal(false)}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 520, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Enviar correo de seguimiento</h2>
+              <button onClick={() => setShowEmailModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={18} /></button>
+            </div>
+
+            {emailSent ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--green-700)' }}>Correo enviado correctamente</div>
+                <button onClick={() => setShowEmailModal(false)} style={{ marginTop: 16, padding: '8px 20px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cerrar</button>
+              </div>
+            ) : (
+              <>
+                {/* Preview del mensaje */}
+                <div style={{ background: 'var(--n-25)', border: '1px solid var(--n-150)', borderRadius: 8, padding: '14px 16px', marginBottom: 16, fontSize: 13, color: 'var(--n-700)', lineHeight: 1.7 }}>
+                  <p style={{ margin: '0 0 8px' }}>Estimados,</p>
+                  <p style={{ margin: '0 0 8px' }}>
+                    Se comunica que la solicitud de pedido correspondiente al{' '}
+                    <strong>{pedido.asunto || `Pedido #${String(pedido.numero).padStart(4, '0')}`}</strong>{' '}
+                    se encuentra actualmente{' '}
+                    <span style={{ fontWeight: 700, color: ec.color }}>{pedido.estado}</span>.
+                  </p>
+                  <p style={{ margin: '0 0 8px' }}>Se viene realizando el seguimiento correspondiente a los equipos, materiales y consumibles requeridos, a fin de asegurar su correcta atención dentro de los plazos establecidos.</p>
+                  <p style={{ margin: '0 0 16px' }}>Cualquier actualización será comunicada oportunamente.</p>
+                  <p style={{ margin: 0, color: 'var(--n-500)' }}>Atentamente,<br /><strong style={{ color: 'var(--n-800)' }}>{emailForm.firma || '[Firma]'}</strong></p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {user?.email && (
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)', display: 'block', marginBottom: 4 }}>Desde</label>
+                      <div style={{ padding: '7px 10px', fontSize: 13, border: '1px solid var(--n-150)', borderRadius: 7, background: 'var(--n-50)', color: 'var(--n-500)' }}>
+                        {user.email}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)', display: 'block', marginBottom: 4 }}>Destinatarios <span style={{ color: 'var(--red-600)' }}>*</span></label>
+                    <input
+                      value={emailForm.destinatarios}
+                      onChange={e => setEmailForm(f => ({ ...f, destinatarios: e.target.value }))}
+                      placeholder="correo@empresa.com, otro@empresa.com"
+                      style={{ width: '100%', padding: '7px 10px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }}
+                    />
+                    <p style={{ margin: '4px 0 0', fontSize: 11.5, color: 'var(--n-400)' }}>Separa múltiples correos con coma o punto y coma</p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)', display: 'block', marginBottom: 4 }}>Firma</label>
+                    <input
+                      value={emailForm.firma}
+                      onChange={e => setEmailForm(f => ({ ...f, firma: e.target.value }))}
+                      placeholder="Tu nombre o área"
+                      style={{ width: '100%', padding: '7px 10px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                {emailError && <p style={{ color: 'var(--red-600)', fontSize: 12.5, marginTop: 10 }}>{emailError}</p>}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+                  <button onClick={() => setShowEmailModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+                  <button onClick={handleSendEmail} disabled={sendingEmail} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: sendingEmail ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, opacity: sendingEmail ? .6 : 1 }}>
+                    <Mail size={13} /> {sendingEmail ? 'Enviando…' : 'Enviar correo'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 

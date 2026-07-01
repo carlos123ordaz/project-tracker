@@ -12,12 +12,16 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = {
-  'Borrador':   { bg: 'var(--n-100)',     color: 'var(--n-600)'     },
-  'Pendiente':  { bg: 'var(--amber-50)',  color: 'var(--amber-700)' },
-  'Aprobado':   { bg: 'var(--blue-50)',   color: 'var(--blue-600)'  },
-  'Enviado':    { bg: 'var(--purple-50)', color: 'var(--purple-600)'},
-  'Completado': { bg: 'var(--green-50)',  color: 'var(--green-600)' },
-  'Cancelado':  { bg: 'var(--red-50)',    color: 'var(--red-600)'   },
+  'En Revisión': { bg: 'var(--n-100)', color: 'var(--n-600)' },
+  'En Cotización': { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
+  'Pendiente de Aprobación': { bg: 'var(--amber-50)', color: 'var(--amber-700)' },
+  'OC Emitida': { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
+  'En Tránsito': { bg: 'var(--indigo-50)', color: 'var(--indigo-600)' },
+  'Recibido Parcialmente': { bg: 'var(--orange-50)', color: 'var(--orange-600)' },
+  'Recibido': { bg: 'var(--green-50)', color: 'var(--green-600)' },
+  'Enviado': { bg: 'var(--brand-50)', color: 'var(--brand-700)' },
+  'Completado': { bg: 'var(--green-50)', color: 'var(--green-700)' },
+  'Cancelado': { bg: 'var(--red-50)', color: 'var(--red-600)' },
 }
 
 const TH: React.CSSProperties = {
@@ -41,10 +45,10 @@ export default function PedidosPage() {
 
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({
-    solicitado_por: '', proveedor_sugerido: '',
+    solicitado_por: '', asunto: '', proveedor_sugerido: '',
     fecha_pedido: new Date().toISOString().split('T')[0],
     fecha_requerida: '', observaciones: '',
-    estado: 'Borrador' as AlmacenPedidoEstado,
+    estado: 'En Revisión' as AlmacenPedidoEstado,
     proyecto_id: null as string | null,
     created_by: user?.id ?? null,
   })
@@ -71,6 +75,7 @@ export default function PedidosPage() {
     try {
       const newPedido = await createPedido({
         ...form,
+        asunto: form.asunto || null,
         proveedor_sugerido: form.proveedor_sugerido || null,
         fecha_requerida: form.fecha_requerida || null,
         observaciones: form.observaciones || null,
@@ -114,7 +119,7 @@ export default function PedidosPage() {
           <Download size={13} /> Exportar
         </button>
         <button
-          onClick={() => { setForm(f => ({ ...f, solicitado_por: '', proveedor_sugerido: '', fecha_requerida: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
+          onClick={() => { setForm(f => ({ ...f, solicitado_por: '', asunto: '', proveedor_sugerido: '', fecha_requerida: '', observaciones: '', estado: 'En Revisión' })); setError(null); setShowModal(true) }}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '6px 14px', borderRadius: 7,
@@ -185,7 +190,7 @@ export default function PedidosPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)' }}>
-                    {['#', 'Solicitado por', 'Proveedor sugerido', 'Fecha pedido', 'Requerido', 'Estado', ''].map(h => (
+                    {['#', 'Solicitado por', 'Asunto', 'Proveedor sugerido', 'Fecha pedido', 'Requerido', 'Estado', ''].map(h => (
                       <th key={h} style={TH}>{h}</th>
                     ))}
                   </tr>
@@ -208,6 +213,9 @@ export default function PedidosPage() {
                           <div style={{ fontWeight: 600, color: 'var(--n-900)' }}>
                             {p.solicitado_por || <span style={{ color: 'var(--n-400)', fontWeight: 400 }}>Sin solicitante</span>}
                           </div>
+                        </td>
+                        <td style={{ ...TD, color: 'var(--n-700)', maxWidth: 220 }}>
+                          {p.asunto || <span style={{ color: 'var(--n-300)' }}>—</span>}
                         </td>
                         <td style={{ ...TD, color: 'var(--n-600)' }}>
                           {p.proveedor_sugerido || <span style={{ color: 'var(--n-300)' }}>—</span>}
@@ -293,6 +301,10 @@ export default function PedidosPage() {
                     </div>
                   )}
                 </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Asunto</label>
+                <input value={form.asunto} onChange={e => setForm(f => ({ ...f, asunto: e.target.value }))} placeholder="# Deal || # Presupuesto || .." style={inp({ marginTop: 4 })} />
               </div>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Proveedor sugerido</label>
