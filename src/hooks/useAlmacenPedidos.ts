@@ -97,7 +97,7 @@ export function useAlmacenPedidoDetail(id: string) {
       supabase.from('almacen_pedidos').select('*').eq('id', id).single(),
       supabase
         .from('almacen_pedido_items')
-        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual)')
+        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria)')
         .eq('pedido_id', id)
         .order('sort_order'),
     ])
@@ -113,7 +113,7 @@ export function useAlmacenPedidoDetail(id: string) {
     const { data, error: err } = await supabase
       .from('almacen_pedido_items')
       .insert({ ...item, pedido_id: id, sort_order: items.length })
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => [...prev, data])
@@ -125,7 +125,7 @@ export function useAlmacenPedidoDetail(id: string) {
       .from('almacen_pedido_items')
       .update(updates)
       .eq('id', itemId)
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => prev.map(it => (it.id === itemId ? data : it)))

@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   Plus, Search, Package, AlertTriangle, Edit2, Trash2, X,
-  ChevronRight, Download, FileText, Upload, Columns, ChevronUp, ChevronDown,
+  ChevronRight, Download, FileText, Upload, Columns, ChevronUp, ChevronDown, TrendingUp,
 } from 'lucide-react'
 import { useAlmacenEquipos } from '../../hooks/useAlmacenEquipos'
 import { useAlmacenUbicaciones } from '../../hooks/useAlmacenUbicaciones'
+import { useAlmacenPrecioHistorial } from '../../hooks/useAlmacenPrecioHistorial'
 import { supabase } from '../../lib/supabase'
 import type { AlmacenEquipo, AlmacenEquipoEstado } from '../../lib/types'
 import { ALMACEN_EQUIPO_ESTADOS } from '../../lib/types'
@@ -200,6 +201,13 @@ export default function EquiposAlmacenPage() {
   const [saving,        setSaving]        = useState(false)
   const [error,         setError]         = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AlmacenEquipo | null>(null)
+  const [precioEquipo,  setPrecioEquipo]  = useState<AlmacenEquipo | null>(null)
+  const { historial: precioHistorial, loading: precioLoading, addPrecio } = useAlmacenPrecioHistorial(precioEquipo?.id ?? null)
+  const PRECIO_FORM_EMPTY = { proveedor_nombre: '', proveedor_id: '', precio_unitario: '', moneda: 'MN', cantidad: '', orden_compra: '', fecha_orden: '', fecha_entrega: '' }
+  const [showPrecioForm, setShowPrecioForm] = useState(false)
+  const [precioForm, setPrecioForm]         = useState(PRECIO_FORM_EMPTY)
+  const [savingPrecio, setSavingPrecio]     = useState(false)
+  const [precioError, setPrecioError]       = useState<string | null>(null)
   const [fichaFile,     setFichaFile]     = useState<File | null>(null)
   const fichaRef = useRef<HTMLInputElement>(null)
 
@@ -259,6 +267,33 @@ export default function EquiposAlmacenPage() {
     if (!confirmDelete) return
     try { await deleteEquipo(confirmDelete.id) } catch {}
     setConfirmDelete(null)
+  }
+
+  const handleSavePrecio = async () => {
+    if (!precioForm.precio_unitario) { setPrecioError('El precio es requerido'); return }
+    if (!precioForm.fecha_orden) { setPrecioError('La fecha de compra es requerida'); return }
+    setSavingPrecio(true); setPrecioError(null)
+    try {
+      await addPrecio({
+        codigo:           precioEquipo!.codigo ?? '',
+        equipo_id:        precioEquipo!.id,
+        descripcion:      precioEquipo!.nombre,
+        proveedor_nombre: precioForm.proveedor_nombre || null,
+        proveedor_id:     precioForm.proveedor_id || null,
+        precio_unitario:  Number(precioForm.precio_unitario),
+        moneda:           precioForm.moneda,
+        cantidad:         precioForm.cantidad ? Number(precioForm.cantidad) : null,
+        orden_compra:     precioForm.orden_compra || null,
+        fecha_orden:      precioForm.fecha_orden || null,
+        fecha_entrega:    precioForm.fecha_entrega || null,
+      })
+      setPrecioForm(PRECIO_FORM_EMPTY)
+      setShowPrecioForm(false)
+    } catch (e: unknown) {
+      setPrecioError(e instanceof Error ? e.message : 'Error al guardar')
+    } finally {
+      setSavingPrecio(false)
+    }
   }
 
   // ── Helpers de estilo ───────────────────────────────────────────────────
@@ -439,10 +474,9 @@ export default function EquiposAlmacenPage() {
                   return (
                     <tr
                       key={e.id}
-                      style={{ borderBottom: '1px solid var(--n-100)', cursor: 'pointer' }}
+                      style={{ borderBottom: '1px solid var(--n-100)' }}
                       onMouseEnter={ev => (ev.currentTarget.style.background = 'var(--n-25)')}
                       onMouseLeave={ev => (ev.currentTarget.style.background = 'var(--n-0)')}
-                      onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)}
                     >
                       {orderedVisibleCols.map(key => {
                         // Columnas personalizadas
@@ -502,6 +536,7 @@ export default function EquiposAlmacenPage() {
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar"><Edit2 size={14} /></button>
                           <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }} title="Eliminar"><Trash2 size={14} /></button>
+                          <button onClick={() => setPrecioEquipo(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--green-600)', borderRadius: 5 }} title="Historial de precios"><TrendingUp size={14} /></button>
                           <button onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-600)', borderRadius: 5 }} title="Ver kardex"><ChevronRight size={14} /></button>
                         </div>
                       </td>
@@ -641,6 +676,130 @@ export default function EquiposAlmacenPage() {
                 {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear material'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal historial de precios */}
+      {precioEquipo && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setPrecioEquipo(null); setShowPrecioForm(false) }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 'min(1100px, 95vw)', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Historial de precios</h2>
+                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--n-500)' }}>
+                  {precioEquipo.codigo && <span style={{ marginRight: 8, color: 'var(--n-400)' }}>[{precioEquipo.codigo}]</span>}
+                  {precioEquipo.nombre}
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => { setShowPrecioForm(v => !v); setPrecioError(null) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: '1px solid var(--n-200)', borderRadius: 7, background: showPrecioForm ? 'var(--n-100)' : 'var(--n-0)', color: 'var(--n-700)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <Plus size={13} /> Agregar
+                </button>
+                <button onClick={() => { setPrecioEquipo(null); setShowPrecioForm(false) }} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)' }}><X size={18} /></button>
+              </div>
+            </div>
+
+            {/* Formulario agregar precio */}
+            {showPrecioForm && (
+              <div style={{ background: 'var(--n-25)', border: '1px solid var(--n-150)', borderRadius: 8, padding: 16, marginBottom: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 10 }}>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Proveedor</label>
+                    <input value={precioForm.proveedor_nombre} onChange={e => setPrecioForm(f => ({ ...f, proveedor_nombre: e.target.value }))} placeholder="Nombre del proveedor" style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>RUC (opcional)</label>
+                    <input value={precioForm.proveedor_id} onChange={e => setPrecioForm(f => ({ ...f, proveedor_id: e.target.value }))} placeholder="20xxxxxxxxx" style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Precio unitario *</label>
+                    <input type="number" min={0} step={0.01} value={precioForm.precio_unitario} onChange={e => setPrecioForm(f => ({ ...f, precio_unitario: e.target.value }))} placeholder="0.00" style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Moneda</label>
+                    <select value={precioForm.moneda} onChange={e => setPrecioForm(f => ({ ...f, moneda: e.target.value }))} style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }}>
+                      <option value="MN">PEN (Soles)</option>
+                      <option value="ME">USD (Dólares)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Cantidad</label>
+                    <input type="number" min={0} step={0.01} value={precioForm.cantidad} onChange={e => setPrecioForm(f => ({ ...f, cantidad: e.target.value }))} placeholder="—" style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Orden de compra</label>
+                    <input value={precioForm.orden_compra} onChange={e => setPrecioForm(f => ({ ...f, orden_compra: e.target.value }))} placeholder="OC-0000" style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Fecha compra *</label>
+                    <input type="date" value={precioForm.fecha_orden} onChange={e => setPrecioForm(f => ({ ...f, fecha_orden: e.target.value }))} style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--n-500)', display: 'block', marginBottom: 3 }}>Fecha entrega</label>
+                    <input type="date" value={precioForm.fecha_entrega} onChange={e => setPrecioForm(f => ({ ...f, fecha_entrega: e.target.value }))} style={{ width: '100%', padding: '6px 9px', fontSize: 13, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-900)', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                {precioError && <p style={{ margin: '0 0 8px', fontSize: 12.5, color: 'var(--red-600)' }}>{precioError}</p>}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <button onClick={() => { setShowPrecioForm(false); setPrecioForm(PRECIO_FORM_EMPTY); setPrecioError(null) }} style={{ padding: '6px 14px', border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+                  <button onClick={handleSavePrecio} disabled={savingPrecio} style={{ padding: '6px 14px', border: 'none', borderRadius: 6, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: savingPrecio ? .6 : 1 }}>
+                    {savingPrecio ? 'Guardando…' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {precioLoading ? (
+              <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
+            ) : precioHistorial.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--n-400)' }}>
+                <TrendingUp size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
+                <p style={{ fontSize: 13 }}>Sin historial de precios para este material.</p>
+                <p style={{ fontSize: 12, color: 'var(--n-300)', marginTop: 4 }}>Importa el Excel con <code>python importar_materiales.py --precios --insertar</code></p>
+              </div>
+            ) : (
+              <div style={{ overflowY: 'auto', flex: 1 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead style={{ position: 'sticky', top: 0, background: 'var(--n-25)', zIndex: 1 }}>
+                    <tr style={{ borderBottom: '1px solid var(--n-150)' }}>
+                      {['Fecha compra', 'Proveedor', 'Precio unit.', 'Moneda', 'Cantidad', 'Orden de compra', 'Fecha entrega'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {precioHistorial.map((h, i) => (
+                      <tr key={h.id} style={{ borderBottom: '1px solid var(--n-100)', background: i % 2 === 0 ? 'transparent' : 'var(--n-25)' }}>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-600)', whiteSpace: 'nowrap' }}>
+                          {h.fecha_orden ? new Date(h.fecha_orden).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </td>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-800)', fontWeight: 500, maxWidth: 220 }}>
+                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.proveedor_nombre || '—'}</div>
+                          {h.proveedor_id && <div style={{ fontSize: 11, color: 'var(--n-400)' }}>RUC {h.proveedor_id}</div>}
+                        </td>
+                        <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand-700)', whiteSpace: 'nowrap' }}>
+                          {Number(h.precio_unitario).toFixed(2)}
+                        </td>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: h.moneda === 'ME' ? 'var(--blue-50)' : 'var(--green-50)', color: h.moneda === 'ME' ? 'var(--blue-600)' : 'var(--green-600)' }}>
+                            {h.moneda === 'ME' ? 'USD' : 'PEN'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-600)' }}>{h.cantidad ?? '—'}</td>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-500)', fontSize: 12 }}>{h.orden_compra || '—'}</td>
+                        <td style={{ padding: '9px 12px', color: 'var(--n-500)', whiteSpace: 'nowrap' }}>
+                          {h.fecha_entrega ? new Date(h.fecha_entrega).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

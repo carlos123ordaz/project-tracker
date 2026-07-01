@@ -281,55 +281,70 @@ export default function PedidoEditorPage() {
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
           <p style={{ fontSize: 13 }}>Sin ítems. Agrega materiales o equipos al pedido.</p>
         </div>
-      ) : (
-        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
-                {['Descripción', 'Cantidad', 'Aprobada', 'Unidad', 'P. Unitario', 'Total', 'Observación', ''].map(h => (
-                  <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: 'var(--n-500)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(it => (
-                <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)' }}>
-                  <td style={{ padding: '9px 12px', color: 'var(--n-900)', fontWeight: 500 }}>{it.descripcion}</td>
-                  <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>{it.cantidad}</td>
-                  <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? 'var(--green-600)' : 'var(--n-400)' }}>
-                    {it.cantidad_aprobada ?? '—'}
-                  </td>
-                  <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
-                  <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>S/ {it.precio_unitario.toFixed(2)}</td>
-                  <td style={{ padding: '9px 12px', fontWeight: 600, color: 'var(--n-900)' }}>
-                    S/ {(it.cantidad * it.precio_unitario).toFixed(2)}
-                  </td>
-                  <td style={{ padding: '9px 12px', color: 'var(--n-500)', fontSize: 12 }}>{it.observacion ?? '—'}</td>
-                  <td style={{ padding: '9px 12px' }}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }} title="Editar">
-                        <Save size={13} />
-                      </button>
-                      <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }} title="Eliminar">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{ borderTop: '2px solid var(--n-150)', background: 'var(--n-25)' }}>
-                <td colSpan={5} style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--n-700)', fontSize: 13 }}>Total estimado</td>
-                <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 14, color: 'var(--brand-700)' }}>
-                  S/ {total.toFixed(2)}
-                </td>
-                <td colSpan={2} />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
+      ) : (() => {
+        // Agrupar por categoría
+        const grupos = items.reduce<Record<string, typeof items>>((acc, it) => {
+          const cat = (it.equipo as (AlmacenPedidoItem['equipo'] & { categoria?: string | null }) | null)?.categoria || 'Sin categoría'
+          if (!acc[cat]) acc[cat] = []
+          acc[cat].push(it)
+          return acc
+        }, {})
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {Object.entries(grupos).map(([categoria, grupoItems]) => {
+              const totalGrupo = grupoItems.reduce((s, it) => s + it.cantidad * it.precio_unitario, 0)
+              return (
+                <div key={categoria} style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+                  {/* Cabecera del grupo */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 14px', background: 'var(--n-25)', borderBottom: '1px solid var(--n-150)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {categoria}
+                      <span style={{ marginLeft: 8, fontWeight: 400, color: 'var(--n-400)', textTransform: 'none', letterSpacing: 0 }}>({grupoItems.length} ítem{grupoItems.length !== 1 ? 's' : ''})</span>
+                    </span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brand-700)' }}>S/ {totalGrupo.toFixed(2)}</span>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--n-100)' }}>
+                        {['Descripción', 'Cantidad', 'Aprobada', 'Unidad', 'P. Unitario', 'Total', 'Observación', ''].map(h => (
+                          <th key={h} style={{ padding: '7px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--n-400)' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grupoItems.map(it => (
+                        <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)' }}>
+                          <td style={{ padding: '9px 12px', color: 'var(--n-900)', fontWeight: 500 }}>{it.descripcion}</td>
+                          <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>{it.cantidad}</td>
+                          <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? 'var(--green-600)' : 'var(--n-400)' }}>
+                            {it.cantidad_aprobada ?? '—'}
+                          </td>
+                          <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
+                          <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>S/ {it.precio_unitario.toFixed(2)}</td>
+                          <td style={{ padding: '9px 12px', fontWeight: 600, color: 'var(--n-900)' }}>S/ {(it.cantidad * it.precio_unitario).toFixed(2)}</td>
+                          <td style={{ padding: '9px 12px', color: 'var(--n-500)', fontSize: 12 }}>{it.observacion ?? '—'}</td>
+                          <td style={{ padding: '9px 12px' }}>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }} title="Editar"><Save size={13} /></button>
+                              <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }} title="Eliminar"><Trash2 size={13} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })}
+            {/* Total general */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 14px', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-700)', marginRight: 16 }}>Total estimado</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brand-700)' }}>S/ {total.toFixed(2)}</span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Historial de estados */}
       {historial.length > 0 && (
