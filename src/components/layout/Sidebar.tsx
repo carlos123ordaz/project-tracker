@@ -82,7 +82,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       icon: FolderOpen,
       items: [
         { to: '/dashboard', label: 'Dashboard', icon: Gauge },
-        { to: '/projects', label: 'Catálogo', icon: FolderOpen },
+        { to: '/projects', label: 'Mis Proyectos', icon: FolderOpen },
         { to: '/kanban', label: 'Kanban', icon: Kanban },
         { to: '/timeline', label: 'Timeline', icon: CalendarRange },
         { to: '/consolidated', label: 'Consolidado', icon: List },
