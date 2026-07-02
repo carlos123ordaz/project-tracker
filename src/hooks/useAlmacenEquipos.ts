@@ -8,7 +8,7 @@ const EQUIPOS_PAGE_SIZE = 50
 
 export function useAlmacenEquipos(
   search?: string,
-  opts?: { estado?: string; bajoStock?: boolean; page?: number; pageSize?: number },
+  opts?: { estado?: string; bajoStock?: boolean; conStock?: boolean; page?: number; pageSize?: number },
 ) {
   const [equipos, setEquipos] = useState<AlmacenEquipo[]>([])
   const [total, setTotal] = useState(0)
@@ -28,6 +28,7 @@ export function useAlmacenEquipos(
       .order('created_at', { ascending: false })
     if (search) q = q.or(`nombre.ilike.%${search}%,codigo.ilike.%${search}%,categoria.ilike.%${search}%`)
     if (opts?.estado && opts.estado !== 'Todos') q = q.eq('estado', opts.estado)
+    if (opts?.conStock) q = q.gt('stock_actual', 0)
     // bajoStock needs column comparison → handled client-side after fetch
     if (paginate && !opts?.bajoStock) {
       q = q.range(page * pageSize, (page + 1) * pageSize - 1)
@@ -39,7 +40,7 @@ export function useAlmacenEquipos(
     setEquipos(result)
     setTotal(opts?.bajoStock ? result.length : (count ?? 0))
     setLoading(false)
-  }, [search, opts?.estado, opts?.bajoStock, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, opts?.estado, opts?.bajoStock, opts?.conStock, page, paginate, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchEquipos() }, [fetchEquipos])
 

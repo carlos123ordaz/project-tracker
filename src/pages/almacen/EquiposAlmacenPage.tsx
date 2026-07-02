@@ -15,7 +15,7 @@ import { Pagination } from '../../components/ui/Pagination'
 import { exportMateriales } from '../../lib/exportAlmacenExcel'
 
 // ── Categorías ────────────────────────────────────────────────────────────────
-const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Vehículo', 'Otro']
+const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Servicio', 'Otro']
 
 // ── Estado colors ─────────────────────────────────────────────────────────────
 const estadoColor: Record<AlmacenEquipoEstado, { bg: string; color: string }> = {
@@ -105,16 +105,17 @@ export default function EquiposAlmacenPage() {
   const [search, setSearch] = useState('')
   const [filterEstado, setFilterEstado] = useState<AlmacenEquipoEstado | 'Todos'>('Todos')
   const [filterBajoStock, setFilterBajoStock] = useState(false)
+  const [filterConStock, setFilterConStock] = useState(false)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(50)
 
   const { equipos, total, loading, createEquipo, updateEquipo, deleteEquipo } = useAlmacenEquipos(
     search,
-    { estado: filterEstado, bajoStock: filterBajoStock, page: filterBajoStock ? undefined : page, pageSize },
+    { estado: filterEstado, bajoStock: filterBajoStock, conStock: filterConStock, page: filterBajoStock ? undefined : page, pageSize },
   )
   const { ubicaciones } = useAlmacenUbicaciones()
 
-  useEffect(() => { setPage(0) }, [search, filterEstado, filterBajoStock])
+  useEffect(() => { setPage(0) }, [search, filterEstado, filterBajoStock, filterConStock])
 
   // ── Gestión de columnas ─────────────────────────────────────────────────
   const [customCols,    setCustomCols]    = useState<CustomColDef[]>(loadCustomCols)
@@ -349,7 +350,14 @@ export default function EquiposAlmacenPage() {
           {ALMACEN_EQUIPO_ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <button
-          onClick={() => setFilterBajoStock(v => !v)}
+          onClick={() => { setFilterConStock(v => !v); if (!filterConStock) setFilterBajoStock(false) }}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 500, border: '1px solid', borderColor: filterConStock ? 'var(--green-600)' : 'var(--n-200)', background: filterConStock ? 'var(--green-50)' : 'var(--n-0)', color: filterConStock ? 'var(--green-600)' : 'var(--n-600)', cursor: 'pointer' }}
+        >
+          <Package size={13} /> Con stock
+        </button>
+        <button
+          onClick={() => { setFilterBajoStock(v => !v); if (!filterBajoStock) setFilterConStock(false) }}
+          title="Muestra materiales cuyo stock actual es igual o menor al stock mínimo configurado (requiere stock mínimo > 0)"
           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 500, border: '1px solid', borderColor: filterBajoStock ? 'var(--red-600)' : 'var(--n-200)', background: filterBajoStock ? 'var(--red-50)' : 'var(--n-0)', color: filterBajoStock ? 'var(--red-600)' : 'var(--n-600)', cursor: 'pointer' }}
         >
           <AlertTriangle size={13} /> Bajo stock
