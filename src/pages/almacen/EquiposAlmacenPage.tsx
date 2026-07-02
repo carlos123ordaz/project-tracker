@@ -15,7 +15,7 @@ import { Pagination } from '../../components/ui/Pagination'
 import { exportMateriales } from '../../lib/exportAlmacenExcel'
 
 // ── Categorías ────────────────────────────────────────────────────────────────
-const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Servicio', 'Otro']
+const CATEGORIAS = ['Herramienta', 'Equipo Eléctrico', 'EPP', 'Material', 'Consumible', 'Vehículo', 'Servicio', 'Otro']
 
 // ── Estado colors ─────────────────────────────────────────────────────────────
 const estadoColor: Record<AlmacenEquipoEstado, { bg: string; color: string }> = {
