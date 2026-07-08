@@ -117,8 +117,25 @@ export default function FormPage() {
 
   function validate() {
     const errs: Record<string, string> = {}
+    const tipo = answers['tipo_servicio'] ?? ''
+
+    // Fields that are consumed by FlightWidget but not displayed for certain service types
+    const skippedFlightFields = new Set<string>()
+    if (tipo === 'regreso') {
+      // "Regreso" only shows Panel 1 (fecha_salida + hora_salida); Panel 2 is hidden
+      skippedFlightFields.add('fecha_regreso')
+      skippedFlightFields.add('hora_llegada_destino')
+    } else if (tipo === 'cambio_fecha') {
+      // "Cambio de fecha" hides cities and Panel 2
+      skippedFlightFields.add('fecha_regreso')
+      skippedFlightFields.add('ciudad_salida')
+      skippedFlightFields.add('ciudad_destino')
+      skippedFlightFields.add('hora_salida_aeropuerto')
+    }
+
     for (const f of fields) {
       if (!isVisible(f)) continue
+      if (skippedFlightFields.has(f.field_key)) continue
       if (f.field_type === 'passenger_list') {
         const count = numPaxFromAnswer(answers['num_pasajeros'] ?? '1')
         const rows  = parsePax(answers[f.field_key] ?? '')
@@ -131,12 +148,13 @@ export default function FormPage() {
         errs[f.field_key] = 'Este campo es obligatorio'
     }
     setErrors(errs)
-    return Object.keys(errs).length === 0
+    return Object.keys(errs).length === 0 ? null : errs
   }
 
   async function handleSubmit() {
-    if (!validate()) {
-      const firstKey = fields.find(f => errors[f.field_key])?.field_key
+    const validationErrors = validate()
+    if (validationErrors) {
+      const firstKey = fields.find(f => validationErrors[f.field_key])?.field_key
       if (firstKey) document.getElementById(`field-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
