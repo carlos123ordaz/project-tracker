@@ -35,7 +35,7 @@ const TD: React.CSSProperties = { padding: '10px 12px', fontSize: 12.5 }
 export default function PedidosPage() {
   const navigate = useNavigate()
   const { user, hasPermission } = useAuth()
-  const canAdd    = hasPermission('almacen:pedidos', 'add')
+  const canAdd = hasPermission('almacen:pedidos', 'add')
   const canDelete = hasPermission('almacen:pedidos', 'delete')
   const [filterEstado, setFilterEstado] = useState<AlmacenPedidoEstado | 'Todos'>('Todos')
   const [search, setSearch] = useState('')
