@@ -96,7 +96,7 @@ export function useAlmacenRecepcionDetail(id: string) {
         .single(),
       supabase
         .from('almacen_recepcion_items')
-        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
+        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
         .eq('recepcion_id', id)
         .order('sort_order'),
     ])
@@ -114,7 +114,7 @@ export function useAlmacenRecepcionDetail(id: string) {
     const { data, error: err } = await supabase
       .from('almacen_recepcion_items')
       .insert({ ...item, recepcion_id: id, sort_order: items.length })
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => [...prev, data])
@@ -126,7 +126,7 @@ export function useAlmacenRecepcionDetail(id: string) {
       .from('almacen_recepcion_items')
       .update(updates)
       .eq('id', itemId)
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_destino:almacen_ubicaciones!ubicacion_destino_id(id,nombre,tipo)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => prev.map(it => (it.id === itemId ? data : it)))
@@ -338,7 +338,7 @@ export function useAlmacenDespachoDetail(id: string) {
       supabase.from('almacen_despachos').select('*').eq('id', id).single(),
       supabase
         .from('almacen_despacho_items')
-        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
+        .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
         .eq('despacho_id', id)
         .order('sort_order'),
     ])
@@ -356,7 +356,7 @@ export function useAlmacenDespachoDetail(id: string) {
     const { data, error: err } = await supabase
       .from('almacen_despacho_items')
       .insert({ ...item, despacho_id: id, sort_order: items.length })
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => [...prev, data])
@@ -368,7 +368,7 @@ export function useAlmacenDespachoDetail(id: string) {
       .from('almacen_despacho_items')
       .update(updates)
       .eq('id', itemId)
-      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
+      .select('*, equipo:almacen_equipos(id,nombre,unidad,stock_actual,categoria), ubicacion_origen:almacen_ubicaciones!ubicacion_origen_id(id,nombre,tipo)')
       .single()
     if (err) throw new Error(err.message)
     setItems(prev => prev.map(it => (it.id === itemId ? data : it)))
