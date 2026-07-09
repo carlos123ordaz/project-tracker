@@ -640,6 +640,7 @@ export type AlmacenPedidoEstado =
   | 'En Revisión'
   | 'En Cotización'
   | 'Pendiente de Aprobación'
+  | 'Aprobado'
   | 'OC Emitida'
   | 'En Tránsito'
   | 'Recibido Parcialmente'
@@ -648,7 +649,7 @@ export type AlmacenPedidoEstado =
   | 'Completado'
   | 'Cancelado'
 export const ALMACEN_PEDIDO_ESTADOS: AlmacenPedidoEstado[] = [
-  'En Revisión', 'En Cotización', 'Pendiente de Aprobación',
+  'En Revisión', 'En Cotización', 'Pendiente de Aprobación', 'Aprobado',
   'OC Emitida', 'En Tránsito', 'Recibido Parcialmente', 'Recibido',
   'Enviado', 'Completado', 'Cancelado',
 ]

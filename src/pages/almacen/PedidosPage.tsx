@@ -15,6 +15,7 @@ const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = 
   'En Revisión': { bg: 'var(--n-100)', color: 'var(--n-600)' },
   'En Cotización': { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
   'Pendiente de Aprobación': { bg: 'var(--amber-50)', color: 'var(--amber-700)' },
+  'Aprobado': { bg: 'var(--green-50)', color: 'var(--green-600)' },
   'OC Emitida': { bg: 'var(--purple-50)', color: 'var(--purple-600)' },
   'En Tránsito': { bg: 'var(--indigo-50)', color: 'var(--indigo-600)' },
   'Recibido Parcialmente': { bg: 'var(--orange-50)', color: 'var(--orange-600)' },
