@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Pencil, Trash2, Search, Download } from 'lucide-react'
 import { useProjects } from '../hooks/useProjects'
+import { useAuth } from '../hooks/useAuth'
 import { useTasks } from '../hooks/useTasks'
 import { useConfigData } from '../hooks/useConfigData'
 import Modal from '../components/ui/Modal'
@@ -16,6 +17,11 @@ import type { Project } from '../lib/types'
 import { fmtDate, fmtMoneyCompact, getProjectColor } from '../lib/helpers'
 
 export default function ProjectsPage() {
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('proyectos:mis-proyectos', 'add')
+  const canEdit   = hasPermission('proyectos:mis-proyectos', 'edit')
+  const canDelete = hasPermission('proyectos:mis-proyectos', 'delete')
+
   const { projects, loading: projLoading, createProject, updateProject, deleteProject } = useProjects()
   const { tasks, loading: taskLoading }  = useTasks()
   const { semaphoreFor, projectMetrics, getMember } = useConfigData()
@@ -110,7 +116,7 @@ export default function ProjectsPage() {
         <span className="mono tnum" style={{ fontSize: 11.5, color: 'var(--n-500)' }}>{filtered.length} de {projects.length}</span>
         <ViewToggle value={view} onChange={setView} />
         <Button icon={Download} onClick={exportCSV} disabled={exporting}>{exporting ? 'Exportando…' : 'Exportar CSV'}</Button>
-        <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nuevo proyecto</Button>
+        {canAdd && <Button icon={Plus} variant="primary" onClick={() => setModalOpen(true)}>Nuevo proyecto</Button>}
       </div>
 
       {(projLoading || taskLoading) ? (
@@ -118,8 +124,8 @@ export default function ProjectsPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonProjectCard key={i} />)}
         </div>
       ) : view === 'grid'
-        ? <ProjectsGrid rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} onAdd={() => setModalOpen(true)} />
-        : <ProjectsList rows={sorted} onEdit={setEditing} onDelete={setConfirmDelete} navigate={navigate} sort={sort} toggleSort={toggleSort} />}
+        ? <ProjectsGrid rows={sorted} onEdit={canEdit ? setEditing : undefined} onDelete={canDelete ? setConfirmDelete : undefined} navigate={navigate} onAdd={canAdd ? () => setModalOpen(true) : undefined} />
+        : <ProjectsList rows={sorted} onEdit={canEdit ? setEditing : undefined} onDelete={canDelete ? setConfirmDelete : undefined} navigate={navigate} sort={sort} toggleSort={toggleSort} />}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuevo proyecto" size="lg">
         <ProjectForm onSubmit={handleCreate} onCancel={() => setModalOpen(false)} />
@@ -165,29 +171,31 @@ function ViewToggle({ value, onChange }: { value: string; onChange: (v: 'grid' |
 
 
 function ProjectsGrid({ rows, onEdit, onDelete, navigate, onAdd }: {
-  rows: any[]; onEdit: (p: Project) => void; onDelete: (p: Project) => void; navigate: (p: string) => void; onAdd: () => void
+  rows: any[]; onEdit?: (p: Project) => void; onDelete?: (p: Project) => void; navigate: (p: string) => void; onAdd?: () => void
 }) {
   return (
     <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(312px, 1fr))', gap: 14 }}>
       {rows.map((p: any) => (
         <ProjectCard key={p.id} p={p} onEdit={onEdit} onDelete={onDelete} navigate={navigate} />
       ))}
-      <div
-        onClick={onAdd}
-        style={{ background: 'transparent', border: '1.5px dashed var(--n-300)', borderRadius: 12, minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--n-500)', transition: 'all .18s' }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-400)'; e.currentTarget.style.background = 'var(--brand-50)'; e.currentTarget.style.color = 'var(--brand-700)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-300)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-500)' }}
-      >
-        <span style={{ width: 36, height: 36, borderRadius: 999, background: 'currentColor', color: 'var(--n-0)', opacity: 0.9, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-          <Plus size={18} />
-        </span>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Nuevo proyecto</div>
-      </div>
+      {onAdd && (
+        <div
+          onClick={onAdd}
+          style={{ background: 'transparent', border: '1.5px dashed var(--n-300)', borderRadius: 12, minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--n-500)', transition: 'all .18s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-400)'; e.currentTarget.style.background = 'var(--brand-50)'; e.currentTarget.style.color = 'var(--brand-700)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-300)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--n-500)' }}
+        >
+          <span style={{ width: 36, height: 36, borderRadius: 999, background: 'currentColor', color: 'var(--n-0)', opacity: 0.9, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+            <Plus size={18} />
+          </span>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Nuevo proyecto</div>
+        </div>
+      )}
     </div>
   )
 }
 
-function ProjectCard({ p, onEdit, onDelete, navigate }: { p: any; onEdit: (p: Project) => void; onDelete: (p: Project) => void; navigate: (path: string) => void }) {
+function ProjectCard({ p, onEdit, onDelete, navigate }: { p: any; onEdit?: (p: Project) => void; onDelete?: (p: Project) => void; navigate: (path: string) => void }) {
   const { _m: m, _lead, _team } = p
   const color = getProjectColor(p.color)
   return (
@@ -198,12 +206,14 @@ function ProjectCard({ p, onEdit, onDelete, navigate }: { p: any; onEdit: (p: Pr
       onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-xs)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = 'var(--n-200)' }}
     >
       <div style={{ height: 6, background: `linear-gradient(90deg, ${color} 0%, ${color}dd 70%, ${color}88 100%)`, flex: '0 0 6px', position: 'relative' }}>
-        <div className="card-actions" style={{ position: 'absolute', top: 10, right: 8, display: 'flex', gap: 2, zIndex: 4 }} onClick={e => e.stopPropagation()}>
-          <span style={{ background: 'var(--n-0)', borderRadius: 7, border: '1px solid var(--n-200)', boxShadow: 'var(--shadow-sm)', display: 'inline-flex', padding: 1 }}>
-            <IconButton icon={Pencil} size={26} title="Editar" onClick={() => onEdit(p)} />
-            <IconButton icon={Trash2} size={26} danger title="Eliminar" onClick={() => onDelete(p)} />
-          </span>
-        </div>
+        {(onEdit || onDelete) && (
+          <div className="card-actions" style={{ position: 'absolute', top: 10, right: 8, display: 'flex', gap: 2, zIndex: 4 }} onClick={e => e.stopPropagation()}>
+            <span style={{ background: 'var(--n-0)', borderRadius: 7, border: '1px solid var(--n-200)', boxShadow: 'var(--shadow-sm)', display: 'inline-flex', padding: 1 }}>
+              {onEdit && <IconButton icon={Pencil} size={26} title="Editar" onClick={() => onEdit(p)} />}
+              {onDelete && <IconButton icon={Trash2} size={26} danger title="Eliminar" onClick={() => onDelete(p)} />}
+            </span>
+          </div>
+        )}
       </div>
       <div style={{ padding: '14px 16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -254,7 +264,7 @@ function ProjectCard({ p, onEdit, onDelete, navigate }: { p: any; onEdit: (p: Pr
 }
 
 function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
-  rows: any[]; onEdit: (p: Project) => void; onDelete: (p: Project) => void; navigate: (p: string) => void
+  rows: any[]; onEdit?: (p: Project) => void; onDelete?: (p: Project) => void; navigate: (p: string) => void
   sort: { key: string; dir: string }; toggleSort: (k: string) => void
 }) {
   const Th = ({ k, children, align = 'left', width }: { k: string; children: React.ReactNode; align?: string; width?: number }) => (
@@ -327,12 +337,14 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
                 <td style={{ padding: '10px 12px' }}>
                   <span className="mono tnum" style={{ fontSize: 11, color: 'var(--n-600)' }}>{fmtDate(p.end_date)}</span>
                 </td>
-                <td style={{ padding: '6px 12px', textAlign: 'right' }}>
-                  <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }} onClick={e => e.stopPropagation()}>
-                    <IconButton icon={Pencil} size={26} title="Editar" onClick={() => onEdit(p)} />
-                    <IconButton icon={Trash2} size={26} danger title="Eliminar" onClick={() => onDelete(p)} />
-                  </div>
-                </td>
+                {(onEdit || onDelete) && (
+                  <td style={{ padding: '6px 12px', textAlign: 'right' }}>
+                    <div className="row-actions" style={{ display: 'inline-flex', gap: 2 }} onClick={e => e.stopPropagation()}>
+                      {onEdit && <IconButton icon={Pencil} size={26} title="Editar" onClick={() => onEdit(p)} />}
+                      {onDelete && <IconButton icon={Trash2} size={26} danger title="Eliminar" onClick={() => onDelete(p)} />}
+                    </div>
+                  </td>
+                )}
               </tr>
             )
           })}

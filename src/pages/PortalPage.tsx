@@ -11,6 +11,15 @@ import {
 } from 'lucide-react'
 import { useAlmacenEquipos } from '../hooks/useAlmacenEquipos'
 import { MONTHS_FULL, DAYS_ES, TODAY } from '../lib/helpers'
+import { SCREENS_LIST } from '../lib/types'
+
+// ── Map paths → screen keys for permission checks ───────────────────────────
+const PATH_TO_SCREEN_KEY: Record<string, string> = {}
+for (const group of SCREENS_LIST) {
+  for (const screen of group.screens) {
+    PATH_TO_SCREEN_KEY[screen.path] = screen.key
+  }
+}
 
 // ── Paleta por módulo ─────────────────────────────────────────────────────────
 
@@ -124,10 +133,17 @@ const MODULES: Module[] = [
 // ── Portal ────────────────────────────────────────────────────────────────────
 
 export default function PortalPage() {
-  const { user }     = useAuth()
+  const { user, hasPermission, isSuperAdmin } = useAuth()
   const { projects } = useProjects()
   const { equipos }  = useAlmacenEquipos()
   const navigate     = useNavigate()
+
+  const canView = (path: string): boolean => {
+    if (isSuperAdmin) return true
+    const screenKey = PATH_TO_SCREEN_KEY[path]
+    if (!screenKey) return false // portal: ocultar rutas sin permiso mapeado
+    return hasPermission(screenKey, 'view')
+  }
 
   const firstName = useMemo(() => {
     const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'equipo'
@@ -142,7 +158,10 @@ export default function PortalPage() {
     if (m.key === 'proyectos') return { ...m, stat: { label: 'proyectos activos', value: activeProjects } }
     if (m.key === 'almacen')   return { ...m, stat: { label: 'ítems bajo stock',  value: bajoStockCount } }
     return m
-  })
+  }).map(m => ({
+    ...m,
+    links: m.links.filter(lk => canView(lk.to)),
+  })).filter(m => canView(m.to) || m.links.length > 0)
 
   return (
     <div style={{

@@ -25,7 +25,9 @@ const TD: React.CSSProperties = { padding: '10px 12px', fontSize: 12.5 }
 
 export default function RecepcionesPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const canAdd    = hasPermission('almacen:recepciones', 'add')
+  const canDelete = hasPermission('almacen:recepciones', 'delete')
   const [filterEstado, setFilterEstado] = useState<AlmacenRecepcionEstado | 'Todos'>('Todos')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -82,17 +84,19 @@ export default function RecepcionesPage() {
           <h1 style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Recepciones Logísticas</h1>
           <p style={{ fontSize: 11.5, color: 'var(--n-500)', margin: '2px 0 0' }}>Ingreso de materiales al almacén</p>
         </div>
-        <button
-          onClick={() => { setForm(f => ({ ...f, pedido_id: null, proveedor: '', nro_factura: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 7,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          <Plus size={14} /> Nueva recepción
-        </button>
+        {canAdd && (
+          <button
+            onClick={() => { setForm(f => ({ ...f, pedido_id: null, proveedor: '', nro_factura: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 7,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Plus size={14} /> Nueva recepción
+          </button>
+        )}
       </div>
 
       {/* Status filter tabs */}
@@ -198,15 +202,17 @@ export default function RecepcionesPage() {
                             {r.estado}
                           </span>
                         </td>
-                        <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setConfirmDelete(r)}
-                            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
+                        {canDelete && (
+                          <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => setConfirmDelete(r)}
+                              style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })}

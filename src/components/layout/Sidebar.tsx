@@ -12,6 +12,15 @@ import {
 } from 'lucide-react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../../hooks/useAuth'
+import { SCREENS_LIST } from '../../lib/types'
+
+// Build a lookup: path → screen key for permission checks
+const PATH_TO_SCREEN_KEY: Record<string, string> = {}
+for (const group of SCREENS_LIST) {
+  for (const screen of group.screens) {
+    PATH_TO_SCREEN_KEY[screen.path] = screen.key
+  }
+}
 
 interface SidebarProps {
   collapsed: boolean
@@ -63,12 +72,21 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
     )
   }
 
-  const rrhhItems: NavItem[] = []
-  if (isSuperAdmin || hasPermission('rrhh', 'view')) {
-    rrhhItems.push({ to: '/rrhh/equipo', label: 'Equipo', icon: Users })
-    rrhhItems.push({ to: '/rrhh/asistencia', label: 'Asistencia', icon: ClipboardList })
-    rrhhItems.push({ to: '/rrhh/hh', label: 'Dashboard HH', icon: BarChart3 })
+  // Filter nav items based on screen-level permissions
+  const canView = (path: string): boolean => {
+    if (isSuperAdmin) return true
+    const screenKey = PATH_TO_SCREEN_KEY[path]
+    if (!screenKey) return true // paths not in SCREENS_LIST are always visible (e.g. /settings)
+    return hasPermission(screenKey, 'view')
   }
+
+  const filterItems = (items: NavItem[]): NavItem[] => items.filter(item => canView(item.to))
+
+  const rrhhItems: NavItem[] = filterItems([
+    { to: '/rrhh/equipo', label: 'Equipo', icon: Users },
+    { to: '/rrhh/asistencia', label: 'Asistencia', icon: ClipboardList },
+    { to: '/rrhh/hh', label: 'Dashboard HH', icon: BarChart3 },
+  ])
   if (isSuperAdmin) {
     rrhhItems.push({ to: '/rrhh/usuarios', label: 'Usuarios', icon: UserCheck })
   }
@@ -80,7 +98,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       key: 'proyectos',
       label: 'Proyectos',
       icon: FolderOpen,
-      items: [
+      items: filterItems([
         { to: '/dashboard', label: 'Dashboard', icon: Gauge },
         { to: '/projects', label: 'Mis Proyectos', icon: FolderOpen },
         { to: '/kanban', label: 'Kanban', icon: Kanban },
@@ -89,25 +107,25 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/calendar', label: 'Calendario', icon: Calendar },
         { to: '/overview', label: 'Overview', icon: Gauge },
         { to: '/ingenieria/tareas/362', label: 'Proy. Ejecución', icon: ListChecks },
-      ],
+      ]),
     },
     {
       key: 'ventas',
       label: 'Ventas',
       icon: Receipt,
-      items: [
+      items: filterItems([
         { to: '/budgets', label: 'Presupuestos', icon: FileSpreadsheet },
         { to: '/libro', label: 'Libro', icon: BookOpen },
         { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText },
         { to: '/cotizaciones/personal', label: 'Horas Hombre', icon: Users2 },
         { to: '/ingenieria/tareas/316', label: 'Proy. Cotizaciones', icon: ListChecks },
-      ],
+      ]),
     },
     {
       key: 'compras',
       label: 'Compras',
       icon: ShoppingCart,
-      items: [
+      items: filterItems([
         { to: '/compras', label: 'Comparativos', icon: TrendingDown, end: true },
         { to: '/compras/proveedores', label: 'Proveedores', icon: Building2 },
         { to: '/compras/seguimiento', label: 'Seguimiento Gestión', icon: ClipboardCheck },
@@ -115,7 +133,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/compras/solicitudes', label: 'Solicitudes Boletos', icon: Ticket },
         { to: '/compras/tareas/91', label: 'Compras Locales', icon: ListChecks },
         { to: '/compras/tareas/85', label: 'Importaciones', icon: ListChecks },
-      ],
+      ]),
     },
     {
       key: 'rrhh',
@@ -127,16 +145,16 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       key: 'comercial',
       label: 'Comercial',
       icon: TrendingUp,
-      items: [
+      items: filterItems([
         { to: '/comercial/deals', label: 'Deals CRM', icon: TrendingUp, end: true },
         { to: '/comercial/deals/dashboard', label: 'Dashboard', icon: BarChart3 },
-      ],
+      ]),
     },
     {
       key: 'almacen',
       label: 'Almacén',
       icon: Warehouse,
-      items: [
+      items: filterItems([
         { to: '/almacen', label: 'Dashboard', icon: Warehouse, end: true },
         { to: '/almacen/equipos', label: 'Equipos & Consumibles', icon: Package },
         { to: '/almacen/kardex', label: 'Kardex', icon: RefreshCw },
@@ -144,7 +162,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         { to: '/almacen/pedidos', label: 'Pedidos', icon: ShoppingCart },
         { to: '/almacen/recepciones', label: 'Recepciones', icon: ArrowDownToLine },
         { to: '/almacen/despachos', label: 'Despachos', icon: Truck },
-      ],
+      ]),
     },
   ]
 
@@ -344,32 +362,34 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         borderTop: '1px solid var(--n-150)',
         display: 'flex', flexDirection: 'column', gap: 4,
       }}>
-        <NavLink
-          to="/settings"
-          onClick={onMobileClose}
-          style={({ isActive }) => ({
-            display: 'flex', alignItems: 'center',
-            gap: 10, padding: collapsed ? '0' : '0 10px',
-            height: 32, borderRadius: 7, cursor: 'pointer',
-            background: isActive ? 'var(--brand-50)' : 'transparent',
-            color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
-            fontWeight: isActive ? 600 : 500, fontSize: 12.5,
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            transition: 'background .15s, color .15s', textDecoration: 'none',
-            position: 'relative',
-          })}
-          title="Configuración"
-        >
-          {({ isActive }) => (
-            <>
-              {isActive && !collapsed && (
-                <span style={{ position: 'absolute', left: -8, top: 6, bottom: 6, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />
-              )}
-              <Settings size={16} />
-              {!collapsed && <span>Configuración</span>}
-            </>
-          )}
-        </NavLink>
+        {canView('/settings') && (
+          <NavLink
+            to="/settings"
+            onClick={onMobileClose}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center',
+              gap: 10, padding: collapsed ? '0' : '0 10px',
+              height: 32, borderRadius: 7, cursor: 'pointer',
+              background: isActive ? 'var(--brand-50)' : 'transparent',
+              color: isActive ? 'var(--brand-700)' : 'var(--n-700)',
+              fontWeight: isActive ? 600 : 500, fontSize: 12.5,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              transition: 'background .15s, color .15s', textDecoration: 'none',
+              position: 'relative',
+            })}
+            title="Configuración"
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && !collapsed && (
+                  <span style={{ position: 'absolute', left: -8, top: 6, bottom: 6, width: 2, background: 'var(--brand-600)', borderRadius: 2 }} />
+                )}
+                <Settings size={16} />
+                {!collapsed && <span>Configuración</span>}
+              </>
+            )}
+          </NavLink>
+        )}
 
         <button
           onClick={onToggle}

@@ -26,7 +26,9 @@ const TD: React.CSSProperties = { padding: '10px 12px', fontSize: 12.5 }
 
 export default function DespachosPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const canAdd    = hasPermission('almacen:despachos', 'add')
+  const canDelete = hasPermission('almacen:despachos', 'delete')
   const [filterEstado, setFilterEstado] = useState<AlmacenDespachoEstado | 'Todos'>('Todos')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -87,17 +89,19 @@ export default function DespachosPage() {
           <h1 style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>Despachos</h1>
           <p style={{ fontSize: 11.5, color: 'var(--n-500)', margin: '2px 0 0' }}>Salida de materiales con guía de remisión</p>
         </div>
-        <button
-          onClick={() => { setForm(f => ({ ...f, pedido_id: null, destinatario: '', direccion: '', movilidad: '', conductor: '', placa: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 7,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          <Plus size={14} /> Nuevo despacho
-        </button>
+        {canAdd && (
+          <button
+            onClick={() => { setForm(f => ({ ...f, pedido_id: null, destinatario: '', direccion: '', movilidad: '', conductor: '', placa: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 7,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Plus size={14} /> Nuevo despacho
+          </button>
+        )}
       </div>
 
       {/* Status filter tabs */}
@@ -200,15 +204,17 @@ export default function DespachosPage() {
                             {d.estado}
                           </span>
                         </td>
-                        <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setConfirmDelete(d)}
-                            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
+                        {canDelete && (
+                          <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => setConfirmDelete(d)}
+                              style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })}

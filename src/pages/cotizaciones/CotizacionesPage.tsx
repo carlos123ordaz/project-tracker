@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import { useCotizaciones } from '../../hooks/useCotizaciones'
 import type { Cotizacion, CotizacionStatus, CotizacionSegmento } from '../../lib/types'
 import { COTIZACION_STATUSES } from '../../lib/types'
@@ -27,6 +28,10 @@ const SEG_STYLE: Record<CotizacionSegmento, { bg: string; color: string }> = {
 
 export default function CotizacionesPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('ventas:cotizaciones', 'add')
+  const canDelete = hasPermission('ventas:cotizaciones', 'delete')
+
   const { cotizaciones, loading, createCotizacion, deleteCotizacion } = useCotizaciones()
 
   const [search, setSearch] = useState('')
@@ -155,12 +160,14 @@ export default function CotizacionesPage() {
           >
             <Users2 size={13} /> Personal
           </Link>
-          <button
-            onClick={openNew}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
-          >
-            <Plus size={13} /> Nueva Cotización
-          </button>
+          {canAdd && (
+            <button
+              onClick={openNew}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Plus size={13} /> Nueva Cotización
+            </button>
+          )}
         </div>
       </div>
 
@@ -168,7 +175,7 @@ export default function CotizacionesPage() {
       {loading ? (
         <div style={{ padding: 48, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando…</div>
       ) : filtered.length === 0 ? (
-        <EmptyState hasFilter={!!search || filterStatus !== 'Todos'} onNew={openNew} />
+        <EmptyState hasFilter={!!search || filterStatus !== 'Todos'} onNew={openNew} canAdd={canAdd} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {filtered.map(c => (
@@ -176,7 +183,7 @@ export default function CotizacionesPage() {
               key={c.id}
               cotizacion={c}
               onOpen={() => navigate(`/cotizaciones/${c.id}`)}
-              onDelete={() => setConfirmDelete(c.id)}
+              onDelete={canDelete ? () => setConfirmDelete(c.id) : undefined}
             />
           ))}
         </div>
@@ -258,7 +265,7 @@ export default function CotizacionesPage() {
   )
 }
 
-function CotizacionCard({ cotizacion: c, onOpen, onDelete }: { cotizacion: Cotizacion; onOpen: () => void; onDelete: () => void }) {
+function CotizacionCard({ cotizacion: c, onOpen, onDelete }: { cotizacion: Cotizacion; onOpen: () => void; onDelete?: () => void }) {
   const st = STATUS_STYLE[c.status as CotizacionStatus] ?? STATUS_STYLE['Borrador']
   const sg = SEG_STYLE[c.segmento as CotizacionSegmento] ?? SEG_STYLE['B']
   return (
@@ -305,12 +312,14 @@ function CotizacionCard({ cotizacion: c, onOpen, onDelete }: { cotizacion: Cotiz
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-        <button
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          style={{ padding: '5px 6px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)' }}
-        >
-          <Trash2 size={11} />
-        </button>
+        {onDelete && (
+          <button
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            style={{ padding: '5px 6px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)' }}
+          >
+            <Trash2 size={11} />
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, background: 'var(--brand-50)', color: 'var(--brand-700)', fontSize: 12, fontWeight: 600 }}>
           Ver <ChevronRight size={12} />
         </div>
@@ -319,7 +328,7 @@ function CotizacionCard({ cotizacion: c, onOpen, onDelete }: { cotizacion: Cotiz
   )
 }
 
-function EmptyState({ hasFilter, onNew }: { hasFilter: boolean; onNew: () => void }) {
+function EmptyState({ hasFilter, onNew, canAdd }: { hasFilter: boolean; onNew: () => void; canAdd?: boolean }) {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
       <FileText size={26} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
@@ -329,7 +338,7 @@ function EmptyState({ hasFilter, onNew }: { hasFilter: boolean; onNew: () => voi
       <div style={{ fontSize: 12.5, color: 'var(--n-400)', marginBottom: 16 }}>
         {hasFilter ? 'Ajusta los filtros para ver más' : 'Crea una cotización para empezar a armar tu propuesta técnico-económica'}
       </div>
-      {!hasFilter && (
+      {!hasFilter && canAdd && (
         <button onClick={onNew} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
           <Plus size={13} /> Nueva Cotización
         </button>

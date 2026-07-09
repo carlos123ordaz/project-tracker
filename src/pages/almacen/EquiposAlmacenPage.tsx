@@ -99,7 +99,10 @@ function genId() { return `c_${Date.now()}_${Math.random().toString(36).slice(2,
 // ── Componente ────────────────────────────────────────────────────────────────
 export default function EquiposAlmacenPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const canAdd    = hasPermission('almacen:equipos', 'add')
+  const canEdit   = hasPermission('almacen:equipos', 'edit')
+  const canDelete = hasPermission('almacen:equipos', 'delete')
 
   // ── Filtros / paginación ────────────────────────────────────────────────
   const [search, setSearch] = useState('')
@@ -330,12 +333,14 @@ export default function EquiposAlmacenPage() {
           >
             <Download size={14} /> Exportar Excel
           </button>
-          <button
-            onClick={openNew}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
-            <Plus size={15} /> Nuevo material
-          </button>
+          {canAdd && (
+            <button
+              onClick={openNew}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Plus size={15} /> Nuevo material
+            </button>
+          )}
         </div>
       </div>
 
@@ -458,7 +463,7 @@ export default function EquiposAlmacenPage() {
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--n-400)' }}>
           <Package size={40} style={{ opacity: .3, marginBottom: 8 }} />
           <p style={{ fontSize: 13 }}>No hay equipos registrados</p>
-          <button onClick={openNew} style={{ fontSize: 13, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Crear el primero</button>
+          {canAdd && <button onClick={openNew} style={{ fontSize: 13, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Crear el primero</button>}
         </div>
       ) : (
         <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
@@ -542,8 +547,8 @@ export default function EquiposAlmacenPage() {
                       })}
                       <td style={tdS} onClick={ev => ev.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar"><Edit2 size={14} /></button>
-                          <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }} title="Eliminar"><Trash2 size={14} /></button>
+                          {canEdit && <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar"><Edit2 size={14} /></button>}
+                          {canDelete && <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }} title="Eliminar"><Trash2 size={14} /></button>}
                           <button onClick={() => setPrecioEquipo(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--green-600)', borderRadius: 5 }} title="Historial de precios"><TrendingUp size={14} /></button>
                           <button onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-600)', borderRadius: 5 }} title="Ver kardex"><ChevronRight size={14} /></button>
                         </div>

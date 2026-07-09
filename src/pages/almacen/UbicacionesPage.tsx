@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MapPin, Plus, X, Pencil, Power, Trash2 } from 'lucide-react'
 import { useAlmacenUbicaciones, useStockPorUbicacion } from '../../hooks/useAlmacenUbicaciones'
+import { useAuth } from '../../hooks/useAuth'
 import type { AlmacenUbicacion, AlmacenUbicacionTipo } from '../../lib/types'
 import { ALMACEN_UBICACION_TIPOS } from '../../lib/types'
 
@@ -22,6 +23,11 @@ const EMPTY_FORM = {
 }
 
 export default function UbicacionesPage() {
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('almacen:ubicaciones', 'add')
+  const canEdit   = hasPermission('almacen:ubicaciones', 'edit')
+  const canDelete = hasPermission('almacen:ubicaciones', 'delete')
+
   const { ubicaciones, loading, createUbicacion, updateUbicacion, deleteUbicacion, toggleActiva } = useAlmacenUbicaciones()
 
   const [showModal, setShowModal] = useState(false)
@@ -86,12 +92,14 @@ export default function UbicacionesPage() {
             Catálogo de ubicaciones físicas del almacén (WMS)
           </p>
         </div>
-        <button
-          onClick={openNew}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-        >
-          <Plus size={15} /> Nueva ubicación
-        </button>
+        {canAdd && (
+          <button
+            onClick={openNew}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Plus size={15} /> Nueva ubicación
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -112,6 +120,8 @@ export default function UbicacionesPage() {
             onToggleActiva={u => toggleActiva(u.id, !u.activa)}
             onDelete={setConfirmDelete}
             tipoColor={tipoColor}
+            canEdit={canEdit}
+            canDelete={canDelete}
           />
           {inactivas.length > 0 && (
             <UbicacionGroup
@@ -123,6 +133,8 @@ export default function UbicacionesPage() {
               onToggleActiva={u => toggleActiva(u.id, !u.activa)}
               onDelete={setConfirmDelete}
               tipoColor={tipoColor}
+              canEdit={canEdit}
+              canDelete={canDelete}
               dimmed
             />
           )}
@@ -209,10 +221,12 @@ interface GroupProps {
   onToggleActiva: (u: AlmacenUbicacion) => void
   onDelete: (u: AlmacenUbicacion) => void
   tipoColor: Record<AlmacenUbicacionTipo, { bg: string; color: string }>
+  canEdit?: boolean
+  canDelete?: boolean
   dimmed?: boolean
 }
 
-function UbicacionGroup({ title, items, expandedId, onToggleExpand, onEdit, onToggleActiva, onDelete, tipoColor, dimmed }: GroupProps) {
+function UbicacionGroup({ title, items, expandedId, onToggleExpand, onEdit, onToggleActiva, onDelete, tipoColor, canEdit, canDelete, dimmed }: GroupProps) {
   if (items.length === 0) return null
   return (
     <div style={{ marginBottom: 24 }}>
@@ -228,6 +242,8 @@ function UbicacionGroup({ title, items, expandedId, onToggleExpand, onEdit, onTo
             onToggleActiva={() => onToggleActiva(u)}
             onDelete={() => onDelete(u)}
             tipoColor={tipoColor}
+            canEdit={canEdit}
+            canDelete={canDelete}
             dimmed={dimmed}
           />
         ))}
@@ -244,10 +260,12 @@ interface RowProps {
   onToggleActiva: () => void
   onDelete: () => void
   tipoColor: Record<AlmacenUbicacionTipo, { bg: string; color: string }>
+  canEdit?: boolean
+  canDelete?: boolean
   dimmed?: boolean
 }
 
-function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onDelete, tipoColor, dimmed }: RowProps) {
+function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onDelete, tipoColor, canEdit, canDelete, dimmed }: RowProps) {
   const { stock } = useStockPorUbicacion(expanded ? u.id : undefined)
   const tc = tipoColor[u.tipo]
 
@@ -273,14 +291,14 @@ function UbicacionRow({ u, expanded, onToggleExpand, onEdit, onToggleActiva, onD
             style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: u.activa ? 'var(--green-600)' : 'var(--n-400)', borderRadius: 5 }}>
             <Power size={14} />
           </button>
-          <button title="Editar" onClick={onEdit}
+          {canEdit && <button title="Editar" onClick={onEdit}
             style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}>
             <Pencil size={14} />
-          </button>
-          <button title="Eliminar" onClick={onDelete}
+          </button>}
+          {canDelete && <button title="Eliminar" onClick={onDelete}
             style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }}>
             <Trash2 size={14} />
-          </button>
+          </button>}
         </div>
         <span style={{ fontSize: 12, color: 'var(--n-400)' }}>{expanded ? '▲' : '▼'}</span>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { useBudgets } from '../hooks/useBudgets'
 import { useProjects } from '../hooks/useProjects'
 import { PageLoader } from '../components/ui/Loader'
@@ -133,6 +134,11 @@ const TD: React.CSSProperties = { padding: '10px 12px', verticalAlign: 'middle',
 
 // ── page ──────────────────────────────────────────────────────────────────────
 export default function BudgetsPage() {
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('ventas:presupuestos', 'add')
+  const canEdit   = hasPermission('ventas:presupuestos', 'edit')
+  const canDelete = hasPermission('ventas:presupuestos', 'delete')
+
   const { budgets, loading, createBudget, updateBudget, deleteBudget } = useBudgets()
   const { projects } = useProjects()
   const navigate     = useNavigate()
@@ -218,7 +224,7 @@ export default function BudgetsPage() {
             ))}
           </div>
 
-          <Button variant="primary" icon={Plus} onClick={openCreate}>Nuevo presupuesto</Button>
+          {canAdd && <Button variant="primary" icon={Plus} onClick={openCreate}>Nuevo presupuesto</Button>}
         </div>
 
         {/* Cards view */}
@@ -258,8 +264,8 @@ export default function BudgetsPage() {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 2, marginTop: 'auto' }} onClick={e => e.stopPropagation()}>
-                    <IconButton icon={Pencil} title="Editar" size={26} onClick={() => openEdit(b)} />
-                    <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDel(b)} />
+                    {canEdit && <IconButton icon={Pencil} title="Editar" size={26} onClick={() => openEdit(b)} />}
+                    {canDelete && <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={() => setConfirmDel(b)} />}
                     <IconButton icon={ExternalLink} title="Abrir editor" size={26} onClick={() => navigate(`/budgets/${b.id}`)} />
                   </div>
                 </div>
@@ -300,8 +306,8 @@ export default function BudgetsPage() {
                     <td style={TD}><StatusBadge status={b.status} /></td>
                     <td style={{ ...TD, textAlign: 'right' }}>
                       <span style={{ display: 'inline-flex', gap: 2 }}>
-                        <IconButton icon={Pencil} title="Editar" size={26} onClick={e => { e.stopPropagation(); openEdit(b) }} />
-                        <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={e => { e.stopPropagation(); setConfirmDel(b) }} />
+                        {canEdit && <IconButton icon={Pencil} title="Editar" size={26} onClick={e => { e.stopPropagation(); openEdit(b) }} />}
+                        {canDelete && <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={e => { e.stopPropagation(); setConfirmDel(b) }} />}
                         <IconButton icon={ExternalLink} title="Abrir" size={26} onClick={e => { e.stopPropagation(); navigate(`/budgets/${b.id}`) }} />
                       </span>
                     </td>

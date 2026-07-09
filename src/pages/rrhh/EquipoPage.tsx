@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Check, X, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 import { useTeamMembers, type TeamMember } from '../../hooks/useConfig'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button, IconButton } from '../../components/ui/Button'
@@ -16,8 +17,12 @@ const LABEL: React.CSSProperties = {
 }
 
 export default function EquipoPage() {
+  const { hasPermission } = useAuth()
   const { items, loading, create, update, remove } = useTeamMembers()
   const isMobile = useIsMobile()
+  const canAdd = hasPermission('rrhh:equipo', 'add')
+  const canEdit = hasPermission('rrhh:equipo', 'edit')
+  const canDelete = hasPermission('rrhh:equipo', 'delete')
 
   const [query,    setQuery]    = useState('')
   const [page,     setPage]     = useState(0)
@@ -90,9 +95,9 @@ export default function EquipoPage() {
         <div style={{ fontSize: 13, color: 'var(--n-500)', flexShrink: 0 }}>
           {filtered.length} colaborador{filtered.length !== 1 ? 'es' : ''}
         </div>
-        <div style={{ marginLeft: 'auto' }}>
+        {canAdd && <div style={{ marginLeft: 'auto' }}>
           <Button icon={Plus} variant="primary" onClick={() => setAdding(true)}>Agregar</Button>
-        </div>
+        </div>}
       </div>
 
       {/* Formulario de nuevo miembro */}
@@ -181,20 +186,20 @@ export default function EquipoPage() {
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-900)' }}>{m.name}</div>
                     {m.role && <div style={{ fontSize: 12, color: 'var(--n-600)', marginTop: 1 }}>{m.role}</div>}
                     {m.email && <div style={{ fontSize: 12, color: 'var(--n-500)', fontFamily: 'monospace', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                      <button
+                    {(canEdit || canDelete) && <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                      {canEdit && <button
                         onClick={() => startEdit(m)}
                         style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', fontSize: 12, fontWeight: 500, borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}
                       >
                         <Pencil size={13} /> Editar
-                      </button>
-                      <button
+                      </button>}
+                      {canDelete && <button
                         onClick={() => remove(m.id)}
                         style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', fontSize: 12, fontWeight: 500, borderRadius: 6, border: '1px solid var(--red-200)', background: 'var(--red-50)', color: 'var(--red-700)', cursor: 'pointer' }}
                       >
                         <Trash2 size={13} /> Eliminar
-                      </button>
-                    </div>
+                      </button>}
+                    </div>}
                   </div>
                 </div>
               )}
@@ -236,8 +241,8 @@ export default function EquipoPage() {
                   <div style={{ fontSize: 12, color: 'var(--n-700)' }}>{m.role}</div>
                   <div style={{ fontSize: 12, color: 'var(--n-600)', fontFamily: 'monospace' }}>{m.email}</div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <IconButton icon={Pencil} onClick={() => startEdit(m)} size={26} title="Editar" />
-                    <IconButton icon={Trash2} onClick={() => remove(m.id)} size={26} title="Eliminar" danger />
+                    {canEdit && <IconButton icon={Pencil} onClick={() => startEdit(m)} size={26} title="Editar" />}
+                    {canDelete && <IconButton icon={Trash2} onClick={() => remove(m.id)} size={26} title="Eliminar" danger />}
                   </div>
                 </>
               )}

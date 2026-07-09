@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSuppliers } from '../../hooks/useSuppliers'
+import { useAuth } from '../../hooks/useAuth'
 import type { Supplier } from '../../lib/types'
 import {
   Plus, Search, Pencil, Trash2, X, Building2,
@@ -12,6 +13,11 @@ const EMPTY: Omit<Supplier, 'id' | 'created_at' | 'updated_at'> = {
 }
 
 export default function ProveedoresPage() {
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('compras:proveedores', 'add')
+  const canEdit   = hasPermission('compras:proveedores', 'edit')
+  const canDelete = hasPermission('compras:proveedores', 'delete')
+
   const { suppliers, loading, createSupplier, updateSupplier, deleteSupplier } = useSuppliers()
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -110,17 +116,19 @@ export default function ProveedoresPage() {
             </div>
           ))}
           <div style={{ width: 1, height: 16, background: 'var(--n-200)' }} />
-          <button
-            onClick={openCreate}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 11px', borderRadius: 7,
-              background: 'var(--brand-600)', color: '#fff',
-              fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: 'none',
-            }}
-          >
-            <Plus size={13} /> Nuevo Proveedor
-          </button>
+          {canAdd && (
+            <button
+              onClick={openCreate}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 11px', borderRadius: 7,
+                background: 'var(--brand-600)', color: '#fff',
+                fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: 'none',
+              }}
+            >
+              <Plus size={13} /> Nuevo Proveedor
+            </button>
+          )}
         </div>
       </div>
 
@@ -226,20 +234,24 @@ export default function ProveedoresPage() {
                   </td>
                   <td style={{ padding: '8px 12px' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                      <button
-                        onClick={() => openEdit(s)}
-                        style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)' }}
-                        title="Editar"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(s.id)}
-                        style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-600)' }}
-                        title="Eliminar"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => openEdit(s)}
+                          style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)' }}
+                          title="Editar"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => setConfirmDelete(s.id)}
+                          style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-600)' }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

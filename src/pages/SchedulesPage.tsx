@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { useSchedules } from '../hooks/useSchedules'
 import { useBudgets } from '../hooks/useBudgets'
 import { PageLoader } from '../components/ui/Loader'
@@ -91,7 +92,10 @@ function NewScheduleModal({ onClose, onCreate }: {
 
 export default function SchedulesPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   const { schedules, loading, createSchedule, deleteSchedule } = useSchedules()
+  const canAdd = hasPermission('proyectos:programar', 'add')
+  const canDelete = hasPermission('proyectos:programar', 'delete')
   const [showCreate,  setShowCreate]  = useState(false)
   const [confirmDel,  setConfirmDel]  = useState<string | null>(null)
   const [deleting,    setDeleting]    = useState(false)
@@ -127,7 +131,7 @@ export default function SchedulesPage() {
           <h1 style={{ fontSize: 16, fontWeight: 700, color: 'var(--n-900)', lineHeight: 1.2 }}>Programar</h1>
           <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>Cronogramas de ejecución ligados a presupuestos</div>
         </div>
-        <Button variant="primary" icon={Plus} onClick={() => setShowCreate(true)}>Nuevo cronograma</Button>
+        {canAdd && <Button variant="primary" icon={Plus} onClick={() => setShowCreate(true)}>Nuevo cronograma</Button>}
       </div>
 
       {/* Content */}
@@ -137,7 +141,7 @@ export default function SchedulesPage() {
             <CalendarRange size={36} style={{ color: 'var(--n-300)', margin: '0 auto 12px' }} />
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--n-700)', marginBottom: 6 }}>Sin cronogramas</div>
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 20 }}>Crea un cronograma ligado a un presupuesto para programar costos en el tiempo.</div>
-            <Button variant="primary" icon={Plus} onClick={() => setShowCreate(true)}>Crear primer cronograma</Button>
+            {canAdd && <Button variant="primary" icon={Plus} onClick={() => setShowCreate(true)}>Crear primer cronograma</Button>}
           </div>
         ) : (
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -184,7 +188,7 @@ export default function SchedulesPage() {
                     <td style={{ ...TD, textAlign: 'right' }}>
                       <span style={{ display: 'inline-flex', gap: 2 }}>
                         <IconButton icon={ArrowRight} title="Abrir" size={26} onClick={e => { e.stopPropagation(); navigate(`/schedule/${s.id}`) }} />
-                        <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={e => { e.stopPropagation(); setConfirmDel(s.id) }} />
+                        {canDelete && <IconButton icon={Trash2} title="Eliminar" size={26} danger onClick={e => { e.stopPropagation(); setConfirmDel(s.id) }} />}
                       </span>
                     </td>
                   </tr>

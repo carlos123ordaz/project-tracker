@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useArticles } from '../../hooks/useArticles'
+import { useAuth } from '../../hooks/useAuth'
 import type { Article } from '../../lib/types'
 import {
   Plus, Search, Pencil, Trash2, X,
@@ -12,6 +13,11 @@ const EMPTY: Omit<Article, 'id' | 'created_at' | 'updated_at'> = {
 }
 
 export default function ArticulosPage() {
+  const { hasPermission } = useAuth()
+  const canAdd    = hasPermission('compras:comparativos', 'add')
+  const canEdit   = hasPermission('compras:comparativos', 'edit')
+  const canDelete = hasPermission('compras:comparativos', 'delete')
+
   const { articles, loading, categories, createArticle, updateArticle, deleteArticle } = useArticles()
 
   const [search, setSearch] = useState('')
@@ -103,12 +109,14 @@ export default function ArticulosPage() {
             Catálogo de artículos y materiales para comparativos de precios
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-        >
-          <Plus size={15} /> Nuevo Artículo
-        </button>
+        {canAdd && (
+          <button
+            onClick={openCreate}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Plus size={15} /> Nuevo Artículo
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -160,7 +168,7 @@ export default function ArticulosPage() {
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--n-400)', fontSize: 13 }}>Cargando…</div>
       ) : filtered.length === 0 ? (
-        <EmptyState hasFilter={!!search || !!filterCat} onNew={openCreate} />
+        <EmptyState hasFilter={!!search || !!filterCat} onNew={openCreate} canAdd={canAdd} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {Object.entries(grouped).sort(([a], [b]) => {
@@ -233,12 +241,12 @@ export default function ArticulosPage() {
                         </td>
                         <td style={{ padding: '10px 12px', width: 80 }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button onClick={() => openEdit(a)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-600)' }}>
+                            {canEdit && <button onClick={() => openEdit(a)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-600)' }}>
                               <Pencil size={12} />
-                            </button>
-                            <button onClick={() => setConfirmDelete(a.id)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)' }}>
+                            </button>}
+                            {canDelete && <button onClick={() => setConfirmDelete(a.id)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)' }}>
                               <Trash2 size={12} />
-                            </button>
+                            </button>}
                           </div>
                         </td>
                       </tr>
@@ -357,7 +365,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   )
 }
 
-function EmptyState({ hasFilter, onNew }: { hasFilter: boolean; onNew: () => void }) {
+function EmptyState({ hasFilter, onNew, canAdd }: { hasFilter: boolean; onNew: () => void; canAdd?: boolean }) {
   return (
     <div style={{ padding: '52px 24px', textAlign: 'center', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12 }}>
       <Package size={36} style={{ color: 'var(--n-300)', marginBottom: 12 }} />
@@ -367,7 +375,7 @@ function EmptyState({ hasFilter, onNew }: { hasFilter: boolean; onNew: () => voi
       <div style={{ fontSize: 13, color: 'var(--n-400)', marginBottom: 20 }}>
         {hasFilter ? 'Ajusta los filtros' : 'Crea artículos para usarlos en tus comparativos de precios'}
       </div>
-      {!hasFilter && (
+      {!hasFilter && canAdd && (
         <button onClick={onNew} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           <Plus size={14} /> Crear artículo
         </button>

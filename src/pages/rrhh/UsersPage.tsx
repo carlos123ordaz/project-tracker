@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import {
   Plus, Pencil, Shield, UserX, UserCheck,
   Check, AlertCircle, Mail, Search, ChevronLeft, ChevronRight,
+  ChevronDown, ChevronUp,
 } from 'lucide-react'
 import { useUserProfiles, useModulePermissions } from '../../hooks/useUserProfiles'
 import { useAuth } from '../../hooks/useAuth'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { Button, IconButton } from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
-import { MODULES_LIST, type UserProfile, type ModulePermission } from '../../lib/types'
+import { SCREENS_LIST, type UserProfile, type ModulePermission } from '../../lib/types'
 
 const INPUT: React.CSSProperties = {
   height: 36, padding: '0 10px', fontSize: 13,
@@ -44,6 +45,7 @@ function Avatar({ name, email, size = 36 }: { name: string; email: string; size?
 function PermissionsModal({ user, onClose }: { user: UserProfile; onClose: () => void }) {
   const { permissions, loading, upsertPermission } = useModulePermissions(user.id)
   const [busy, setBusy] = useState<string | null>(null)
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(SCREENS_LIST.map(g => g.group)))
 
   if (user.is_superadmin) {
     return (
@@ -56,20 +58,46 @@ function PermissionsModal({ user, onClose }: { user: UserProfile; onClose: () =>
     )
   }
 
-  const getPermission = (module: string): ModulePermission | undefined =>
-    permissions.find(p => p.module === module)
+  const getPermission = (key: string): ModulePermission | undefined =>
+    permissions.find(p => p.module === key)
 
-  const toggle = async (module: string, field: 'can_view' | 'can_add' | 'can_edit' | 'can_delete') => {
-    setBusy(`${module}-${field}`)
-    const current = getPermission(module)
+  const toggle = async (key: string, field: 'can_view' | 'can_add' | 'can_edit' | 'can_delete') => {
+    setBusy(`${key}-${field}`)
+    const current = getPermission(key)
     const currentVal = current ? current[field] : false
     try {
-      await upsertPermission(module, { [field]: !currentVal })
+      await upsertPermission(key, { [field]: !currentVal })
     } catch (e: any) {
       alert(e.message)
     } finally {
       setBusy(null)
     }
+  }
+
+  const toggleGroupAll = async (group: typeof SCREENS_LIST[number], field: 'can_view' | 'can_add' | 'can_edit' | 'can_delete') => {
+    const allOn = group.screens.every(s => getPermission(s.key)?.[field])
+    const newVal = !allOn
+    for (const screen of group.screens) {
+      const current = getPermission(screen.key)
+      if ((current?.[field] ?? false) !== newVal) {
+        setBusy(`${screen.key}-${field}`)
+        try {
+          await upsertPermission(screen.key, { [field]: newVal })
+        } catch (e: any) {
+          alert(e.message)
+        }
+      }
+    }
+    setBusy(null)
+  }
+
+  const toggleGroupOpen = (group: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(group)) next.delete(group)
+      else next.add(group)
+      return next
+    })
   }
 
   return (
@@ -79,41 +107,90 @@ function PermissionsModal({ user, onClose }: { user: UserProfile; onClose: () =>
       {loading ? (
         <div style={{ textAlign: 'center', padding: 24, color: 'var(--n-400)', fontSize: 12.5 }}>Cargando...</div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: 520, overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--n-150)' }}>
-                <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: 'var(--n-700)', fontSize: 11.5 }}>Módulo</th>
+              <tr style={{ borderBottom: '1px solid var(--n-150)', position: 'sticky', top: 0, background: 'var(--n-0)', zIndex: 1 }}>
+                <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: 'var(--n-700)', fontSize: 11.5 }}>Pantalla</th>
                 {(['Ver', 'Agregar', 'Editar', 'Eliminar'] as const).map(h => (
-                  <th key={h} style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: 'var(--n-700)', fontSize: 11.5 }}>{h}</th>
+                  <th key={h} style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: 'var(--n-700)', fontSize: 11.5, width: 72 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {MODULES_LIST.map(({ key, label }, i) => {
-                const perm = getPermission(key)
+              {SCREENS_LIST.map(group => {
+                const isOpen = openGroups.has(group.group)
+                const FIELDS = ['can_view', 'can_add', 'can_edit', 'can_delete'] as const
                 return (
-                  <tr key={key} style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n-100)', background: i % 2 === 0 ? 'transparent' : 'var(--n-25)' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: 550, color: 'var(--n-900)' }}>{label}</td>
-                    {(['can_view', 'can_add', 'can_edit', 'can_delete'] as const).map(field => (
-                      <td key={field} style={{ textAlign: 'center', padding: '10px 12px' }}>
-                        <button
-                          disabled={busy === `${key}-${field}`}
-                          onClick={() => toggle(key, field)}
-                          style={{
-                            width: 24, height: 24, borderRadius: 6,
-                            border: '1.5px solid',
-                            borderColor: perm?.[field] ? 'var(--brand-600)' : 'var(--n-300)',
-                            background: perm?.[field] ? 'var(--brand-600)' : 'var(--n-0)',
-                            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            opacity: busy === `${key}-${field}` ? 0.5 : 1,
-                          }}
-                        >
-                          {perm?.[field] && <Check size={13} color="#fff" />}
-                        </button>
+                  <Fragment key={group.group}>
+                    {/* Group header */}
+                    <tr
+                      style={{ background: 'var(--n-50)', cursor: 'pointer', borderTop: '1px solid var(--n-150)' }}
+                      onClick={() => toggleGroupOpen(group.group)}
+                    >
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--n-800)', fontSize: 12.5 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {group.group}
+                          <span style={{ fontSize: 10.5, color: 'var(--n-400)', fontWeight: 500 }}>
+                            ({group.screens.length})
+                          </span>
+                        </div>
                       </td>
-                    ))}
-                  </tr>
+                      {FIELDS.map(field => {
+                        const allOn = group.screens.every(s => getPermission(s.key)?.[field])
+                        const someOn = !allOn && group.screens.some(s => getPermission(s.key)?.[field])
+                        return (
+                          <td key={field} style={{ textAlign: 'center', padding: '8px 12px' }}>
+                            <button
+                              onClick={e => { e.stopPropagation(); toggleGroupAll(group, field) }}
+                              style={{
+                                width: 24, height: 24, borderRadius: 6,
+                                border: '1.5px solid',
+                                borderColor: allOn ? 'var(--brand-600)' : someOn ? 'var(--brand-300)' : 'var(--n-300)',
+                                background: allOn ? 'var(--brand-600)' : someOn ? 'var(--brand-100)' : 'var(--n-0)',
+                                cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              }}
+                              title={`${allOn ? 'Quitar' : 'Dar'} acceso a todo el grupo`}
+                            >
+                              {allOn && <Check size={13} color="#fff" />}
+                              {someOn && <span style={{ width: 8, height: 2, background: 'var(--brand-600)', borderRadius: 1 }} />}
+                            </button>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                    {/* Screen rows */}
+                    {isOpen && group.screens.map((screen, i) => {
+                      const perm = getPermission(screen.key)
+                      return (
+                        <tr key={screen.key} style={{ borderTop: '1px solid var(--n-100)', background: i % 2 === 0 ? 'transparent' : 'var(--n-25)' }}>
+                          <td style={{ padding: '8px 12px 8px 32px', fontWeight: 500, color: 'var(--n-800)' }}>
+                            {screen.label}
+                            <span style={{ fontSize: 10.5, color: 'var(--n-400)', marginLeft: 6, fontFamily: 'monospace' }}>{screen.path}</span>
+                          </td>
+                          {FIELDS.map(field => (
+                            <td key={field} style={{ textAlign: 'center', padding: '8px 12px' }}>
+                              <button
+                                disabled={busy === `${screen.key}-${field}`}
+                                onClick={() => toggle(screen.key, field)}
+                                style={{
+                                  width: 24, height: 24, borderRadius: 6,
+                                  border: '1.5px solid',
+                                  borderColor: perm?.[field] ? 'var(--brand-600)' : 'var(--n-300)',
+                                  background: perm?.[field] ? 'var(--brand-600)' : 'var(--n-0)',
+                                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  opacity: busy === `${screen.key}-${field}` ? 0.5 : 1,
+                                }}
+                              >
+                                {perm?.[field] && <Check size={13} color="#fff" />}
+                              </button>
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                  </Fragment>
                 )
               })}
             </tbody>

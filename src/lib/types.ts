@@ -245,6 +245,79 @@ export const MODULES_LIST = [
   { key: 'configuracion', label: 'Configuración' },
 ] as const
 
+export const SCREENS_LIST: { group: string; screens: { key: string; label: string; path: string }[] }[] = [
+  {
+    group: 'Proyectos',
+    screens: [
+      { key: 'proyectos:dashboard',     label: 'Dashboard',          path: '/dashboard' },
+      { key: 'proyectos:mis-proyectos', label: 'Mis Proyectos',      path: '/projects' },
+      { key: 'proyectos:kanban',        label: 'Kanban',             path: '/kanban' },
+      { key: 'proyectos:timeline',      label: 'Timeline',           path: '/timeline' },
+      { key: 'proyectos:consolidado',   label: 'Consolidado',        path: '/consolidated' },
+      { key: 'proyectos:calendario',    label: 'Calendario',         path: '/calendar' },
+      { key: 'proyectos:overview',      label: 'Overview',           path: '/overview' },
+      { key: 'proyectos:ejecucion',     label: 'Proy. Ejecución',   path: '/ingenieria/tareas/362' },
+      { key: 'proyectos:programar',     label: 'Programar',          path: '/schedule' },
+    ],
+  },
+  {
+    group: 'Ventas',
+    screens: [
+      { key: 'ventas:presupuestos',     label: 'Presupuestos',       path: '/budgets' },
+      { key: 'ventas:libro',            label: 'Libro',              path: '/libro' },
+      { key: 'ventas:cotizaciones',     label: 'Cotizaciones',       path: '/cotizaciones' },
+      { key: 'ventas:horas-hombre',     label: 'Horas Hombre',       path: '/cotizaciones/personal' },
+      { key: 'ventas:proy-cotizaciones', label: 'Proy. Cotizaciones', path: '/ingenieria/tareas/316' },
+    ],
+  },
+  {
+    group: 'Compras',
+    screens: [
+      { key: 'compras:comparativos',    label: 'Comparativos',           path: '/compras' },
+      { key: 'compras:proveedores',     label: 'Proveedores',            path: '/compras/proveedores' },
+      { key: 'compras:seguimiento',     label: 'Seguimiento Gestión',    path: '/compras/seguimiento' },
+      { key: 'compras:bom',             label: 'Solicitud Compra BOM',   path: '/compras/bom' },
+      { key: 'compras:solicitudes',     label: 'Solicitudes Boletos',    path: '/compras/solicitudes' },
+      { key: 'compras:locales',         label: 'Compras Locales',        path: '/compras/tareas/91' },
+      { key: 'compras:locales-dash',   label: 'Dashboard Compras',      path: '/compras/tareas/91/dashboard' },
+      { key: 'compras:importaciones',   label: 'Importaciones',          path: '/compras/tareas/85' },
+    ],
+  },
+  {
+    group: 'RRHH',
+    screens: [
+      { key: 'rrhh:equipo',       label: 'Equipo',        path: '/rrhh/equipo' },
+      { key: 'rrhh:asistencia',   label: 'Asistencia',    path: '/rrhh/asistencia' },
+      { key: 'rrhh:dashboard-hh', label: 'Dashboard HH',  path: '/rrhh/hh' },
+    ],
+  },
+  {
+    group: 'Comercial',
+    screens: [
+      { key: 'comercial:deals',     label: 'Deals CRM',  path: '/comercial/deals' },
+      { key: 'comercial:dashboard', label: 'Dashboard',   path: '/comercial/deals/dashboard' },
+    ],
+  },
+  {
+    group: 'Almacén',
+    screens: [
+      { key: 'almacen:dashboard',    label: 'Dashboard',             path: '/almacen' },
+      { key: 'almacen:equipos',      label: 'Equipos & Consumibles', path: '/almacen/equipos' },
+      { key: 'almacen:kardex',       label: 'Kardex',                path: '/almacen/kardex' },
+      { key: 'almacen:ubicaciones',  label: 'Ubicaciones',           path: '/almacen/ubicaciones' },
+      { key: 'almacen:pedidos',      label: 'Pedidos',               path: '/almacen/pedidos' },
+      { key: 'almacen:recepciones',  label: 'Recepciones',           path: '/almacen/recepciones' },
+      { key: 'almacen:despachos',    label: 'Despachos',             path: '/almacen/despachos' },
+    ],
+  },
+  {
+    group: 'Configuración',
+    screens: [
+      { key: 'configuracion:settings', label: 'Configuración', path: '/settings' },
+    ],
+  },
+]
+
 // ── Compras ───────────────────────────────────────────────────
 
 export type ComparisonStatus = 'Borrador' | 'En Evaluación' | 'Aprobado' | 'Cerrado'

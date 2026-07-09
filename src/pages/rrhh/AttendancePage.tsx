@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   LogIn, LogOut, Clock, CheckCircle, AlertCircle,
-  Search, Calendar, ChevronDown, ChevronUp, X, MapPin, MapPinOff,
+  Search, Calendar, ChevronDown, ChevronUp, X, MapPin, MapPinOff, Download,
 } from 'lucide-react'
 import { useAttendance } from '../../hooks/useAttendance'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
+import { exportAttendanceExcel } from '../../lib/exportAttendanceExcel'
 import {
   ATTENDANCE_MOTIVES,
   ATTENDANCE_CONDITIONS,
@@ -608,11 +609,28 @@ export default function AttendancePage() {
   const [filterUser,   setFilterUser]   = useState('')
   const [filterDate,   setFilterDate]   = useState(() => new Date().toISOString().split('T')[0])
 
+  const [exporting, setExporting] = useState(false)
+
   const { records, loading, refetch, checkIn, checkOut } = useAttendance(
     isSuperAdmin ? undefined : profile?.id,
     filterDate || undefined,
   )
   const dateInputRef = useRef<HTMLInputElement>(null)
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      await exportAttendanceExcel({
+        userId: isSuperAdmin ? undefined : profile?.id,
+        dateFilter: filterDate || undefined,
+        filterUser: filterUser || undefined,
+      })
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const today    = new Date().toISOString().split('T')[0]
   const todayRec = records.find(r => r.date === today && r.collaborator_id === profile?.id)
@@ -858,6 +876,17 @@ export default function AttendancePage() {
               }}
             />
           </div>
+        )}
+
+        {isSuperAdmin && (
+          <Button
+            icon={Download}
+            variant="secondary"
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? 'Exportando...' : 'Exportar'}
+          </Button>
         )}
       </div>
 

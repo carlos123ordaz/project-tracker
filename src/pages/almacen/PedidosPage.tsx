@@ -33,7 +33,9 @@ const TD: React.CSSProperties = { padding: '10px 12px', fontSize: 12.5 }
 
 export default function PedidosPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const canAdd    = hasPermission('almacen:pedidos', 'add')
+  const canDelete = hasPermission('almacen:pedidos', 'delete')
   const [filterEstado, setFilterEstado] = useState<AlmacenPedidoEstado | 'Todos'>('Todos')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -118,17 +120,19 @@ export default function PedidosPage() {
         >
           <Download size={13} /> Exportar
         </button>
-        <button
-          onClick={() => { setForm(f => ({ ...f, solicitado_por: '', asunto: '', proveedor_sugerido: '', fecha_requerida: '', observaciones: '', estado: 'En Revisión' })); setError(null); setShowModal(true) }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 7,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          <Plus size={14} /> Nuevo pedido
-        </button>
+        {canAdd && (
+          <button
+            onClick={() => { setForm(f => ({ ...f, solicitado_por: '', asunto: '', proveedor_sugerido: '', fecha_requerida: '', observaciones: '', estado: 'En Revisión' })); setError(null); setShowModal(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 7,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Plus size={14} /> Nuevo pedido
+          </button>
+        )}
       </div>
 
       {/* Status filter tabs */}
@@ -234,15 +238,17 @@ export default function PedidosPage() {
                             {p.estado}
                           </span>
                         </td>
-                        <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setConfirmDelete(p)}
-                            style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
+                        {canDelete && (
+                          <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => setConfirmDelete(p)}
+                              style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-400)', borderRadius: 5 }}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })}
