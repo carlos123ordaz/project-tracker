@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, X, Save, ChevronDown, Search, Mail } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, X, Save, ChevronDown, Search, Mail, Download } from 'lucide-react'
 import { useAlmacenPedidoDetail, usePedidoEstadoHistorial } from '../../hooks/useAlmacenPedidos'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 
 const API_BASE   = import.meta.env.VITE_API_URL   ?? 'http://localhost:8000'
 const LS_DESTINATARIOS_KEY = 'almacen_pedido_email_destinatarios'
-import type { AlmacenPedidoEstado, AlmacenPedidoItem } from '../../lib/types'
-import { ALMACEN_PEDIDO_ESTADOS } from '../../lib/types'
+import type { AlmacenPedidoEstado, AlmacenPedidoItem, AlmacenPedidoItemEstado } from '../../lib/types'
+import { ALMACEN_PEDIDO_ESTADOS, ALMACEN_PEDIDO_ITEM_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = {
   'En Revisión':            { bg: 'var(--n-100)',     color: 'var(--n-600)'     },
@@ -24,6 +24,13 @@ const estadoColor: Record<AlmacenPedidoEstado, { bg: string; color: string }> = 
   'Cancelado':              { bg: 'var(--red-50)',    color: 'var(--red-600)'   },
 }
 
+const itemEstadoColor: Record<string, { bg: string; color: string }> = {
+  'Pendiente':  { bg: 'var(--amber-50)',  color: 'var(--amber-600)' },
+  'En Proceso': { bg: 'var(--blue-50)',   color: 'var(--blue-600)'  },
+  'Recibido':   { bg: 'var(--green-50)',  color: 'var(--green-600)' },
+  'Cancelado':  { bg: 'var(--red-50)',    color: 'var(--red-600)'   },
+}
+
 const EMPTY_ITEM = {
   equipo_id: null as string | null,
   descripcion: '',
@@ -32,14 +39,68 @@ const EMPTY_ITEM = {
   unidad: 'UND',
   precio_unitario: 0,
   observacion: null as string | null,
+  proveedor: null as string | null,
+  estado_item: null as AlmacenPedidoItemEstado | null,
+  fecha_requerida: null as string | null,
 }
 
 export default function PedidoEditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { pedido, items, loading, error, updatePedido, addItem, updateItem, removeItem } = useAlmacenPedidoDetail(id!)
+  const { pedido, items, loading, error, updatePedido, addItem, updateItem, removeItem, bulkUpdateItems, bulkRemoveItems } = useAlmacenPedidoDetail(id!)
   const { historial } = usePedidoEstadoHistorial(id!)
   const { user, profile } = useAuth()
+
+  // ── Selección múltiple ──
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkModal, setShowBulkModal] = useState(false)
+  const [bulkField, setBulkField] = useState<'proveedor' | 'estado_item' | 'fecha_requerida' | null>(null)
+  const [bulkValue, setBulkValue] = useState('')
+  const [bulkSaving, setBulkSaving] = useState(false)
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(items.map(i => i.id)))
+  }
+
+  const handleBulkUpdate = async () => {
+    if (!bulkField) return
+    setBulkSaving(true)
+    try {
+      const updates: Record<string, unknown> = {}
+      if (bulkField === 'proveedor') updates.proveedor = bulkValue || null
+      if (bulkField === 'estado_item') updates.estado_item = bulkValue || null
+      if (bulkField === 'fecha_requerida') updates.fecha_requerida = bulkValue || null
+      await bulkUpdateItems(Array.from(selectedIds), updates)
+      setShowBulkModal(false)
+      setSelectedIds(new Set())
+    } catch {}
+    setBulkSaving(false)
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkSaving(true)
+    try {
+      await bulkRemoveItems(Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setConfirmBulkDelete(false)
+    } catch {}
+    setBulkSaving(false)
+  }
+
+  const openBulkEdit = (field: 'proveedor' | 'estado_item' | 'fecha_requerida') => {
+    setBulkField(field)
+    setBulkValue('')
+    setShowBulkModal(true)
+  }
 
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emailForm, setEmailForm] = useState({
@@ -173,6 +234,9 @@ export default function PedidoEditorPage() {
       unidad: it.unidad,
       precio_unitario: it.precio_unitario,
       observacion: it.observacion,
+      proveedor: it.proveedor,
+      estado_item: it.estado_item,
+      fecha_requerida: it.fecha_requerida,
     })
     setItemError(null)
     setShowItemModal(true)
@@ -209,6 +273,31 @@ export default function PedidoEditorPage() {
   }
 
   const total = items.reduce((sum, it) => sum + it.cantidad * it.precio_unitario, 0)
+
+  const exportToExcel = () => {
+    const headers = ['Descripción', 'Cantidad', 'Aprobada', 'Unidad', 'P. Unitario', 'Total', 'Proveedor', 'Estado', 'Fecha Requerida', 'Observación']
+    const rows = items.map(it => [
+      it.descripcion,
+      it.cantidad,
+      it.cantidad_aprobada ?? '',
+      it.unidad,
+      it.precio_unitario,
+      (it.cantidad * it.precio_unitario).toFixed(2),
+      it.proveedor ?? '',
+      it.estado_item ?? '',
+      it.fecha_requerida ? new Date(it.fecha_requerida).toLocaleDateString('es-PE') : '',
+      it.observacion ?? '',
+    ])
+    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pedido_${String(pedido?.numero ?? 0).padStart(4, '0')}_items.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', padding: '7px 10px', fontSize: 13,
@@ -298,18 +387,64 @@ export default function PedidoEditorPage() {
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--n-800)' }}>
           Ítems del pedido ({items.length})
         </h3>
-        <button
-          onClick={openNewItem}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'var(--brand-600)', color: '#fff',
-            border: 'none', borderRadius: 7, padding: '7px 12px',
-            fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          <Plus size={13} /> Agregar ítem
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {items.length > 0 && (
+            <button
+              onClick={exportToExcel}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'var(--n-0)', color: 'var(--n-700)',
+                border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px',
+                fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <Download size={13} /> Exportar Excel
+            </button>
+          )}
+          <button
+            onClick={openNewItem}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'var(--brand-600)', color: '#fff',
+              border: 'none', borderRadius: 7, padding: '7px 12px',
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Plus size={13} /> Agregar ítem
+          </button>
+        </div>
       </div>
+
+      {/* Barra de acciones masivas (sticky) */}
+      {selectedIds.size > 0 && (
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 20,
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+          padding: '8px 14px', background: 'var(--brand-50)', border: '1px solid var(--brand-200)',
+          borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,.08)',
+        }}>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--brand-700)', marginRight: 4 }}>
+            {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+          </span>
+          <div style={{ width: 1, height: 18, background: 'var(--brand-200)' }} />
+          <button onClick={() => openBulkEdit('proveedor')} style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}>
+            Cambiar proveedor
+          </button>
+          <button onClick={() => openBulkEdit('estado_item')} style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}>
+            Cambiar estado
+          </button>
+          <button onClick={() => openBulkEdit('fecha_requerida')} style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600, border: '1px solid var(--n-200)', borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)', cursor: 'pointer' }}>
+            Cambiar fecha requerida
+          </button>
+          <div style={{ flex: 1 }} />
+          <button onClick={() => setConfirmBulkDelete(true)} style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600, border: '1px solid var(--red-200)', borderRadius: 6, background: 'var(--red-50)', color: 'var(--red-600)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Trash2 size={12} /> Eliminar
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} style={{ padding: '4px 8px', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', fontSize: 12 }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--n-400)', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
@@ -341,31 +476,55 @@ export default function PedidoEditorPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--n-100)' }}>
-                        {['Descripción', 'Cantidad', 'Aprobada', 'Unidad', 'P. Unitario', 'Total', 'Observación', ''].map(h => (
+                        <th style={{ padding: '7px 8px 7px 12px', width: 28 }}>
+                          <input type="checkbox" checked={selectedIds.size === items.length && items.length > 0} onChange={toggleSelectAll} style={{ cursor: 'pointer', accentColor: 'var(--brand-600)' }} />
+                        </th>
+                        {['Descripción', 'Cantidad', 'Aprobada', 'Unidad', 'P. Unitario', 'Total', 'Proveedor', 'Estado', 'F. Requerida', 'Observación', ''].map(h => (
                           <th key={h} style={{ padding: '7px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--n-400)' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {grupoItems.map(it => (
-                        <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)' }}>
-                          <td style={{ padding: '9px 12px', color: 'var(--n-900)', fontWeight: 500 }}>{it.descripcion}</td>
-                          <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>{it.cantidad}</td>
-                          <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? 'var(--green-600)' : 'var(--n-400)' }}>
-                            {it.cantidad_aprobada ?? '—'}
-                          </td>
-                          <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
-                          <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>S/ {it.precio_unitario.toFixed(2)}</td>
-                          <td style={{ padding: '9px 12px', fontWeight: 600, color: 'var(--n-900)' }}>S/ {(it.cantidad * it.precio_unitario).toFixed(2)}</td>
-                          <td style={{ padding: '9px 12px', color: 'var(--n-500)', fontSize: 12 }}>{it.observacion ?? '—'}</td>
-                          <td style={{ padding: '9px 12px' }}>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }} title="Editar"><Save size={13} /></button>
-                              <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }} title="Eliminar"><Trash2 size={13} /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {grupoItems.map(it => {
+                        const today = new Date().toISOString().split('T')[0]
+                        const isDelayed = it.fecha_requerida && it.fecha_requerida < today && it.estado_item !== 'Recibido' && it.estado_item !== 'Cancelado'
+                        const iec = it.estado_item ? (itemEstadoColor[it.estado_item] ?? { bg: 'var(--n-100)', color: 'var(--n-600)' }) : null
+                        const isSelected = selectedIds.has(it.id)
+                        return (
+                          <tr key={it.id} style={{ borderBottom: '1px solid var(--n-100)', background: isDelayed ? 'var(--red-50)' : isSelected ? 'var(--brand-25, var(--n-25))' : undefined }}>
+                            <td style={{ padding: '9px 8px 9px 12px', width: 28 }}>
+                              <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(it.id)} style={{ cursor: 'pointer', accentColor: 'var(--brand-600)' }} />
+                            </td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-900)', fontWeight: 500 }}>
+                              {it.descripcion}
+                              {isDelayed && <span style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--red-600)', fontWeight: 600 }}>RETRASADO</span>}
+                            </td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>{it.cantidad}</td>
+                            <td style={{ padding: '9px 12px', color: it.cantidad_aprobada != null ? 'var(--green-600)' : 'var(--n-400)' }}>
+                              {it.cantidad_aprobada ?? '—'}
+                            </td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-500)' }}>{it.unidad}</td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-700)' }}>S/ {it.precio_unitario.toFixed(2)}</td>
+                            <td style={{ padding: '9px 12px', fontWeight: 600, color: 'var(--n-900)' }}>S/ {(it.cantidad * it.precio_unitario).toFixed(2)}</td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-700)', fontSize: 12 }}>{it.proveedor ?? '—'}</td>
+                            <td style={{ padding: '9px 12px' }}>
+                              {iec ? (
+                                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: iec.bg, color: iec.color }}>{it.estado_item}</span>
+                              ) : <span style={{ color: 'var(--n-400)' }}>—</span>}
+                            </td>
+                            <td style={{ padding: '9px 12px', color: isDelayed ? 'var(--red-600)' : 'var(--n-600)', fontSize: 12, fontWeight: isDelayed ? 600 : 400, whiteSpace: 'nowrap' }}>
+                              {it.fecha_requerida ? new Date(it.fecha_requerida).toLocaleDateString('es-PE') : '—'}
+                            </td>
+                            <td style={{ padding: '9px 12px', color: 'var(--n-500)', fontSize: 12 }}>{it.observacion ?? '—'}</td>
+                            <td style={{ padding: '9px 12px' }}>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button onClick={() => openEditItem(it)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }} title="Editar"><Save size={13} /></button>
+                                <button onClick={() => removeItem(it.id)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)' }} title="Eliminar"><Trash2 size={13} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -518,6 +677,63 @@ export default function PedidoEditorPage() {
         </div>
       )}
 
+      {/* Modal edición masiva */}
+      {showBulkModal && bulkField && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowBulkModal(false)}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>
+                {bulkField === 'proveedor' && 'Cambiar proveedor'}
+                {bulkField === 'estado_item' && 'Cambiar estado'}
+                {bulkField === 'fecha_requerida' && 'Cambiar fecha requerida'}
+              </h3>
+              <button onClick={() => setShowBulkModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={16} /></button>
+            </div>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--n-600)' }}>
+              Se aplicará a <strong>{selectedIds.size}</strong> ítem{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}.
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              {bulkField === 'proveedor' && (
+                <input value={bulkValue} onChange={e => setBulkValue(e.target.value)} placeholder="Nombre del proveedor" style={inp()} autoFocus />
+              )}
+              {bulkField === 'estado_item' && (
+                <select value={bulkValue} onChange={e => setBulkValue(e.target.value)} style={inp()} autoFocus>
+                  <option value="">— Sin estado —</option>
+                  {ALMACEN_PEDIDO_ITEM_ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              )}
+              {bulkField === 'fecha_requerida' && (
+                <input type="date" value={bulkValue} onChange={e => setBulkValue(e.target.value)} style={inp()} autoFocus />
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={() => setShowBulkModal(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={handleBulkUpdate} disabled={bulkSaving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--brand-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: bulkSaving ? .6 : 1 }}>
+                {bulkSaving ? 'Aplicando…' : 'Aplicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmar eliminación masiva */}
+      {confirmBulkDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmBulkDelete(false)}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: 24, width: 380, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>¿Eliminar {selectedIds.size} ítem{selectedIds.size !== 1 ? 's' : ''}?</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--n-600)' }}>
+              Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={() => setConfirmBulkDelete(false)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+              <button onClick={handleBulkDelete} disabled={bulkSaving} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--red-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: bulkSaving ? .6 : 1 }}>
+                {bulkSaving ? 'Eliminando…' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal ítem */}
       {showItemModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemModal(false)}>
@@ -588,6 +804,23 @@ export default function PedidoEditorPage() {
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Precio unitario (S/)</label>
                 <input type="number" min={0} step={0.01} value={itemForm.precio_unitario} onChange={e => setItemForm(f => ({ ...f, precio_unitario: Number(e.target.value) }))} style={inp({ marginTop: 4 })} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Proveedor</label>
+                  <input value={itemForm.proveedor ?? ''} onChange={e => setItemForm(f => ({ ...f, proveedor: e.target.value || null }))} style={inp({ marginTop: 4 })} placeholder="Nombre del proveedor" />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Estado del ítem</label>
+                  <select value={itemForm.estado_item ?? ''} onChange={e => setItemForm(f => ({ ...f, estado_item: (e.target.value || null) as AlmacenPedidoItemEstado | null }))} style={inp({ marginTop: 4 })}>
+                    <option value="">— Sin estado —</option>
+                    {ALMACEN_PEDIDO_ITEM_ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Fecha requerida</label>
+                <input type="date" value={itemForm.fecha_requerida ?? ''} onChange={e => setItemForm(f => ({ ...f, fecha_requerida: e.target.value || null }))} style={inp({ marginTop: 4 })} />
               </div>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Observación</label>

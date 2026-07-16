@@ -138,6 +138,24 @@ export function useAlmacenPedidoDetail(id: string) {
     setItems(prev => prev.filter(it => it.id !== itemId))
   }
 
+  const bulkUpdateItems = async (ids: string[], updates: Record<string, unknown>) => {
+    const { error: err } = await supabase
+      .from('almacen_pedido_items')
+      .update(updates)
+      .in('id', ids)
+    if (err) throw new Error(err.message)
+    setItems(prev => prev.map(it => ids.includes(it.id) ? { ...it, ...updates } as AlmacenPedidoItem : it))
+  }
+
+  const bulkRemoveItems = async (ids: string[]) => {
+    const { error: err } = await supabase
+      .from('almacen_pedido_items')
+      .delete()
+      .in('id', ids)
+    if (err) throw new Error(err.message)
+    setItems(prev => prev.filter(it => !ids.includes(it.id)))
+  }
+
   const updatePedido = async (updates: Partial<AlmacenPedido>) => {
     const estadoAnterior = pedido?.estado
     const { data, error: err } = await supabase
@@ -155,7 +173,7 @@ export function useAlmacenPedidoDetail(id: string) {
     return data as AlmacenPedido
   }
 
-  return { pedido, items, loading, error, refetch: fetchAll, addItem, updateItem, removeItem, updatePedido }
+  return { pedido, items, loading, error, refetch: fetchAll, addItem, updateItem, removeItem, updatePedido, bulkUpdateItems, bulkRemoveItems }
 }
 
 // ── Historial de estados ────────────────────────────────────────

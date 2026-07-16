@@ -9,7 +9,7 @@ import type { AlmacenRecepcionEstado, AlmacenRecepcionItem, AlmacenEquipo } from
 import { ALMACEN_RECEPCION_ESTADOS } from '../../lib/types'
 
 const estadoColor: Record<AlmacenRecepcionEstado, { bg: string; color: string }> = {
-  'Borrador':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
+  'Pendiente':   { bg: 'var(--n-100)', color: 'var(--n-600)' },
   'Parcial':    { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
   'Completada': { bg: 'var(--green-50)', color: 'var(--green-600)' },
 }

@@ -87,6 +87,9 @@ CREATE TABLE IF NOT EXISTS almacen_pedido_items (
   unidad            TEXT NOT NULL DEFAULT 'UND',
   precio_unitario   NUMERIC NOT NULL DEFAULT 0,
   observacion       TEXT,
+  proveedor         TEXT,
+  estado_item       TEXT CHECK (estado_item IN ('Pendiente','En Proceso','Recibido','Cancelado')),
+  fecha_requerida   DATE,
   sort_order        INTEGER NOT NULL DEFAULT 0,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -103,8 +106,8 @@ CREATE TABLE IF NOT EXISTS almacen_recepciones (
   nro_factura      TEXT,
   guia_remision    TEXT,
   fecha_recepcion  DATE NOT NULL DEFAULT CURRENT_DATE,
-  estado           TEXT NOT NULL DEFAULT 'Borrador'
-                     CHECK (estado IN ('Borrador','Parcial','Completada')),
+  estado           TEXT NOT NULL DEFAULT 'Pendiente'
+                     CHECK (estado IN ('Pendiente','Parcial','Completada')),
   observaciones    TEXT,
   sort_order       INTEGER NOT NULL DEFAULT 0,
   created_by       UUID REFERENCES auth.users(id) ON DELETE SET NULL,

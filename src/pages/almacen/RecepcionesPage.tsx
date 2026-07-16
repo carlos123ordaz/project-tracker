@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 const estadoColor: Record<AlmacenRecepcionEstado, { bg: string; color: string }> = {
-  'Borrador':   { bg: 'var(--n-100)',    color: 'var(--n-600)'     },
+  'Pendiente':   { bg: 'var(--n-100)',    color: 'var(--n-600)'     },
   'Parcial':    { bg: 'var(--amber-50)', color: 'var(--amber-700)' },
   'Completada': { bg: 'var(--green-50)', color: 'var(--green-600)' },
 }
@@ -45,7 +45,7 @@ export default function RecepcionesPage() {
     pedido_id: null as string | null,
     proveedor: '', nro_factura: '', guia_remision: '',
     fecha_recepcion: new Date().toISOString().split('T')[0],
-    estado: 'Borrador' as AlmacenRecepcionEstado,
+    estado: 'Pendiente' as AlmacenRecepcionEstado,
     observaciones: '',
     created_by: user?.id ?? null,
   })
@@ -86,7 +86,7 @@ export default function RecepcionesPage() {
         </div>
         {canAdd && (
           <button
-            onClick={() => { setForm(f => ({ ...f, pedido_id: null, proveedor: '', nro_factura: '', guia_remision: '', observaciones: '', estado: 'Borrador' })); setError(null); setShowModal(true) }}
+            onClick={() => { setForm(f => ({ ...f, pedido_id: null, proveedor: '', nro_factura: '', guia_remision: '', observaciones: '', estado: 'Pendiente' })); setError(null); setShowModal(true) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 14px', borderRadius: 7,
@@ -237,7 +237,7 @@ export default function RecepcionesPage() {
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-600)' }}>Pedido asociado (opcional)</label>
                 <select value={form.pedido_id ?? ''} onChange={e => setForm(f => ({ ...f, pedido_id: e.target.value || null }))} style={inp({ marginTop: 4 })}>
                   <option value="">— Sin pedido —</option>
-                  {pedidos.filter(p => ['OC Emitida', 'En Tránsito', 'Recibido Parcialmente'].includes(p.estado)).map(p => (
+                  {pedidos.filter(p => ['Aprobado', 'OC Emitida', 'En Tránsito', 'Recibido Parcialmente'].includes(p.estado)).map(p => (
                     <option key={p.id} value={p.id}>#{String(p.numero).padStart(4, '0')} — {p.solicitado_por ?? 'Sin solicitante'}</option>
                   ))}
                 </select>

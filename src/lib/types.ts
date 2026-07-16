@@ -654,8 +654,8 @@ export const ALMACEN_PEDIDO_ESTADOS: AlmacenPedidoEstado[] = [
   'Enviado', 'Completado', 'Cancelado',
 ]
 
-export type AlmacenRecepcionEstado = 'Borrador' | 'Parcial' | 'Completada'
-export const ALMACEN_RECEPCION_ESTADOS: AlmacenRecepcionEstado[] = ['Borrador', 'Parcial', 'Completada']
+export type AlmacenRecepcionEstado = 'Pendiente' | 'Parcial' | 'Completada'
+export const ALMACEN_RECEPCION_ESTADOS: AlmacenRecepcionEstado[] = ['Pendiente', 'Parcial', 'Completada']
 
 export type AlmacenDespachoEstado = 'Borrador' | 'Despachado' | 'Entregado' | 'Cancelado'
 export const ALMACEN_DESPACHO_ESTADOS: AlmacenDespachoEstado[] = ['Borrador', 'Despachado', 'Entregado', 'Cancelado']
@@ -748,6 +748,9 @@ export interface AlmacenPedido {
   updated_at: string
 }
 
+export type AlmacenPedidoItemEstado = 'Pendiente' | 'En Proceso' | 'Recibido' | 'Cancelado'
+export const ALMACEN_PEDIDO_ITEM_ESTADOS: AlmacenPedidoItemEstado[] = ['Pendiente', 'En Proceso', 'Recibido', 'Cancelado']
+
 export interface AlmacenPedidoItem {
   id: string
   pedido_id: string
@@ -758,6 +761,9 @@ export interface AlmacenPedidoItem {
   unidad: string
   precio_unitario: number
   observacion: string | null
+  proveedor: string | null
+  estado_item: AlmacenPedidoItemEstado | null
+  fecha_requerida: string | null
   sort_order: number
   created_at: string
   equipo?: AlmacenEquipo | null
