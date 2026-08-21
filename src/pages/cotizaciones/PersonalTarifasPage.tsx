@@ -227,7 +227,7 @@ export default function PersonalTarifasPage() {
       {/* Preview section */}
       <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '16px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <Eye size={14} style={{ color: 'var(--brand-600)' }} />
+          <Eye size={14} style={{ color: 'var(--brand-700)' }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-800)' }}>Preview de tarifas diarias</span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 12, color: 'var(--n-600)' }}>Segmento:</span>
@@ -287,7 +287,7 @@ export default function PersonalTarifasPage() {
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>Esta acción no se puede deshacer.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setDelId(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={async () => { await deleteTarifa(delId); setDelId(null) }} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+              <button onClick={async () => { await deleteTarifa(delId); setDelId(null) }} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
         </div>

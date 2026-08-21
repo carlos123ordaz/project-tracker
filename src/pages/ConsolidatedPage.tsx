@@ -29,9 +29,9 @@ function TaskRow({ t, showProject, projectMap, getMember }: {
   const member = getMember(t.assigned_to || '')
   return (
     <tr
-      style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'rgba(254,226,226,0.30)' : 'transparent', transition: 'background .12s', cursor: 'default' }}
-      onMouseEnter={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.55)' : 'var(--n-25)'}
-      onMouseLeave={e => e.currentTarget.style.background = isLate ? 'rgba(254,226,226,0.30)' : 'transparent'}
+      style={{ borderTop: '1px solid var(--n-150)', background: isLate ? 'var(--row-danger)' : 'transparent', transition: 'background .12s', cursor: 'default' }}
+      onMouseEnter={e => e.currentTarget.style.background = isLate ? 'var(--row-danger-hover)' : 'var(--n-25)'}
+      onMouseLeave={e => e.currentTarget.style.background = isLate ? 'var(--row-danger)' : 'transparent'}
     >
       {showProject && (
         <td style={TD}>

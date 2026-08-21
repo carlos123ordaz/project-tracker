@@ -126,7 +126,7 @@ export default function ArticulosPage() {
           { label: 'Activos', value: articles.filter(a => a.is_active).length, color: 'var(--green-700)' },
           { label: 'Categorías', value: categories.length, color: 'var(--brand-700)' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '10px 18px' }}>
+          <div key={s.label} style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '10px 18px' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 1 }}>{s.label}</div>
           </div>
@@ -141,7 +141,7 @@ export default function ArticulosPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar artículo…"
-            style={{ width: '100%', paddingLeft: 32, paddingRight: 10, height: 34, border: '1px solid var(--n-200)', borderRadius: 8, fontSize: 12.5, color: 'var(--n-800)', background: '#fff', boxSizing: 'border-box' }}
+            style={{ width: '100%', paddingLeft: 32, paddingRight: 10, height: 34, border: '1px solid var(--n-200)', borderRadius: 8, fontSize: 12.5, color: 'var(--n-800)', background: 'var(--n-0)', boxSizing: 'border-box' }}
           />
         </div>
 
@@ -156,7 +156,7 @@ export default function ArticulosPage() {
         <select
           value={filterActive}
           onChange={e => setFilterActive(e.target.value as typeof filterActive)}
-          style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, color: 'var(--n-700)', cursor: 'pointer' }}
+          style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, color: 'var(--n-700)', cursor: 'pointer' }}
         >
           <option value="todos">Todos</option>
           <option value="activos">Solo activos</option>
@@ -189,7 +189,7 @@ export default function ArticulosPage() {
               </div>
 
               {/* Articles table */}
-              <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--n-150)', background: 'var(--n-25)' }}>
@@ -241,7 +241,7 @@ export default function ArticulosPage() {
                         </td>
                         <td style={{ padding: '10px 12px', width: 80 }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            {canEdit && <button onClick={() => openEdit(a)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-600)' }}>
+                            {canEdit && <button onClick={() => openEdit(a)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)' }}>
                               <Pencil size={12} />
                             </button>}
                             {canDelete && <button onClick={() => setConfirmDelete(a.id)} style={{ padding: '5px 7px', borderRadius: 6, border: '1px solid var(--red-100)', background: 'var(--red-50)', cursor: 'pointer', color: 'var(--red-500)' }}>
@@ -265,7 +265,7 @@ export default function ArticulosPage() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
         >
-          <div style={{ background: '#fff', borderRadius: 14, padding: '26px 26px 22px', width: '100%', maxWidth: 520, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 14, padding: '26px 26px 22px', width: '100%', maxWidth: 520, boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>
                 {editing ? 'Editar Artículo' : 'Nuevo Artículo'}
@@ -320,7 +320,7 @@ export default function ArticulosPage() {
             {err && <div style={{ marginTop: 12, fontSize: 12.5, color: 'var(--red-600)', background: 'var(--red-50)', padding: '8px 12px', borderRadius: 8 }}>{err}</div>}
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 13, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
               <button onClick={handleSave} disabled={saving} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
                 {saving ? 'Guardando…' : editing ? 'Guardar' : 'Crear artículo'}
               </button>
@@ -332,14 +332,14 @@ export default function ArticulosPage() {
       {/* Confirm Delete */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: 26, width: 360, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--n-0)', borderRadius: 14, padding: 26, width: 360, boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-900)', marginBottom: 8 }}>¿Eliminar artículo?</div>
             <div style={{ fontSize: 13, color: 'var(--n-500)', marginBottom: 22 }}>
               El artículo se eliminará del catálogo. Los ítems en comparativos existentes no se verán afectados.
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: '#fff', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={async () => { await deleteArticle(confirmDelete); setConfirmDelete(null) }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={async () => { await deleteArticle(confirmDelete); setConfirmDelete(null) }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
         </div>
@@ -355,7 +355,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
       style={{
         padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
         border: active ? '1.5px solid var(--brand-400)' : '1px solid var(--n-200)',
-        background: active ? 'var(--brand-50)' : '#fff',
+        background: active ? 'var(--brand-50)' : 'var(--n-0)',
         color: active ? 'var(--brand-700)' : 'var(--n-600)',
         transition: 'all .12s',
       }}
@@ -367,7 +367,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
 
 function EmptyState({ hasFilter, onNew, canAdd }: { hasFilter: boolean; onNew: () => void; canAdd?: boolean }) {
   return (
-    <div style={{ padding: '52px 24px', textAlign: 'center', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12 }}>
+    <div style={{ padding: '52px 24px', textAlign: 'center', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12 }}>
       <Package size={36} style={{ color: 'var(--n-300)', marginBottom: 12 }} />
       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--n-700)', marginBottom: 6 }}>
         {hasFilter ? 'Sin resultados' : 'No hay artículos en el catálogo'}
@@ -391,5 +391,5 @@ function FL({ children }: { children: React.ReactNode }) {
 const iStyle: React.CSSProperties = {
   width: '100%', padding: '8px 11px', borderRadius: 8,
   border: '1px solid var(--n-200)', fontSize: 13,
-  color: 'var(--n-800)', boxSizing: 'border-box', background: '#fff',
+  color: 'var(--n-800)', boxSizing: 'border-box', background: 'var(--n-0)',
 }

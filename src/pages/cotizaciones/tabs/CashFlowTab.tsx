@@ -249,14 +249,14 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
             type="month"
             value={fechaInicio}
             onChange={e => handleFechaChange(e.target.value)}
-            style={{ height: 28, padding: '0 8px', borderRadius: 6, border: '1px solid var(--n-200)', fontSize: 12, color: 'var(--n-800)', background: '#fff', cursor: 'pointer' }}
+            style={{ height: 28, padding: '0 8px', borderRadius: 6, border: '1px solid var(--n-200)', fontSize: 12, color: 'var(--n-800)', background: 'var(--n-0)', cursor: 'pointer' }}
           />
         </div>
         {saving && <span style={{ fontSize: 11, color: 'var(--brand-500)' }}>Guardando…</span>}
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10 }}>
+      <div style={{ overflowX: 'auto', background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10 }}>
         <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: LABEL_W + TOTAL_W + COL_W * numPeriodos + 32 }}>
           <thead>
             <tr>
@@ -309,14 +309,14 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
                     onChange={e => setNewEgresoDesc(e.target.value)}
                     placeholder="Descripción del egreso…"
                     onKeyDown={e => { if (e.key === 'Enter') handleAddEgreso(); if (e.key === 'Escape') setAddingEgreso(false) }}
-                    style={{ width: '100%', height: 26, padding: '0 6px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 12, background: '#fff' }}
+                    style={{ width: '100%', height: 26, padding: '0 6px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 12, background: 'var(--n-0)' }}
                   />
                 </td>
                 <td colSpan={numPeriodos + 1} style={tdBase} />
                 <td style={tdBase}>
                   <div style={{ display: 'flex', gap: 3 }}>
-                    <button onClick={handleAddEgreso} style={{ padding: '2px 4px', border: 'none', background: 'var(--green-600)', color: '#fff', borderRadius: 4, cursor: 'pointer', display: 'flex' }}><Check size={10} /></button>
-                    <button onClick={() => setAddingEgreso(false)} style={{ padding: '2px 4px', border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-500)', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>×</button>
+                    <button onClick={handleAddEgreso} style={{ padding: '2px 4px', border: 'none', background: 'var(--green-fill)', color: '#fff', borderRadius: 4, cursor: 'pointer', display: 'flex' }}><Check size={10} /></button>
+                    <button onClick={() => setAddingEgreso(false)} style={{ padding: '2px 4px', border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-500)', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>×</button>
                   </div>
                 </td>
               </tr>
@@ -324,7 +324,7 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
 
             {egresos.length === 0 && !addingEgreso && (
               <tr><td colSpan={numPeriodos + 3} style={{ padding: '12px 8px', color: 'var(--n-400)', fontSize: 12, textAlign: 'center' }}>
-                Sin egresos. <button onClick={() => setAddingEgreso(true)} style={{ background: 'none', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', fontSize: 12 }}>Agregar primero</button>
+                Sin egresos. <button onClick={() => setAddingEgreso(true)} style={{ background: 'none', border: 'none', color: 'var(--brand-700)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', fontSize: 12 }}>Agregar primero</button>
               </td></tr>
             )}
 
@@ -372,7 +372,7 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
                       value={newIngresoPct}
                       onChange={e => setNewIngresoPct(e.target.value)}
                       placeholder="%"
-                      style={{ width: 52, height: 26, padding: '0 4px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 11, textAlign: 'right', background: '#fff' }}
+                      style={{ width: 52, height: 26, padding: '0 4px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 11, textAlign: 'right', background: 'var(--n-0)' }}
                     />
                     <input
                       autoFocus
@@ -380,15 +380,15 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
                       onChange={e => setNewIngresoDesc(e.target.value)}
                       placeholder="Descripción del hito…"
                       onKeyDown={e => { if (e.key === 'Enter') handleAddIngreso(); if (e.key === 'Escape') setAddingIngreso(false) }}
-                      style={{ flex: 1, height: 26, padding: '0 6px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 12, background: '#fff' }}
+                      style={{ flex: 1, height: 26, padding: '0 6px', border: '1px solid var(--n-200)', borderRadius: 4, fontSize: 12, background: 'var(--n-0)' }}
                     />
                   </div>
                 </td>
                 <td colSpan={numPeriodos + 1} style={tdBase} />
                 <td style={tdBase}>
                   <div style={{ display: 'flex', gap: 3 }}>
-                    <button onClick={handleAddIngreso} style={{ padding: '2px 4px', border: 'none', background: 'var(--green-600)', color: '#fff', borderRadius: 4, cursor: 'pointer', display: 'flex' }}><Check size={10} /></button>
-                    <button onClick={() => setAddingIngreso(false)} style={{ padding: '2px 4px', border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-500)', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>×</button>
+                    <button onClick={handleAddIngreso} style={{ padding: '2px 4px', border: 'none', background: 'var(--green-fill)', color: '#fff', borderRadius: 4, cursor: 'pointer', display: 'flex' }}><Check size={10} /></button>
+                    <button onClick={() => setAddingIngreso(false)} style={{ padding: '2px 4px', border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-500)', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>×</button>
                   </div>
                 </td>
               </tr>
@@ -396,7 +396,7 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
 
             {ingresos.length === 0 && !addingIngreso && (
               <tr><td colSpan={numPeriodos + 3} style={{ padding: '12px 8px', color: 'var(--n-400)', fontSize: 12, textAlign: 'center' }}>
-                Sin ingresos. <button onClick={() => setAddingIngreso(true)} style={{ background: 'none', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', fontSize: 12 }}>Agregar primero</button>
+                Sin ingresos. <button onClick={() => setAddingIngreso(true)} style={{ background: 'none', border: 'none', color: 'var(--brand-700)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', fontSize: 12 }}>Agregar primero</button>
               </td></tr>
             )}
 
@@ -408,7 +408,7 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
             </tr>
 
             {/* Balance mensual */}
-            <tr style={{ background: 'var(--n-800)' }}>
+            <tr style={{ background: 'var(--inverted-bg-soft)' }}>
               <td style={{ ...tdBase, width: LABEL_W, paddingLeft: 8, fontWeight: 800, fontSize: 12, color: '#fff', borderBottom: 'none' }}>Balance del Mes</td>
               <td style={{ ...tdBase, width: TOTAL_W, textAlign: 'right', fontWeight: 700, fontSize: 11, color: 'var(--n-300)', borderBottom: 'none' }}>
                 {fmtBalance(totalIngresos - totalEgresos)}
@@ -422,7 +422,7 @@ export default function CashFlowTab({ cotizacionId, plazoSemanas, precioVentaTot
             </tr>
 
             {/* Flujo acumulado */}
-            <tr style={{ background: 'var(--n-900)' }}>
+            <tr style={{ background: 'var(--inverted-bg)' }}>
               <td style={{ ...tdBase, width: LABEL_W, paddingLeft: 8, fontWeight: 800, fontSize: 12, color: '#fff', borderBottom: 'none' }}>Flujo Acumulado</td>
               <td style={{ ...tdBase, width: TOTAL_W, borderBottom: 'none' }} />
               {acumuladoPorPeriodo.map((v, i) => (

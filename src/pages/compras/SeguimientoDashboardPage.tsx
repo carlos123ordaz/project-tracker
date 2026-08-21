@@ -10,22 +10,22 @@ import { differenceInDays, parseISO } from 'date-fns'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 const STATUS_COLOR = {
-  'CULMINADO':  '#22c55e',
-  'EN PROCESO': '#6366f1',
-  'PENDIENTE':  '#94a3b8',
+  'CULMINADO':  'var(--green-500)',
+  'EN PROCESO': 'var(--indigo-600)',
+  'PENDIENTE':  'var(--n-500)',
 }
 
 const PRIO_COLOR = {
-  'ALTO':  '#ef4444',
-  'MEDIO': '#f59e0b',
-  'BAJO':  '#22c55e',
+  'ALTO':  'var(--red-500)',
+  'MEDIO': 'var(--amber-500)',
+  'BAJO':  'var(--green-500)',
 }
 
 function KpiCard({ label, value, sub, color, Icon }: {
   label: string; value: string | number; sub?: string; color: string; Icon: React.ElementType
 }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
       <div style={{ width: 34, height: 34, borderRadius: 8, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon size={16} style={{ color }} />
       </div>
@@ -121,13 +121,13 @@ export default function SeguimientoDashboardPage() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8, marginBottom: 14 }}>
-        <KpiCard label="Total tareas"    value={stats.total}        color="#6366f1" Icon={TrendingUp}   />
-        <KpiCard label="Culminadas"      value={stats.culminados}   color="#22c55e" Icon={CheckCircle2} sub={`${Math.round(stats.culminados / Math.max(stats.total,1) * 100)}%`} />
-        <KpiCard label="En proceso"      value={stats.enProceso}    color="#6366f1" Icon={Clock}        />
-        <KpiCard label="Pendientes"      value={stats.pendientes}   color="#94a3b8" Icon={AlertCircle}  />
-        <KpiCard label="Avance prom."    value={`${stats.avgProgress}%`} color="#f59e0b" Icon={TrendingUp} />
+        <KpiCard label="Total tareas"    value={stats.total}        color="var(--indigo-600)" Icon={TrendingUp}   />
+        <KpiCard label="Culminadas"      value={stats.culminados}   color="var(--green-500)" Icon={CheckCircle2} sub={`${Math.round(stats.culminados / Math.max(stats.total,1) * 100)}%`} />
+        <KpiCard label="En proceso"      value={stats.enProceso}    color="var(--indigo-600)" Icon={Clock}        />
+        <KpiCard label="Pendientes"      value={stats.pendientes}   color="var(--n-500)" Icon={AlertCircle}  />
+        <KpiCard label="Avance prom."    value={`${stats.avgProgress}%`} color="var(--amber-500)" Icon={TrendingUp} />
         {stats.vencidas > 0 && (
-          <KpiCard label="Vencidas" value={stats.vencidas} color="#ef4444" Icon={AlertCircle} sub="Sin completar" />
+          <KpiCard label="Vencidas" value={stats.vencidas} color="var(--red-500)" Icon={AlertCircle} sub="Sin completar" />
         )}
       </div>
 
@@ -174,7 +174,7 @@ export default function SeguimientoDashboardPage() {
               <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={90} />
               <Tooltip />
-              <Bar dataKey="value" fill="#6366f1" radius={[0, 3, 3, 0]} name="Tareas" />
+              <Bar dataKey="value" fill="var(--indigo-600)" radius={[0, 3, 3, 0]} name="Tareas" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -196,11 +196,11 @@ export default function SeguimientoDashboardPage() {
               <tr key={r.name} style={{ borderBottom: i < stats.byResponsable.length - 1 ? '1px solid var(--n-100)' : undefined }}>
                 <td style={{ padding: '6px 8px', fontWeight: 600, color: 'var(--n-800)', whiteSpace: 'nowrap' }}>{r.name}</td>
                 <td style={{ padding: '6px 8px', color: 'var(--n-600)', textAlign: 'center' }}>{r.total}</td>
-                <td style={{ padding: '6px 8px', color: '#22c55e', fontWeight: 600, textAlign: 'center' }}>{r.done}</td>
+                <td style={{ padding: '6px 8px', color: 'var(--green-500)', fontWeight: 600, textAlign: 'center' }}>{r.done}</td>
                 <td style={{ padding: '6px 8px', minWidth: 90 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ flex: 1, height: 5, background: 'var(--n-150)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${r.pct}%`, background: r.pct === 100 ? '#22c55e' : '#6366f1', borderRadius: 3 }} />
+                      <div style={{ height: '100%', width: `${r.pct}%`, background: r.pct === 100 ? 'var(--green-500)' : 'var(--indigo-600)', borderRadius: 3 }} />
                     </div>
                     <span style={{ fontSize: 10, color: 'var(--n-500)', fontWeight: 600, minWidth: 26 }}>{r.pct}%</span>
                   </div>
@@ -216,32 +216,32 @@ export default function SeguimientoDashboardPage() {
 
         <CollapsePanel panelKey="vencidas" open={openPanels.vencidas} onToggle={toggle}
           label="Tareas vencidas" count={stats.grupoVencidas.length}
-          accentColor="#ef4444" bgColor="#fef2f2" borderColor="#fecaca">
+          accentColor="var(--red-500)" bgColor="var(--red-50)" borderColor="var(--red-200)">
           {stats.grupoVencidas.length === 0
             ? <EmptyMsg text="Sin tareas vencidas" />
             : stats.grupoVencidas.map(t => (
               <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
-                badge={`${Math.abs((t as any).daysLeft)}d vencida`} badgeColor="#dc2626" badgeBg="#fee2e2"
+                badge={`${Math.abs((t as any).daysLeft)}d vencida`} badgeColor="var(--red-600)" badgeBg="var(--red-100)"
                 prioridad={t.prioridad} nota={t.nota} />
             ))}
         </CollapsePanel>
 
         <CollapsePanel panelKey="proximas" open={openPanels.proximas} onToggle={toggle}
           label="Próximas a vencer (≤7 días)" count={stats.grupoProximas.length}
-          accentColor="#f59e0b" bgColor="#fefce8" borderColor="#fde68a">
+          accentColor="var(--amber-500)" bgColor="var(--amber-50)" borderColor="var(--amber-200)">
           {stats.grupoProximas.length === 0
             ? <EmptyMsg text="Sin tareas próximas a vencer" />
             : stats.grupoProximas.map(t => (
               <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
                 badge={(t as any).daysLeft === 0 ? 'Hoy' : `${(t as any).daysLeft}d`}
-                badgeColor="#92400e" badgeBg="#fef3c7"
+                badgeColor="var(--amber-700)" badgeBg="var(--amber-100)"
                 prioridad={t.prioridad} nota={t.nota} />
             ))}
         </CollapsePanel>
 
         <CollapsePanel panelKey="sinVencer" open={openPanels.sinVencer} onToggle={toggle}
           label="Sin fecha de vencimiento" count={stats.grupoSinVencer.length}
-          accentColor="#94a3b8" bgColor="var(--n-50)" borderColor="var(--n-200)">
+          accentColor="var(--n-500)" bgColor="var(--n-50)" borderColor="var(--n-200)">
           {stats.grupoSinVencer.length === 0
             ? <EmptyMsg text="Todas las tareas pendientes tienen fecha" />
             : stats.grupoSinVencer.map(t => (
@@ -253,24 +253,24 @@ export default function SeguimientoDashboardPage() {
 
         <CollapsePanel panelKey="enProceso" open={openPanels.enProceso} onToggle={toggle}
           label="En proceso" count={stats.grupoEnProceso.length}
-          accentColor="#6366f1" bgColor="#eef2ff" borderColor="#c7d2fe">
+          accentColor="var(--indigo-600)" bgColor="var(--indigo-50)" borderColor="var(--indigo-200)">
           {stats.grupoEnProceso.length === 0
             ? <EmptyMsg text="Sin tareas en proceso" />
             : stats.grupoEnProceso.map(t => (
               <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
-                badge={`${Math.round(t.status * 100)}%`} badgeColor="#4338ca" badgeBg="#e0e7ff"
+                badge={`${Math.round(t.status * 100)}%`} badgeColor="var(--indigo-700)" badgeBg="var(--indigo-100)"
                 prioridad={t.prioridad} nota={t.nota} />
             ))}
         </CollapsePanel>
 
         <CollapsePanel panelKey="completadas" open={openPanels.completadas} onToggle={toggle}
           label="Completadas" count={stats.grupoCompletadas.length}
-          accentColor="#22c55e" bgColor="#f0fdf4" borderColor="#bbf7d0">
+          accentColor="var(--green-500)" bgColor="var(--green-50)" borderColor="var(--green-200)">
           {stats.grupoCompletadas.length === 0
             ? <EmptyMsg text="Sin tareas completadas aún" />
             : stats.grupoCompletadas.map(t => (
               <TaskRow key={t.id} tarea={t.tarea} sub={t.solicitante} responsable={t.responsable}
-                badge="Culminado" badgeColor="#15803d" badgeBg="#dcfce7"
+                badge="Culminado" badgeColor="var(--green-700)" badgeBg="var(--green-100)"
                 prioridad={t.prioridad} nota={t.nota} />
             ))}
         </CollapsePanel>
@@ -285,10 +285,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 const cardS: React.CSSProperties = {
-  background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px',
+  background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '12px 14px',
 }
 
-const PRIO_DOT: Record<string, string> = { ALTO: '#ef4444', MEDIO: '#f59e0b', BAJO: '#22c55e' }
+const PRIO_DOT: Record<string, string> = { ALTO: 'var(--red-500)', MEDIO: 'var(--amber-500)', BAJO: 'var(--green-500)' }
 
 function CollapsePanel({ panelKey, open, onToggle, label, count, accentColor, bgColor, borderColor, children }: {
   panelKey: PanelKey; open: boolean; onToggle: (k: PanelKey) => void
@@ -296,9 +296,9 @@ function CollapsePanel({ panelKey, open, onToggle, label, count, accentColor, bg
   children: React.ReactNode
 }) {
   return (
-    <div style={{ border: `1px solid ${borderColor}`, borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+    <div style={{ border: `1px solid ${borderColor}`, borderRadius: 10, background: 'var(--n-0)', overflow: 'hidden' }}>
       <button onClick={() => onToggle(panelKey)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: open ? bgColor : '#fff', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}>
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: open ? bgColor : 'var(--n-0)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}>
         {open
           ? <ChevronDown size={14} style={{ color: accentColor, flexShrink: 0 }} />
           : <ChevronRight size={14} style={{ color: 'var(--n-400)', flexShrink: 0 }} />}
@@ -321,7 +321,7 @@ function TaskRow({ tarea, sub, responsable, badge, badgeColor, badgeBg, priorida
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 8px', borderRadius: 7, background: 'var(--n-50)', border: '1px solid var(--n-100)' }}>
-      <div style={{ width: 7, height: 7, borderRadius: '50%', background: PRIO_DOT[prioridad] ?? '#94a3b8', marginTop: 5, flexShrink: 0 }} />
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: PRIO_DOT[prioridad] ?? 'var(--n-500)', marginTop: 5, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-800)', wordBreak: 'break-word' }}>{tarea}</div>
         <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 1 }}>

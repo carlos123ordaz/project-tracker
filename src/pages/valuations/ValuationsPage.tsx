@@ -146,7 +146,7 @@ export default function ValuationsPage() {
       {chartData.length > 0 && (
         <div className="card" style={{ padding: '16px 16px 8px', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <TrendingUp size={15} style={{ color: 'var(--brand-600)' }} />
+            <TrendingUp size={15} style={{ color: 'var(--brand-700)' }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-700)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Curva de Avance
             </span>

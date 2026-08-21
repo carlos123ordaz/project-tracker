@@ -335,7 +335,7 @@ function UserCard({
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
             {p.is_superadmin && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--brand-100)' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--brand-100)' }}>
                 SUPERADMIN
               </span>
             )}
@@ -576,7 +576,7 @@ export default function UsersPage() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
                       {p.is_superadmin && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '1px 5px', borderRadius: 3, border: '1px solid var(--brand-100)' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '1px 5px', borderRadius: 3, border: '1px solid var(--brand-100)' }}>
                           SUPERADMIN
                         </span>
                       )}

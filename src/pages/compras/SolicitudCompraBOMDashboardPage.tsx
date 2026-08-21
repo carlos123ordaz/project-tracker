@@ -10,17 +10,17 @@ import { BOMNavTabs } from './BOMNavTabs'
 // ── Colores ────────────────────────────────────────────────────────────────────
 
 const ESTADO_COLOR: Record<string, string> = {
-  'COMPRADO':   '#22c55e',
-  'EN PROCESO': '#6366f1',
-  'PENDIENTE':  '#94a3b8',
+  'COMPRADO':   'var(--green-500)',
+  'EN PROCESO': 'var(--indigo-600)',
+  'PENDIENTE':  'var(--n-500)',
 }
 
 const PROCESO_COLOR: Record<string, string> = {
-  'Compra':      '#6366f1',
-  'Fabricación': '#f59e0b',
+  'Compra':      'var(--indigo-600)',
+  'Fabricación': 'var(--amber-500)',
 }
 
-const PROV_COLOR = ['#6366f1', '#22c55e', '#3b82f6', '#f59e0b', '#a855f7']
+const PROV_COLOR = ['var(--indigo-600)', 'var(--green-500)', '#3b82f6', 'var(--amber-500)', '#a855f7']
 
 const PROVEEDORES = [
   { key: 'polimetales' as const,     label: 'Polimetales' },
@@ -36,7 +36,7 @@ function KpiCard({ label, value, sub, color, Icon }: {
   label: string; value: string | number; sub?: string; color: string; Icon: React.ElementType
 }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 38, height: 38, borderRadius: 10, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon size={18} style={{ color }} />
       </div>
@@ -54,7 +54,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 const cardS: React.CSSProperties = {
-  background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px',
+  background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px',
 }
 
 // ── Página ─────────────────────────────────────────────────────────────────────
@@ -140,17 +140,17 @@ export default function SolicitudCompraBOMDashboardPage() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: 10, marginBottom: 16 }}>
-        <KpiCard label="Total ítems"     value={stats.total}        color="#6366f1" Icon={Package}      />
-        <KpiCard label="Comprados"       value={stats.comprados}    color="#22c55e" Icon={CheckCircle2}
+        <KpiCard label="Total ítems"     value={stats.total}        color="var(--indigo-600)" Icon={Package}      />
+        <KpiCard label="Comprados"       value={stats.comprados}    color="var(--green-500)" Icon={CheckCircle2}
           sub={`${stats.pctComprado}% del total`} />
-        <KpiCard label="En proceso"      value={stats.enProceso}    color="#6366f1" Icon={Clock}        />
-        <KpiCard label="Pendientes"      value={stats.pendientes}   color="#94a3b8" Icon={AlertCircle}  />
-        <KpiCard label="Sin cotizar"     value={stats.sinCotizar.length} color="#ef4444" Icon={AlertCircle}
+        <KpiCard label="En proceso"      value={stats.enProceso}    color="var(--indigo-600)" Icon={Clock}        />
+        <KpiCard label="Pendientes"      value={stats.pendientes}   color="var(--n-500)" Icon={AlertCircle}  />
+        <KpiCard label="Sin cotizar"     value={stats.sinCotizar.length} color="var(--red-500)" Icon={AlertCircle}
           sub="sin precio registrado" />
         <KpiCard
           label="Inversión mínima estimada"
           value={`S/ ${stats.totalMinimo.toFixed(2)}`}
-          color="#f59e0b" Icon={DollarSign}
+          color="var(--amber-500)" Icon={DollarSign}
           sub="mejor precio por ítem"
         />
       </div>
@@ -197,7 +197,7 @@ export default function SolicitudCompraBOMDashboardPage() {
               <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={80} />
               <Tooltip />
-              <Bar dataKey="value" fill="#6366f1" radius={[0, 3, 3, 0]} name="Ítems" />
+              <Bar dataKey="value" fill="var(--indigo-600)" radius={[0, 3, 3, 0]} name="Ítems" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -239,7 +239,7 @@ export default function SolicitudCompraBOMDashboardPage() {
           ) : (
             <div style={{ maxHeight: 220, overflowY: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5 }}>
-                <thead style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
+                <thead style={{ position: 'sticky', top: 0, background: 'var(--n-0)', zIndex: 1 }}>
                   <tr style={{ borderBottom: '1px solid var(--n-100)' }}>
                     {['#', 'Descripción', 'Estado', 'Mejor precio'].map(h => (
                       <th key={h} style={{ padding: '5px 8px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: 'var(--n-500)' }}>{h}</th>
@@ -250,8 +250,8 @@ export default function SolicitudCompraBOMDashboardPage() {
                   {stats.pendientesConPrecio.map((it, i) => {
                     const vals = PROVEEDORES.map(p => ({ label: p.label, v: Number(it[p.key]) || 0 })).filter(x => x.v > 0)
                     const best = vals.length ? vals.reduce((a, b) => a.v < b.v ? a : b) : null
-                    const estColor = it.estado_cot === 'EN PROCESO' ? '#6366f1' : '#94a3b8'
-                    const estBg    = it.estado_cot === 'EN PROCESO' ? '#eef2ff' : 'var(--n-100)'
+                    const estColor = it.estado_cot === 'EN PROCESO' ? 'var(--indigo-600)' : 'var(--n-500)'
+                    const estBg    = it.estado_cot === 'EN PROCESO' ? 'var(--indigo-50)' : 'var(--n-100)'
                     return (
                       <tr key={it.id} style={{ borderBottom: i < stats.pendientesConPrecio.length - 1 ? '1px solid var(--n-100)' : undefined }}>
                         <td style={{ padding: '5px 8px', color: 'var(--n-400)', fontWeight: 700, fontSize: 10.5 }}>{it.item}</td>
@@ -259,7 +259,7 @@ export default function SolicitudCompraBOMDashboardPage() {
                         <td style={{ padding: '5px 8px' }}>
                           <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 20, background: estBg, color: estColor }}>{it.estado_cot}</span>
                         </td>
-                        <td style={{ padding: '5px 8px', fontWeight: 600, color: '#22c55e', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '5px 8px', fontWeight: 600, color: 'var(--green-500)', whiteSpace: 'nowrap' }}>
                           {best ? `${best.label}: S/ ${best.v.toFixed(2)}` : '—'}
                         </td>
                       </tr>

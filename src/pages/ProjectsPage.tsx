@@ -274,7 +274,7 @@ function ProjectsList({ rows, onEdit, onDelete, navigate, sort, toggleSort }: {
     >
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         {children}
-        <span style={{ opacity: sort.key === k ? 1 : 0.25, color: sort.key === k ? 'var(--brand-600)' : 'var(--n-400)', fontSize: 10 }}>
+        <span style={{ opacity: sort.key === k ? 1 : 0.25, color: sort.key === k ? 'var(--brand-700)' : 'var(--n-400)', fontSize: 10 }}>
           {sort.key === k && sort.dir === 'desc' ? '↓' : '↑'}
         </span>
       </span>

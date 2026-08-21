@@ -18,7 +18,7 @@ export function Pagination({
 
   const btnStyle = (disabled: boolean): React.CSSProperties => ({
     padding: '4px 12px', border: '1px solid var(--n-200)', borderRadius: 6,
-    background: '#fff', cursor: disabled ? 'default' : 'pointer',
+    background: 'var(--n-0)', cursor: disabled ? 'default' : 'pointer',
     fontSize: 12, color: 'var(--n-600)', opacity: disabled ? 0.4 : 1,
     fontWeight: 500,
   })
@@ -42,7 +42,7 @@ export function Pagination({
               disabled={loading}
               style={{
                 padding: '3px 6px', fontSize: 12, border: '1px solid var(--n-200)',
-                borderRadius: 6, background: '#fff', color: 'var(--n-700)',
+                borderRadius: 6, background: 'var(--n-0)', color: 'var(--n-700)',
                 cursor: 'pointer', outline: 'none',
               }}
             >

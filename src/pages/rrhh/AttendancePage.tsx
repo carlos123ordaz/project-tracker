@@ -328,7 +328,7 @@ function CheckOutModal({ record, onClose, onConfirm }: {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'var(--brand-50)', borderRadius: 8 }}>
-          <Clock size={15} style={{ color: 'var(--brand-600)', flexShrink: 0 }} />
+          <Clock size={15} style={{ color: 'var(--brand-700)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: 'var(--brand-700)' }}>
             Se registrará la hora actual: <strong>{now}</strong>
           </span>
@@ -473,7 +473,7 @@ function RecordCard({ r, showCollaborator }: { r: AttendanceRecord; showCollabor
           <DetailRow label="H. Reales"       value={fmtHours(r.real_hours)} />
           <DetailRow label="H. Extra"        value={
             r.extra_hours > 0
-              ? <span style={{ color: 'var(--brand-600)', fontWeight: 700 }}>{fmtHours(r.extra_hours)}</span>
+              ? <span style={{ color: 'var(--brand-700)', fontWeight: 700 }}>{fmtHours(r.extra_hours)}</span>
               : '—'
           } />
           {r.project_name && <DetailRow label="Proyecto" value={r.project_name} span />}
@@ -550,7 +550,7 @@ function DesktopTable({ records, showCollaborator }: { records: AttendanceRecord
                 <td style={{ ...TD, textAlign: 'center' }}>{fmtHours(r.real_hours)}</td>
                 <td style={{ ...TD, textAlign: 'center' }}>
                   {r.extra_hours > 0
-                    ? <span style={{ color: 'var(--brand-600)', fontWeight: 600 }}>{fmtHours(r.extra_hours)}</span>
+                    ? <span style={{ color: 'var(--brand-700)', fontWeight: 600 }}>{fmtHours(r.extra_hours)}</span>
                     : '—'}
                 </td>
                 <td style={TD}>
@@ -583,7 +583,7 @@ function DesktopTable({ records, showCollaborator }: { records: AttendanceRecord
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Ubicación de salida"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--brand-600)', textDecoration: 'none', padding: '3px 7px', borderRadius: 6, border: '1px solid var(--brand-200)', background: 'var(--brand-50)' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--brand-700)', textDecoration: 'none', padding: '3px 7px', borderRadius: 6, border: '1px solid var(--brand-200)', background: 'var(--brand-50)' }}
                         >
                           <MapPin size={10} /> Out
                         </a>
@@ -708,7 +708,7 @@ export default function AttendancePage() {
                 <div style={{
                   width: 48, height: 48, borderRadius: 12, flexShrink: 0,
                   background: isCheckedOut ? 'var(--green-50)' : isCheckedIn ? 'var(--brand-50)' : 'var(--n-100)',
-                  color: isCheckedOut ? 'var(--green-600)' : isCheckedIn ? 'var(--brand-600)' : 'var(--n-400)',
+                  color: isCheckedOut ? 'var(--green-600)' : isCheckedIn ? 'var(--brand-700)' : 'var(--n-400)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {isCheckedOut ? <CheckCircle size={22} /> : <Clock size={22} />}
@@ -734,7 +734,7 @@ export default function AttendancePage() {
                           <LogOut size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
                           {fmtTime(todayRec!.check_out_time)}
                         </span>
-                        <span style={{ color: 'var(--brand-600)', fontWeight: 600 }}>
+                        <span style={{ color: 'var(--brand-700)', fontWeight: 600 }}>
                           {fmtHours(todayRec!.real_hours)} reales
                         </span>
                         {todayRec!.extra_hours > 0 && (

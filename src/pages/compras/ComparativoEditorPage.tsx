@@ -251,7 +251,7 @@ export default function ComparativoEditorPage() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
       {/* ── Header (single unified bar) ── */}
-      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--n-150)', background: '#fff', padding: '0 20px' }}>
+      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--n-150)', background: 'var(--n-0)', padding: '0 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 46 }}>
           {/* Breadcrumb + title */}
           <button
@@ -270,7 +270,7 @@ export default function ComparativoEditorPage() {
             {comparison.title}
           </span>
           {projectName && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>
               <FolderOpen size={10} />{projectName}
             </span>
           )}
@@ -296,7 +296,7 @@ export default function ComparativoEditorPage() {
           <div style={{ width: 1, height: 16, background: 'var(--n-200)', flexShrink: 0 }} />
 
           {/* Action buttons */}
-          <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-700)', flexShrink: 0 }}>
+          <button onClick={openAddItem} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, cursor: 'pointer', color: 'var(--n-700)', flexShrink: 0 }}>
             <PackagePlus size={12} /> Ítem
           </button>
           <button
@@ -319,11 +319,11 @@ export default function ComparativoEditorPage() {
             {showStatusMenu && (
               <>
                 <div style={{ position: 'fixed', inset: 0, zIndex: 39 }} onClick={() => setShowStatusMenu(false)} />
-                <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 40, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 8, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 160 }}>
+                <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 40, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 8, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 160 }}>
                   {COMPARISON_STATUSES.map(s => {
                     const ss = STATUS_STYLE[s]
                     return (
-                      <button key={s} onClick={() => handleChangeStatus(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', border: 'none', cursor: 'pointer', background: comparison.status === s ? 'var(--n-50)' : '#fff', fontSize: 12.5, color: ss.color, textAlign: 'left' }}>
+                      <button key={s} onClick={() => handleChangeStatus(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', border: 'none', cursor: 'pointer', background: comparison.status === s ? 'var(--n-50)' : 'var(--n-0)', fontSize: 12.5, color: ss.color, textAlign: 'left' }}>
                         {comparison.status === s ? <Check size={11} /> : <span style={{ width: 11 }} />}
                         {s}
                       </button>
@@ -334,7 +334,7 @@ export default function ComparativoEditorPage() {
             )}
           </div>
 
-          <button onClick={openEditMeta} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-600)', flexShrink: 0 }}>
+          <button onClick={openEditMeta} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, cursor: 'pointer', color: 'var(--n-600)', flexShrink: 0 }}>
             <Pencil size={12} /> Editar
           </button>
         </div>
@@ -346,7 +346,7 @@ export default function ComparativoEditorPage() {
           <EmptyHint onAddItem={openAddItem} hasProject={!!comparison.project_id} />
         ) : (
           <div style={{ width: '100%' }}>
-            <table style={{ borderCollapse: 'collapse', background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--n-150)', width: '100%' }}>
+            <table style={{ borderCollapse: 'collapse', background: 'var(--n-0)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--n-150)', width: '100%' }}>
               <thead>
                 <tr style={{ background: 'var(--n-25)', borderBottom: '2px solid var(--n-150)' }}>
                   <TH width={36}>#</TH>
@@ -434,7 +434,7 @@ export default function ComparativoEditorPage() {
                                 onChange={e => setCellValue(e.target.value)}
                                 onBlur={() => commitEdit(item.id, cs.id)}
                                 onKeyDown={e => handleCellKeyDown(e, item.id, cs.id)}
-                                style={{ width: '100%', textAlign: 'right', padding: '2px 6px', border: '2px solid var(--brand-400)', borderRadius: 6, fontSize: 13, fontWeight: 600, background: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                                style={{ width: '100%', textAlign: 'right', padding: '2px 6px', border: '2px solid var(--brand-400)', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'var(--n-0)', outline: 'none', boxSizing: 'border-box' }}
                               />
                             ) : (
                               <div onClick={() => startEdit(item.id, cs.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 5, minHeight: 28 }}>
@@ -576,7 +576,7 @@ export default function ComparativoEditorPage() {
                   <div style={{ fontSize: 12, color: 'var(--n-400)', padding: '8px 12px' }}>Cargando insumos…</div>
                 )}
                 {!loadingInsumos && filteredInsumos.length > 0 && (
-                  <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid var(--n-150)', borderRadius: 8, background: '#fff' }}>
+                  <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid var(--n-150)', borderRadius: 8, background: 'var(--n-0)' }}>
                     {filteredInsumos.map(bi => (
                       <button
                         key={bi.id}
@@ -584,7 +584,7 @@ export default function ComparativoEditorPage() {
                         style={{
                           display: 'flex', alignItems: 'center', width: '100%', padding: '8px 12px',
                           border: 'none', cursor: 'pointer', textAlign: 'left',
-                          background: selectedBudgetItemId === bi.id ? 'var(--brand-50)' : '#fff',
+                          background: selectedBudgetItemId === bi.id ? 'var(--brand-50)' : 'var(--n-0)',
                           borderBottom: '1px solid var(--n-100)',
                           transition: 'background .1s',
                         }}
@@ -599,10 +599,10 @@ export default function ComparativoEditorPage() {
                             {[bi.code && `#${bi.code}`, bi.subtitle].filter(Boolean).join(' · ') || ' '}
                           </div>
                         </div>
-                        <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--brand-600)', background: 'var(--brand-50)', padding: '2px 6px', borderRadius: 5, marginLeft: 8, flexShrink: 0 }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '2px 6px', borderRadius: 5, marginLeft: 8, flexShrink: 0 }}>
                           {bi.unit}
                         </span>
-                        {selectedBudgetItemId === bi.id && <Check size={14} style={{ color: 'var(--brand-600)', marginLeft: 6 }} />}
+                        {selectedBudgetItemId === bi.id && <Check size={14} style={{ color: 'var(--brand-700)', marginLeft: 6 }} />}
                       </button>
                     ))}
                   </div>
@@ -724,7 +724,7 @@ function tdS({ center, right }: { center?: boolean; right?: boolean }): React.CS
 
 function EmptyHint({ onAddItem, hasProject }: { onAddItem: () => void; hasProject: boolean }) {
   return (
-    <div style={{ padding: '52px 24px', textAlign: 'center', background: '#fff', border: '1.5px dashed var(--n-200)', borderRadius: 14 }}>
+    <div style={{ padding: '52px 24px', textAlign: 'center', background: 'var(--n-0)', border: '1.5px dashed var(--n-200)', borderRadius: 14 }}>
       <PackagePlus size={28} style={{ color: 'var(--n-300)', marginBottom: 10 }} />
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-700)', marginBottom: 6 }}>Comparativo vacío</div>
       <div style={{ fontSize: 12.5, color: 'var(--n-400)', maxWidth: 400, margin: '0 auto 20px' }}>
@@ -742,7 +742,7 @@ function EmptyHint({ onAddItem, hasProject }: { onAddItem: () => void; hasProjec
 function Modal({ title, children, onClose, width = 460 }: { title: string; children: React.ReactNode; onClose: () => void; width?: number }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: width, boxShadow: 'var(--shadow-lg)', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px 18px', width: '100%', maxWidth: width, boxShadow: 'var(--shadow-lg)', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', margin: 0 }}>{title}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--n-500)' }}><X size={14} /></button>
@@ -756,7 +756,7 @@ function Modal({ title, children, onClose, width = 460 }: { title: string; child
 function ModalFooter({ onCancel, onSave, saving, label }: { onCancel: () => void; onSave: () => void; saving: boolean; label: string }) {
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-      <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
+      <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer', color: 'var(--n-700)' }}>Cancelar</button>
       <button onClick={onSave} disabled={saving} style={{ padding: '6px 16px', borderRadius: 7, border: 'none', background: saving ? 'var(--brand-300)' : 'var(--brand-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
         {saving ? 'Guardando…' : label}
       </button>
@@ -767,12 +767,12 @@ function ModalFooter({ onCancel, onSave, saving, label }: { onCancel: () => void
 function ConfirmModal({ title, body, onCancel, onConfirm }: { title: string; body: string; onCancel: () => void; onConfirm: () => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
+      <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 22px', width: 360, boxShadow: 'var(--shadow-lg)' }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)', marginBottom: 6 }}>{title}</div>
         <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>{body}</div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={onConfirm} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+          <button onClick={onCancel} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={onConfirm} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
         </div>
       </div>
     </div>
@@ -790,5 +790,5 @@ function ErrorMsg({ children }: { children: React.ReactNode }) {
 const iStyle: React.CSSProperties = {
   width: '100%', height: 32, padding: '0 10px', borderRadius: 6,
   border: '1px solid var(--n-200)', fontSize: 12.5,
-  color: 'var(--n-800)', boxSizing: 'border-box', background: '#fff',
+  color: 'var(--n-800)', boxSizing: 'border-box', background: 'var(--n-0)',
 }

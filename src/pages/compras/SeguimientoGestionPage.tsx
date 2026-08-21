@@ -14,9 +14,9 @@ const STATUS_STYLE: Record<StatusFinal, { bg: string; color: string; border: str
 }
 
 const PRIORIDAD_STYLE: Record<Prioridad, { bg: string; color: string }> = {
-  'ALTO':  { bg: '#fef2f2', color: '#dc2626' },
-  'MEDIO': { bg: '#fefce8', color: '#ca8a04' },
-  'BAJO':  { bg: '#f0fdf4', color: '#16a34a' },
+  'ALTO':  { bg: 'var(--red-50)',   color: 'var(--red-700)' },
+  'MEDIO': { bg: 'var(--amber-50)', color: 'var(--amber-700)' },
+  'BAJO':  { bg: 'var(--green-50)', color: 'var(--green-700)' },
 }
 
 const emptyForm = (): Omit<SeguimientoTareaInsert, 'sort_order'> => ({
@@ -343,7 +343,7 @@ export default function SeguimientoGestionPage() {
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>Esta acción no se puede deshacer.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
         </div>

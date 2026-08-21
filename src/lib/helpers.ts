@@ -75,3 +75,22 @@ export function makeSpark(seed: number, n = 14, base = 50, amp = 22): number[] {
   }
   return data
 }
+
+/** Pick the text color that stays legible on an arbitrary background hex.
+ *  Avatar/tag colors come from config, and mid-tone ones (amber, cyan, lime)
+ *  drop white text to ~2:1. Threshold is the WCAG relative-luminance crossover. */
+export function readableTextOn(bg?: string | null): string {
+  if (!bg || bg[0] !== '#') return '#fff'
+  const h = bg.length === 4
+    ? bg.slice(1).split('').map(c => parseInt(c + c, 16))
+    : [bg.slice(1, 3), bg.slice(3, 5), bg.slice(5, 7)].map(c => parseInt(c, 16))
+  if (h.some(isNaN)) return '#fff'
+  const lin = h.map(v => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4) })
+  const lum = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+  // Compare both candidates instead of using a luminance cutoff: mid-tone hues
+  // (cyan, emerald, blue) sit right at the crossover and a fixed threshold
+  // keeps handing them white at ~2.4:1.
+  const onWhite = 1.05 / (lum + 0.05)
+  const onDark  = (lum + 0.05) / 0.0596
+  return onDark >= onWhite ? '#15171c' : '#fff'
+}

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Bell, Search, ChevronDown, LogOut, Menu, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../hooks/useTheme'
-import { getInitials, getMemberColor } from '../../lib/helpers'
+import { getInitials, getMemberColor, readableTextOn } from '../../lib/helpers'
 
 const PAGE_TITLES: Record<string, string> = {
   '/':             'Dashboard',
@@ -124,7 +124,7 @@ export default function Header({ action, onMenuToggle }: HeaderProps) {
           >
             <span style={{
               width: 22, height: 22, borderRadius: 999,
-              background: avatarColor, color: '#fff',
+              background: avatarColor, color: readableTextOn(avatarColor),
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 9, fontWeight: 600,
             }}>

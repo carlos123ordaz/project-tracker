@@ -334,7 +334,7 @@ export default function DealsGanttPage() {
           </span>
           <button
             onClick={() => navigate('/comercial/deals')}
-            style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--brand-700)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
           >
             Cambiar filtros →
           </button>
@@ -357,7 +357,7 @@ export default function DealsGanttPage() {
             <div style={{ height: 68, borderBottom: '1px solid var(--n-150)', display: 'flex', alignItems: 'flex-end', padding: '0 8px 8px', gap: 6 }}>
               <span style={{ fontSize: 10, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
                 Responsable / Deal
-                {totalDeals > 0 && <span style={{ marginLeft: 6, color: 'var(--brand-600)' }}>({totalDeals})</span>}
+                {totalDeals > 0 && <span style={{ marginLeft: 6, color: 'var(--brand-700)' }}>({totalDeals})</span>}
               </span>
             </div>
 
@@ -436,7 +436,7 @@ export default function DealsGanttPage() {
               {/* Línea de hoy */}
               {todayLeft >= 0 && todayLeft <= totalWidth && (
                 <div style={{ position: 'absolute', top: 0, bottom: 0, left: todayLeft, width: 2, background: '#ef4444', zIndex: 5, pointerEvents: 'none', boxShadow: '0 0 0 1px rgba(239,68,68,.15)' }}>
-                  <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%) translateY(-5px)', width: 8, height: 8, borderRadius: 999, background: '#ef4444', border: '2px solid #fff' }} />
+                  <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%) translateY(-5px)', width: 8, height: 8, borderRadius: 999, background: '#ef4444', border: '2px solid var(--n-0)' }} />
                 </div>
               )}
 
@@ -534,7 +534,7 @@ export default function DealsGanttPage() {
         const x = Math.min(tooltip.x + 14, window.innerWidth - 290)
         const y = Math.min(tooltip.y + 14, window.innerHeight - 210)
         return (
-          <div style={{ position: 'fixed', left: x, top: y, zIndex: 999, pointerEvents: 'none', background: '#fff', border: '1px solid var(--n-200)', borderRadius: 8, padding: '10px 13px', fontSize: 12, boxShadow: '0 4px 16px rgba(0,0,0,.13)', minWidth: 235 }}>
+          <div style={{ position: 'fixed', left: x, top: y, zIndex: 999, pointerEvents: 'none', background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 8, padding: '10px 13px', fontSize: 12, boxShadow: '0 4px 16px rgba(0,0,0,.13)', minWidth: 235 }}>
             <div style={{ fontWeight: 700, color: 'var(--n-900)', marginBottom: 6, lineHeight: 1.4, maxWidth: 260 }}>
               {tooltip.deal.title || '—'}
             </div>

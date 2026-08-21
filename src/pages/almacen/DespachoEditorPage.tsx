@@ -244,7 +244,7 @@ export default function DespachoEditorPage() {
                 disabled={importing}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'var(--n-0)', color: 'var(--brand-600)',
+                  background: 'var(--n-0)', color: 'var(--brand-700)',
                   border: '1px solid var(--brand-200)', borderRadius: 7, padding: '7px 12px',
                   fontSize: 12.5, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer',
                   opacity: importing ? 0.6 : 1,

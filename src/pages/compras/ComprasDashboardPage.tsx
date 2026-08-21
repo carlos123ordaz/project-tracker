@@ -14,19 +14,19 @@ import { BitrixNavTabs } from '../../components/bitrix/BitrixNavTabs'
 // ── Colores ──────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
-  'Nueva':         '#94a3b8',
-  'Pendiente':     '#f59e0b',
-  'En proceso':    '#6366f1',
+  'Nueva':         'var(--n-500)',
+  'Pendiente':     'var(--amber-500)',
+  'En proceso':    'var(--indigo-600)',
   'Por verificar': '#a855f7',
-  'Completada':    '#22c55e',
-  'Rechazada':     '#ef4444',
+  'Completada':    'var(--green-500)',
+  'Rechazada':     'var(--red-500)',
   'Diferida':      '#cbd5e1',
 }
 
 const PRIORITY_COLOR: Record<string, string> = {
-  'Alta':   '#ef4444',
-  'Normal': '#6366f1',
-  'Baja':   '#22c55e',
+  'Alta':   'var(--red-500)',
+  'Normal': 'var(--indigo-600)',
+  'Baja':   'var(--green-500)',
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ function KPICard({ label, value, sub, accent, bg, border }: KPIProps) {
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: { name: string; value: number; fill: string }[] }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 7, padding: '7px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>
       <span style={{ color: payload[0].fill, fontWeight: 700 }}>{payload[0].name}: </span>
       <span style={{ color: 'var(--n-900)', fontWeight: 600 }}>{payload[0].value}</span>
     </div>
@@ -213,12 +213,12 @@ export default function ComprasDashboardPage() {
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={byStatus} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
-                    {byStatus.map((e, i) => <Cell key={i} fill={STATUS_COLOR[e.name] || '#94a3b8'} />)}
+                    {byStatus.map((e, i) => <Cell key={i} fill={STATUS_COLOR[e.name] || 'var(--n-500)'} />)}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <Legend items={byStatus.map(e => ({ name: e.name, value: e.value, color: STATUS_COLOR[e.name] || '#94a3b8' }))} />
+              <Legend items={byStatus.map(e => ({ name: e.name, value: e.value, color: STATUS_COLOR[e.name] || 'var(--n-500)' }))} />
             </ChartCard>
 
             {/* Barras — por prioridad */}
@@ -230,7 +230,7 @@ export default function ComprasDashboardPage() {
                   <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 11.5, fill: 'var(--n-700)', fontWeight: 600 }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                    {byPriority.map((e, i) => <Cell key={i} fill={PRIORITY_COLOR[e.name] || '#6366f1'} />)}
+                    {byPriority.map((e, i) => <Cell key={i} fill={PRIORITY_COLOR[e.name] || 'var(--indigo-600)'} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -244,7 +244,7 @@ export default function ComprasDashboardPage() {
                   <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--n-500)' }} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: 'var(--n-700)' }} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                  <Bar dataKey="value" fill="var(--indigo-600)" radius={[0, 4, 4, 0]} maxBarSize={22} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -255,19 +255,19 @@ export default function ComprasDashboardPage() {
 
             <CollapsePanel panelKey="vencidas" open={openPanels.vencidas} onToggle={togglePanel}
               label="Tareas vencidas" count={grupoVencidas.length}
-              accentColor="#ef4444" bgColor="#fef2f2" borderColor="#fecaca">
+              accentColor="var(--red-500)" bgColor="var(--red-50)" borderColor="var(--red-200)">
               {grupoVencidas.length === 0
                 ? <PanelEmpty icon={<CheckCircle2 size={16} />} text="No hay tareas vencidas" />
                 : grupoVencidas.map(t => (
                   <BitrixTaskRow key={t.id} title={t.title} responsible={t.responsible_name}
-                    badge={`−${Math.abs(daysLeft(t.deadline))}d`} badgeColor="#dc2626" badgeBg="#fee2e2"
-                    sub={fmtDate(t.deadline)} priority={t.priority} icon={<AlertTriangle size={11} style={{ color: '#ef4444' }} />} />
+                    badge={`−${Math.abs(daysLeft(t.deadline))}d`} badgeColor="var(--red-600)" badgeBg="var(--red-100)"
+                    sub={fmtDate(t.deadline)} priority={t.priority} icon={<AlertTriangle size={11} style={{ color: 'var(--red-500)' }} />} />
                 ))}
             </CollapsePanel>
 
             <CollapsePanel panelKey="proximas" open={openPanels.proximas} onToggle={togglePanel}
               label="Próximas a vencer (≤14 días)" count={grupoProximas.length}
-              accentColor="#f59e0b" bgColor="#fefce8" borderColor="#fde68a">
+              accentColor="var(--amber-500)" bgColor="var(--amber-50)" borderColor="var(--amber-200)">
               {grupoProximas.length === 0
                 ? <PanelEmpty icon={<CheckCircle2 size={16} />} text="No hay tareas próximas a vencer" />
                 : grupoProximas.map(t => {
@@ -275,15 +275,15 @@ export default function ComprasDashboardPage() {
                     return (
                       <BitrixTaskRow key={t.id} title={t.title} responsible={t.responsible_name}
                         badge={dl === 0 ? 'Hoy' : dl === 1 ? 'Mañana' : `${dl}d`}
-                        badgeColor={dl <= 3 ? '#92400e' : '#78350f'} badgeBg={dl <= 3 ? '#fef3c7' : '#fef9c3'}
-                        sub={fmtDate(t.deadline)} priority={t.priority} icon={<Clock size={11} style={{ color: '#f59e0b' }} />} />
+                        badgeColor={dl <= 3 ? 'var(--amber-700)' : 'var(--amber-700)'} badgeBg={dl <= 3 ? 'var(--amber-100)' : 'var(--amber-100)'}
+                        sub={fmtDate(t.deadline)} priority={t.priority} icon={<Clock size={11} style={{ color: 'var(--amber-500)' }} />} />
                     )
                   })}
             </CollapsePanel>
 
             <CollapsePanel panelKey="sinFecha" open={openPanels.sinFecha} onToggle={togglePanel}
               label="Sin fecha de vencimiento" count={grupoSinFecha.length}
-              accentColor="#94a3b8" bgColor="var(--n-50)" borderColor="var(--n-200)">
+              accentColor="var(--n-500)" bgColor="var(--n-50)" borderColor="var(--n-200)">
               {grupoSinFecha.length === 0
                 ? <PanelEmpty icon={<CheckCircle2 size={16} />} text="Todas las tareas activas tienen fecha" />
                 : grupoSinFecha.map(t => (
@@ -295,13 +295,13 @@ export default function ComprasDashboardPage() {
 
             <CollapsePanel panelKey="enProceso" open={openPanels.enProceso} onToggle={togglePanel}
               label="En proceso" count={grupoEnProceso.length}
-              accentColor="#6366f1" bgColor="#eef2ff" borderColor="#c7d2fe">
+              accentColor="var(--indigo-600)" bgColor="var(--indigo-50)" borderColor="var(--indigo-200)">
               {grupoEnProceso.length === 0
                 ? <PanelEmpty icon={<Clock size={16} />} text="No hay tareas en proceso" />
                 : grupoEnProceso.map(t => (
                   <BitrixTaskRow key={t.id} title={t.title} responsible={t.responsible_name}
                     badge={t.deadline ? fmtDate(t.deadline) : 'Sin fecha'}
-                    badgeColor="#4338ca" badgeBg="#e0e7ff"
+                    badgeColor="var(--indigo-700)" badgeBg="var(--indigo-100)"
                     sub={t.deadline ? (daysLeft(t.deadline) >= 0 ? `${daysLeft(t.deadline)}d restantes` : `${Math.abs(daysLeft(t.deadline))}d vencida`) : ''}
                     priority={t.priority} />
                 ))}
@@ -309,14 +309,14 @@ export default function ComprasDashboardPage() {
 
             <CollapsePanel panelKey="completadas" open={openPanels.completadas} onToggle={togglePanel}
               label="Completadas" count={grupoCompletadas.length}
-              accentColor="#22c55e" bgColor="#f0fdf4" borderColor="#bbf7d0">
+              accentColor="var(--green-500)" bgColor="var(--green-50)" borderColor="var(--green-200)">
               {grupoCompletadas.length === 0
                 ? <PanelEmpty icon={<CheckCircle2 size={16} />} text="Sin tareas completadas aún" />
                 : grupoCompletadas.map(t => (
                   <BitrixTaskRow key={t.id} title={t.title} responsible={t.responsible_name}
-                    badge="Completada" badgeColor="#15803d" badgeBg="#dcfce7"
+                    badge="Completada" badgeColor="var(--green-700)" badgeBg="var(--green-100)"
                     sub={t.deadline ? fmtDate(t.deadline) : ''} priority={t.priority}
-                    icon={<CheckCircle2 size={11} style={{ color: '#22c55e' }} />} />
+                    icon={<CheckCircle2 size={11} style={{ color: 'var(--green-500)' }} />} />
                 ))}
             </CollapsePanel>
 
@@ -331,7 +331,7 @@ export default function ComprasDashboardPage() {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, padding: '14px 16px' }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-700)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
       {children}
     </div>
@@ -351,7 +351,7 @@ function Legend({ items }: { items: { name: string; value: number; color: string
   )
 }
 
-const PRIO_DOT: Record<string, string> = { Alta: '#ef4444', Normal: '#6366f1', Baja: '#22c55e' }
+const PRIO_DOT: Record<string, string> = { Alta: 'var(--red-500)', Normal: 'var(--indigo-600)', Baja: 'var(--green-500)' }
 
 function CollapsePanel({ panelKey, open, onToggle, label, count, accentColor, bgColor, borderColor, children }: {
   panelKey: PanelKey; open: boolean; onToggle: (k: PanelKey) => void
@@ -359,9 +359,9 @@ function CollapsePanel({ panelKey, open, onToggle, label, count, accentColor, bg
   children: React.ReactNode
 }) {
   return (
-    <div style={{ border: `1px solid ${borderColor}`, borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+    <div style={{ border: `1px solid ${borderColor}`, borderRadius: 10, background: 'var(--n-0)', overflow: 'hidden' }}>
       <button onClick={() => onToggle(panelKey)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: open ? bgColor : '#fff', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}>
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: open ? bgColor : 'var(--n-0)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .15s' }}>
         {open
           ? <ChevronDown size={14} style={{ color: accentColor, flexShrink: 0 }} />
           : <ChevronRight size={14} style={{ color: 'var(--n-400)', flexShrink: 0 }} />}
@@ -385,7 +385,7 @@ function BitrixTaskRow({ title, responsible, badge, badgeColor, badgeBg, sub, pr
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 8px', borderRadius: 7, background: 'var(--n-50)', border: '1px solid var(--n-100)' }}>
       {icon
         ? <span style={{ marginTop: 3, flexShrink: 0 }}>{icon}</span>
-        : <span style={{ width: 7, height: 7, borderRadius: '50%', background: PRIO_DOT[priority] ?? '#94a3b8', marginTop: 5, flexShrink: 0, display: 'inline-block' }} />}
+        : <span style={{ width: 7, height: 7, borderRadius: '50%', background: PRIO_DOT[priority] ?? 'var(--n-500)', marginTop: 5, flexShrink: 0, display: 'inline-block' }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--n-800)', wordBreak: 'break-word' }}>{title}</div>
         <div style={{ fontSize: 10.5, color: 'var(--n-400)', marginTop: 1 }}>

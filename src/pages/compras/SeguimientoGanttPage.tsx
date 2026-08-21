@@ -93,7 +93,7 @@ export default function SeguimientoGanttPage() {
         <SeguimientoNavTabs active="gantt" />
 
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as StatusFinal | 'TODOS')}
-          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
+          style={{ height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer' }}>
           <option value="TODOS">Todos los estados</option>
           <option value="PENDIENTE">PENDIENTE</option>
           <option value="EN PROCESO">EN PROCESO</option>
@@ -102,7 +102,7 @@ export default function SeguimientoGanttPage() {
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => setWeekOffset(0)}
-            style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--n-600)' }}>
+            style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12, cursor: 'pointer', color: 'var(--n-600)' }}>
             Hoy
           </button>
           <button onClick={() => setWeekOffset(w => w - 1)} style={navBtnS}><ChevronLeft size={14} /></button>
@@ -113,7 +113,7 @@ export default function SeguimientoGanttPage() {
       {loading ? (
         <div style={{ padding: 48, textAlign: 'center', color: 'var(--n-400)', fontSize: 12.5 }}>Cargando…</div>
       ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ display: 'flex', minWidth: LABEL_W + totalDays * DAY_W }}>
 
@@ -127,7 +127,7 @@ export default function SeguimientoGanttPage() {
                   <div key={t.id} style={{
                     height: 44, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6,
                     borderBottom: i < filtered.length - 1 ? '1px solid var(--n-100)' : undefined,
-                    background: i % 2 === 0 ? '#fff' : 'var(--n-50)',
+                    background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)',
                   }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: PRIORIDAD_DOT[t.prioridad] ?? '#94a3b8', flexShrink: 0 }} />
                     <div style={{ overflow: 'hidden' }}>
@@ -185,7 +185,7 @@ export default function SeguimientoGanttPage() {
                     <div key={t.id} style={{
                       height: 44, position: 'relative', display: 'flex', alignItems: 'center',
                       borderBottom: i < filtered.length - 1 ? '1px solid var(--n-100)' : undefined,
-                      background: i % 2 === 0 ? '#fff' : 'var(--n-50)',
+                      background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)',
                     }}>
                       {/* Weekend shading */}
                       {days.map((d, di) => d.getDay() === 0 || d.getDay() === 6
@@ -247,5 +247,5 @@ export default function SeguimientoGanttPage() {
 
 const navBtnS: React.CSSProperties = {
   width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-  borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer', color: 'var(--n-600)',
+  borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)',
 }

@@ -38,7 +38,7 @@ export function BitrixNavTabs({ groupId, active }: Props) {
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 12px', borderRadius: 7,
               border:      isActive ? '1.5px solid var(--brand-300)' : '1px solid var(--n-200)',
-              background:  isActive ? 'var(--brand-50)' : '#fff',
+              background:  isActive ? 'var(--brand-50)' : 'var(--n-0)',
               color:       isActive ? 'var(--brand-700)' : 'var(--n-600)',
               fontSize: 12.5, fontWeight: isActive ? 700 : 500, cursor: 'pointer',
             }}

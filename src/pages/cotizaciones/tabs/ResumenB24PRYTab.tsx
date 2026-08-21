@@ -184,7 +184,7 @@ export default function ResumenB24PRYTab({ cotizacion, partidas, tarifas }: Prop
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-700)',
+                border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-700)',
                 cursor: 'pointer',
               }}
             >
@@ -196,7 +196,7 @@ export default function ResumenB24PRYTab({ cotizacion, partidas, tarifas }: Prop
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
 
           {/* Main table */}
-          <div style={{ flex: 1, background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ flex: 1, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: 'var(--n-25)' }}>
@@ -240,7 +240,7 @@ export default function ResumenB24PRYTab({ cotizacion, partidas, tarifas }: Prop
                 )}
 
                 {/* Grand total */}
-                <tr style={{ background: 'var(--n-900)' }}>
+                <tr style={{ background: 'var(--inverted-bg)' }}>
                   <td colSpan={2} style={{ padding: '9px 12px', fontWeight: 700, color: '#fff', fontSize: 12 }}>
                     TOTAL GENERAL
                   </td>
@@ -260,7 +260,7 @@ export default function ResumenB24PRYTab({ cotizacion, partidas, tarifas }: Prop
 
             {/* Summary cards */}
             <div style={{ background: 'var(--brand-50)', border: '1px solid var(--brand-100)', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--brand-600)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--brand-700)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Resumen
               </div>
               <SummaryLine label="Total PIC" value={totalPIC} total={grandTotal} color="var(--brand-800)" />
@@ -275,7 +275,7 @@ export default function ResumenB24PRYTab({ cotizacion, partidas, tarifas }: Prop
 
             {/* Non-zero pivot */}
             {(nonZeroPIC.length > 0 || nonZeroPAU.length > 0) && (
-              <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
                 <div style={{ padding: '10px 12px', background: 'var(--n-25)', borderBottom: '1px solid var(--n-100)', fontSize: 10.5, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Pivot — solo con valores
                 </div>

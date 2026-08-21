@@ -87,7 +87,7 @@ function AuthenticatedApp() {
         </div>
         <button
           onClick={signOut}
-          style={{ marginTop: 8, fontSize: 12.5, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          style={{ marginTop: 8, fontSize: 12.5, color: 'var(--brand-700)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
         >
           Cerrar sesión
         </button>

@@ -143,7 +143,7 @@ export default function ResumenCISACTab({
           </span>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -155,7 +155,7 @@ export default function ResumenCISACTab({
                   <th style={th}>IMPREVISTOS USD</th>
                   <th style={th}>COSTO FINAL USD</th>
                   <th style={th}>MARGEN %</th>
-                  <th style={{ ...th, color: 'var(--brand-600)' }}>UTILIDAD USD</th>
+                  <th style={{ ...th, color: 'var(--brand-700)' }}>UTILIDAD USD</th>
                   <th style={{ ...th, color: 'var(--brand-800)', background: 'var(--brand-50)' }}>PRECIO VENTA USD</th>
                 </tr>
               </thead>
@@ -185,7 +185,7 @@ export default function ResumenCISACTab({
                 ))}
 
                 {/* Total row */}
-                <tr style={{ background: 'var(--n-900)' }}>
+                <tr style={{ background: 'var(--inverted-bg)' }}>
                   <td style={{ ...td, textAlign: 'left', color: 'var(--n-25)', fontWeight: 700 }} colSpan={2}>
                     PRECIO VENTA SIN IGV
                   </td>

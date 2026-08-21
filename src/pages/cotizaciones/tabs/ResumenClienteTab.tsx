@@ -145,7 +145,7 @@ export default function ResumenClienteTab({
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '7px 14px', borderRadius: 8,
-              border: '1px solid var(--n-200)', background: '#fff',
+              border: '1px solid var(--n-200)', background: 'var(--n-0)',
               color: 'var(--n-600)', fontSize: 12, fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -173,11 +173,11 @@ export default function ResumenClienteTab({
         </div>
 
         {/* Printable area */}
-        <div id="cotizacion-cliente-print" style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+        <div id="cotizacion-cliente-print" style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
 
           {/* Letterhead */}
           <div style={{
-            background: 'var(--n-900)',
+            background: 'var(--inverted-bg)',
             padding: '20px 28px',
             display: 'flex',
             alignItems: 'center',
@@ -270,7 +270,7 @@ export default function ResumenClienteTab({
                 )}
 
                 {/* Total row */}
-                <tr style={{ background: 'var(--n-900)' }}>
+                <tr style={{ background: 'var(--inverted-bg)' }}>
                   <td colSpan={5} style={{ ...td, color: '#fff', fontWeight: 800, textAlign: 'right', fontSize: 13, borderBottom: 'none' }}>
                     COSTO DIRECTO SIN IGV
                   </td>
@@ -339,7 +339,7 @@ export default function ResumenClienteTab({
                     color: 'var(--n-800)',
                     resize: 'vertical',
                     fontFamily: 'inherit',
-                    background: '#fff',
+                    background: 'var(--n-0)',
                   }}
                 />
                 {/* Print version (static text) */}

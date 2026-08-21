@@ -244,7 +244,7 @@ export default function ComprasPage() {
             <div style={{ fontSize: 12.5, color: 'var(--n-500)', marginBottom: 18 }}>Se eliminarán todos los ítems y cotizaciones asociadas. Esta acción no se puede deshacer.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmDelete(null)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--n-200)', background: 'var(--n-0)', fontSize: 12.5, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={async () => { await deleteComparison(confirmDelete); setConfirmDelete(null) }} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+              <button onClick={async () => { await deleteComparison(confirmDelete); setConfirmDelete(null) }} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
             </div>
           </div>
         </div>
@@ -263,7 +263,7 @@ function ComparisonCard({ comparison, projectName, onOpen, onDelete }: { compari
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--n-150)'; e.currentTarget.style.boxShadow = 'none' }}
     >
       <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <FileText size={14} style={{ color: 'var(--brand-600)' }} />
+        <FileText size={14} style={{ color: 'var(--brand-700)' }} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -279,7 +279,7 @@ function ComparisonCard({ comparison, projectName, onOpen, onDelete }: { compari
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--n-900)', marginBottom: 2 }}>{comparison.title}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {projectName && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--brand-600)', fontWeight: 500 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--brand-700)', fontWeight: 500 }}>
               <FolderOpen size={10} />{projectName}
             </span>
           )}

@@ -32,16 +32,19 @@
   /* Semantic */
   --red-50:    #fef2f2;
   --red-100:   #fee2e2;
+  --red-200:   #fecaca;
   --red-500:   #ef4444;
   --red-600:   #dc2626;
   --red-700:   #b91c1c;
   --amber-50:  #fffbeb;
   --amber-100: #fef3c7;
+  --amber-200: #fde68a;
   --amber-500: #f59e0b;
   --amber-600: #d97706;
   --amber-700: #b45309;
   --green-50:  #ecfdf5;
   --green-100: #d1fae5;
+  --green-200: #a7f3d0;
   --green-500: #10b981;
   --green-600: #059669;
   --green-700: #047857;
@@ -49,12 +52,28 @@
   --blue-100:  #dbeafe;
   --blue-500:  #3b82f6;
   --blue-600:  #2563eb;
+  --blue-700:  #1d4ed8;
   --purple-50:  #f5f3ff;
   --purple-600: #7c3aed;
   --indigo-50:  #eef2ff;
+  --indigo-100: #e0e7ff;
+  --indigo-200: #c7d2fe;
   --indigo-600: #4f46e5;
+  --indigo-700: #4338ca;
   --orange-50:  #fff7ed;
   --orange-600: #ea580c;
+  --orange-700: #c2410c;
+
+  /* Fill roles — surfaces that carry white text, must stay dark in both themes */
+  --brand-fill-hover: #003a96;
+  --danger-fill:      #dc2626;
+  --green-fill:       #047857;
+  /* Inverted panels (total rows, code blocks, gantt tooltip): always dark,
+     always light text. Previously --n-900, which flips to near-white in dark. */
+  --inverted-bg:      #15171c;
+  --inverted-bg-soft: #242832;
+  --row-danger:       rgba(254,226,226,0.30);
+  --row-danger-hover: rgba(254,226,226,0.55);
 
   /* Shadows */
   --shadow-xs: 0 1px 1px rgba(15,17,22,0.04);
@@ -80,28 +99,73 @@
   --n-100: #1a1d25;
   --n-150: #1f2330;
   --n-200: #252b3a;
-  --n-300: #323a4d;
-  --n-400: #4e5669;
-  --n-500: #7a818f;
-  --n-600: #9aa3b2;
-  --n-700: #b8c0cc;
-  --n-800: #d1d9e4;
-  --n-900: #e8ecf2;
+  /* 300–900 carry text in this codebase (n-400 alone is used 358x as `color`),
+     so the low end is lifted until every step clears 4.5:1 on n-0…n-200.
+     Surfaces/borders stay in 0–200 and are unchanged. */
+  --n-300: #8a93a8;
+  --n-400: #9aa3b5;
+  --n-500: #aab2c1;
+  --n-600: #bcc2ce;
+  --n-700: #c8cfda;
+  --n-800: #d9dfe8;
+  --n-900: #eceff4;
+
+  /* Borders keep the old low-end values, which n-300 no longer provides. */
+  --border:        #252b3a;
+  --border-strong: #323a4d;
 
   --brand-50:  #001433;
   --brand-100: #001d4a;
 
   --red-50:    #2a1414;
   --red-100:   #3b1c1c;
+  --red-200:   #4d2424;
   --amber-50:  #2a1f0e;
   --amber-100: #3a2c10;
+  --amber-200: #4d3a14;
   --green-50:  #0d2a1c;
   --green-100: #123520;
+  --green-200: #17462b;
   --blue-50:   #0e1f3a;
   --blue-100:  #132847;
   --purple-50:  #1e1433;
   --indigo-50:  #181c3a;
+  --indigo-100: #1f2450;
+  --indigo-200: #2b3168;
+  --indigo-700: #b9c4fd;
   --orange-50:  #2a1a0e;
+
+  /* Accent text: 500/600/700 are read as text on dark surfaces, so they are
+     re-tinted light. brand-600 is excluded — it is the primary-button fill. */
+  --brand-500:  #6f9fff;
+  --brand-700:  #8ab4ff;
+  --red-500:    #f47174;
+  --red-600:    #fb8f8f;
+  --red-700:    #fcb0b0;
+  --green-500:  #2ecf94;
+  --green-600:  #4ade80;
+  --green-700:  #7ceaa8;
+  --amber-500:  #f5b73c;
+  --amber-600:  #fbbf24;
+  --amber-700:  #fcd34d;
+  --blue-500:   #5fa3fb;
+  --blue-600:   #7cb5fb;
+  --blue-700:   #a3ccfd;
+  --purple-600: #c4b5fd;
+  --indigo-600: #a5b4fc;
+  --orange-600: #fdba74;
+  --orange-700: #fdba74;
+
+  /* Fills keep white text legible, so they stay dark; hover goes lighter. */
+  --brand-fill-hover: #1f63d6;
+  --danger-fill:      #dc2626;
+  --green-fill:       #047857;
+  --inverted-bg:      #0b0d11;
+  --inverted-bg-soft: #141821;
+  --row-danger:       rgba(239,68,68,0.10);
+  --row-danger-hover: rgba(239,68,68,0.20);
+
+  --ring: 0 0 0 3px rgba(111,159,255,0.35);
 
   --shadow-xs: 0 1px 1px rgba(0,0,0,.30);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.30), 0 1px 1px rgba(0,0,0,.22);
@@ -110,13 +174,39 @@
   --shadow-lg: 0 16px 40px -8px rgba(0,0,0,.65), 0 6px 12px -6px rgba(0,0,0,.45);
 }
 
-[data-theme="dark"] *::-webkit-scrollbar-thumb { background: var(--n-200); }
-[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: var(--n-300); }
+[data-theme="dark"] *::-webkit-scrollbar-thumb { background: var(--border); }
+[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+[data-theme="dark"] .card-hover:hover { border-color: var(--border-strong); }
+/* Recharts paints legend labels in the series color, which is tuned for a light
+   plot area. Keep the colored swatch as the identifier and make the text neutral. */
+[data-theme="dark"] .recharts-legend-item-text { color: var(--n-700) !important; }
+/* Recharts writes the tooltip's white background inline, so it needs !important. */
+[data-theme="dark"] .recharts-default-tooltip {
+  background: var(--n-150) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--n-800) !important;
+}
+[data-theme="dark"] .recharts-cartesian-axis-tick text,
+[data-theme="dark"] .recharts-cartesian-axis-tick-value,
+[data-theme="dark"] .recharts-polar-angle-axis-tick-value { fill: var(--n-500) !important; }
+[data-theme="dark"] .recharts-label,
+[data-theme="dark"] .recharts-text.recharts-label { fill: var(--n-600) !important; }
+
 [data-theme="dark"] .shimmer {
   background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
 }
+/* Chips whose colors come from the database carry light-mode hex values.
+   In dark mode the tint is rebuilt from the chip's own accent (--chip-accent),
+   so any color an admin picks stays legible instead of shipping a light island. */
 [data-theme="dark"] .status-chip {
-  background: var(--n-100) !important;
+  background: color-mix(in srgb, var(--chip-accent, #7a818f) 22%, transparent) !important;
+  color:      color-mix(in srgb, var(--chip-accent, #7a818f) 65%, #ffffff) !important;
+}
+[data-theme="dark"] .status-chip .chip-dot {
+  background: color-mix(in srgb, var(--chip-accent, #7a818f) 65%, #ffffff) !important;
+}
+[data-theme="dark"] .status-chip .chip-fg {
+  color: color-mix(in srgb, var(--chip-accent, #7a818f) 65%, #ffffff) !important;
 }
 
 /* ─── Reset & base ───────────────────────────────────────────────────────── */
@@ -302,6 +392,6 @@ tr:hover .row-actions,
 [data-tip]:hover::after {
   content: attr(data-tip);
   position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-  background: var(--n-900); color: white; font-size: 11px; padding: 4px 8px; border-radius: 6px;
+  background: var(--inverted-bg); color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 6px;
   white-space: nowrap; z-index: 100; pointer-events: none; font-weight: 500;
 }

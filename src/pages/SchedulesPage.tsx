@@ -126,7 +126,7 @@ export default function SchedulesPage() {
         padding: '14px 24px', borderBottom: '1px solid var(--n-150)',
         display: 'flex', alignItems: 'center', gap: 12, flex: '0 0 auto',
       }}>
-        <CalendarRange size={18} style={{ color: 'var(--brand-600)' }} />
+        <CalendarRange size={18} style={{ color: 'var(--brand-700)' }} />
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 16, fontWeight: 700, color: 'var(--n-900)', lineHeight: 1.2 }}>Programar</h1>
           <div style={{ fontSize: 11.5, color: 'var(--n-500)', marginTop: 2 }}>Cronogramas de ejecución ligados a presupuestos</div>

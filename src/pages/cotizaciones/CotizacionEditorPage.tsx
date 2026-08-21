@@ -452,7 +452,7 @@ export default function CotizacionEditorPage() {
                     {isActive && <span style={{ position: 'absolute', left: 0, top: 6, bottom: 6, width: 3, background: 'var(--brand-500)', borderRadius: '0 2px 2px 0' }} />}
                     <span style={{ fontSize: 12.5, fontWeight: isActive ? 700 : 500, color: isActive ? 'var(--brand-800)' : 'var(--n-700)', lineHeight: 1.3 }}>{disc.nombre}</span>
                     {costoDir > 0 && (
-                      <span style={{ fontSize: 10.5, color: isActive ? 'var(--brand-600)' : 'var(--n-400)', marginTop: 2, fontWeight: 600 }}>
+                      <span style={{ fontSize: 10.5, color: isActive ? 'var(--brand-700)' : 'var(--n-400)', marginTop: 2, fontWeight: 600 }}>
                         {fmtUSD(costoDir)} CD
                       </span>
                     )}
@@ -741,7 +741,7 @@ export default function CotizacionEditorPage() {
                                   <tr>
                                     <td colSpan={11} style={{ padding: '14px 14px', textAlign: 'center', color: 'var(--n-400)', fontSize: 12 }}>
                                       Sin partidas.{' '}
-                                      <button onClick={() => openNewPartida(sec.id)} style={{ background: 'none', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>
+                                      <button onClick={() => openNewPartida(sec.id)} style={{ background: 'none', border: 'none', color: 'var(--brand-700)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>
                                         Agregar primera partida
                                       </button>
                                     </td>
@@ -820,7 +820,7 @@ export default function CotizacionEditorPage() {
 
                     {/* Precio venta — highlighted */}
                     <div style={{ background: 'var(--brand-50)', borderRadius: 8, padding: '10px 12px', border: '1px solid var(--brand-100)', marginTop: 4 }}>
-                      <div style={{ fontSize: 11, color: 'var(--brand-600)', marginBottom: 3 }}>Precio Venta</div>
+                      <div style={{ fontSize: 11, color: 'var(--brand-700)', marginBottom: 3 }}>Precio Venta</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--brand-800)' }}>
                         {fmtUSD(getPrecioVentaDisc(activeDisciplina))}
                       </div>
@@ -854,7 +854,7 @@ export default function CotizacionEditorPage() {
                 )}
 
                 {/* Total */}
-                <div style={{ background: 'var(--n-900)', borderRadius: 8, padding: '10px 12px', marginTop: 10 }}>
+                <div style={{ background: 'var(--inverted-bg)', borderRadius: 8, padding: '10px 12px', marginTop: 10 }}>
                   <div style={{ fontSize: 10.5, color: 'var(--n-300)', marginBottom: 3 }}>PRECIO OFERTA TOTAL</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>{fmtUSD(totalOferta)}</div>
                   <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 2 }}>
@@ -1085,7 +1085,7 @@ function ErrorScreen({ error, onBack }: { error: string | null; onBack: () => vo
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
       <AlertCircle size={24} style={{ color: 'var(--red-500)' }} />
       <div style={{ fontSize: 13, color: 'var(--n-700)' }}>{error ?? 'Cotización no encontrada'}</div>
-      <button onClick={onBack} style={{ fontSize: 12, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Volver al listado</button>
+      <button onClick={onBack} style={{ fontSize: 12, color: 'var(--brand-700)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Volver al listado</button>
     </div>
   )
 }

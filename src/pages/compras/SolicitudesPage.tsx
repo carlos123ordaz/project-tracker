@@ -143,7 +143,7 @@ export default function SolicitudesPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '6px 14px', borderRadius: 7,
-            background: copied ? 'var(--green-600)' : 'var(--brand-600)',
+            background: copied ? 'var(--green-fill)' : 'var(--brand-600)',
             color: '#fff', border: 'none', fontSize: 12.5, fontWeight: 600,
             cursor: 'pointer', transition: 'background .2s',
           }}

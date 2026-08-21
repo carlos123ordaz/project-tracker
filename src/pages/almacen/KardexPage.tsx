@@ -262,7 +262,7 @@ export default function KardexPage() {
                     padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     border: '1.5px solid',
                     borderColor: active ? (meta?.color ?? 'var(--brand-600)') : 'var(--n-200)',
-                    background: active ? (meta?.bg ?? 'var(--brand-50)') : '#fff',
+                    background: active ? (meta?.bg ?? 'var(--brand-50)') : 'var(--n-0)',
                     color: active ? (meta?.color ?? 'var(--brand-700)') : 'var(--n-500)',
                     whiteSpace: 'nowrap',
                   }}
@@ -432,7 +432,7 @@ export default function KardexPage() {
                         flex: 1, minWidth: 80, padding: '7px 6px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                         border: '2px solid',
                         borderColor: tipo === t ? tipoMeta[t].color : 'var(--n-200)',
-                        background: tipo === t ? tipoMeta[t].bg : '#fff',
+                        background: tipo === t ? tipoMeta[t].bg : 'var(--n-0)',
                         color: tipo === t ? tipoMeta[t].color : 'var(--n-600)',
                       }}
                     >

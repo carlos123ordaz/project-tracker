@@ -399,6 +399,7 @@ function StatusBreakdownCard({ statuses, counts, total }: {
             style={{
               border: `1px solid ${s.dot}33`,
               background: s.bg,
+              ['--chip-accent' as string]: s.dot,
               borderRadius: 8, padding: '8px 9px',
               display: 'flex', flexDirection: 'column',
               position: 'relative', overflow: 'hidden',
@@ -408,8 +409,8 @@ function StatusBreakdownCard({ statuses, counts, total }: {
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 10px -2px ${s.dot}33` }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: s.dot, fontWeight: 600, letterSpacing: '-0.005em' }}>
-              <span style={{ width: 5, height: 5, borderRadius: 999, background: s.dot }} />
+            <span className="chip-fg" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: s.dot, fontWeight: 600, letterSpacing: '-0.005em' }}>
+              <span className="chip-dot" style={{ width: 5, height: 5, borderRadius: 999, background: s.dot }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
             </span>
             <span className="mono tnum" style={{ fontSize: 18, fontWeight: 600, color: 'var(--n-900)', marginTop: 2, letterSpacing: '-0.02em', lineHeight: 1 }}>
@@ -488,7 +489,7 @@ function ProgressGaugeCard({ progress, totalTasks }: { progress: number; totalTa
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{
           width: 32, height: 32, borderRadius: 8,
-          background: 'var(--brand-50)', color: 'var(--brand-600)',
+          background: 'var(--brand-50)', color: 'var(--brand-700)',
           border: '1px solid var(--brand-100)',
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -541,7 +542,7 @@ function TimelineProgressCard({ progress, label }: { progress: number; label: st
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             width: 32, height: 32, borderRadius: 8,
-            background: 'var(--brand-50)', color: 'var(--brand-600)',
+            background: 'var(--brand-50)', color: 'var(--brand-700)',
             border: '1px solid var(--brand-200)',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           }}>

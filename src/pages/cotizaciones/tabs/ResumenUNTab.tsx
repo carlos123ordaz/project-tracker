@@ -169,7 +169,7 @@ export default function ResumenUNTab({
               marginLeft: 'auto',
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-              border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-700)',
+              border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-700)',
               cursor: rows.length === 0 ? 'not-allowed' : 'pointer',
               opacity: rows.length === 0 ? 0.5 : 1,
             }}
@@ -194,7 +194,7 @@ export default function ResumenUNTab({
         ) : (
           <>
             {/* Main table */}
-            <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
+            <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
@@ -237,7 +237,7 @@ export default function ResumenUNTab({
                     ))}
 
                     {/* Totals row */}
-                    <tr style={{ background: 'var(--n-900)' }}>
+                    <tr style={{ background: 'var(--inverted-bg)' }}>
                       <td colSpan={2} style={{ padding: '9px 12px', fontWeight: 700, color: '#fff', fontSize: 12 }}>
                         Total
                       </td>

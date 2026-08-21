@@ -13,10 +13,10 @@ import { getProjectColor } from '../lib/helpers'
 import type { SemKind } from '../hooks/useConfigData'
 
 const SEM_PALETTES: Record<SemKind, { bg: string; edge: string; text: string }> = {
-  green: { bg: 'var(--green-50)', edge: '#A7F3D0', text: '#065F46' },
-  amber: { bg: 'var(--amber-50)', edge: '#FDE68A', text: '#92400E' },
-  red:   { bg: 'var(--red-50)',   edge: '#FECACA', text: '#991B1B' },
-  gray:  { bg: 'var(--n-50)',     edge: '#E1E4EA', text: '#3B414C' },
+  green: { bg: 'var(--green-50)', edge: 'var(--green-200)', text: 'var(--green-700)' },
+  amber: { bg: 'var(--amber-50)', edge: 'var(--amber-200)', text: 'var(--amber-700)' },
+  red:   { bg: 'var(--red-50)',   edge: 'var(--red-200)',   text: 'var(--red-700)' },
+  gray:  { bg: 'var(--n-50)',     edge: 'var(--n-200)',     text: 'var(--n-700)' },
 }
 const SEM_LABELS:  Record<SemKind, string> = { green: 'En curso',    amber: 'En riesgo', red: 'Crítico',                      gray: 'Sin planificar' }
 const SEM_SUBS:   Record<SemKind, string> = { green: 'Sin retrasos', amber: 'Vencen ≤7 días o retrasos puntuales', red: '>30% retrasadas o fecha vencida', gray: 'Sin tareas o fechas' }
@@ -121,9 +121,9 @@ export default function OverviewPage() {
               return (
                 <tr key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
-                  style={{ borderTop: '1px solid var(--n-150)', background: isCrit ? 'rgba(254,226,226,0.30)' : 'transparent', cursor: 'pointer', transition: 'background .12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = isCrit ? 'rgba(254,226,226,0.55)' : 'var(--n-25)'}
-                  onMouseLeave={e => e.currentTarget.style.background = isCrit ? 'rgba(254,226,226,0.30)' : 'transparent'}
+                  style={{ borderTop: '1px solid var(--n-150)', background: isCrit ? 'var(--row-danger)' : 'transparent', cursor: 'pointer', transition: 'background .12s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = isCrit ? 'var(--row-danger-hover)' : 'var(--n-25)'}
+                  onMouseLeave={e => e.currentTarget.style.background = isCrit ? 'var(--row-danger)' : 'transparent'}
                 >
                   <td style={{ ...TD, textAlign: 'right', color: 'var(--n-400)' }} className="mono tnum">{i + 1}</td>
                   <td style={TD}><Semaforo kind={sem.kind} label={sem.label} size="lg" /></td>

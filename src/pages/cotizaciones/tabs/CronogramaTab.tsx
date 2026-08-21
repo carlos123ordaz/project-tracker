@@ -36,7 +36,7 @@ function NumInput({ value, onChange, width = 60 }: { value: number; onChange: (v
       min={1}
       value={value}
       onChange={e => onChange(parseInt(e.target.value) || 1)}
-      style={{ width, height: 26, padding: '0 5px', borderRadius: 5, border: '1px solid var(--n-150)', fontSize: 12, textAlign: 'right', background: '#fff' }}
+      style={{ width, height: 26, padding: '0 5px', borderRadius: 5, border: '1px solid var(--n-150)', fontSize: 12, textAlign: 'right', background: 'var(--n-0)' }}
     />
   )
 }
@@ -123,7 +123,7 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
       {/* ── Gantt ─────────────────────────────────────────────────────────── */}
       <div>
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-800)', margin: '0 0 10px' }}>Diagrama Gantt</h3>
-        <div style={{ border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+        <div style={{ border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden', background: 'var(--n-0)' }}>
           <div style={{ overflowX: 'auto' }} ref={ganttRef}>
             <div style={{ display: 'flex', minWidth: LABEL_W + weeks.length * DAY_W }}>
 
@@ -307,7 +307,7 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
           </button>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: 'var(--n-25)' }}>
@@ -401,7 +401,7 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
                       value={newItem.descripcion}
                       onChange={e => setNewItem(p => ({ ...p, descripcion: e.target.value }))}
                       placeholder="Descripción de la actividad…"
-                      style={{ width: '100%', minWidth: 180, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-200)', fontSize: 12.5, background: '#fff' }}
+                      style={{ width: '100%', minWidth: 180, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-200)', fontSize: 12.5, background: 'var(--n-0)' }}
                       onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setAdding(false) }}
                     />
                   </td>
@@ -409,7 +409,7 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
                     <select
                       value={newItem.tipo}
                       onChange={e => setNewItem(p => ({ ...p, tipo: e.target.value as CronogramaTipo }))}
-                      style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: '#fff', cursor: 'pointer' }}
+                      style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 6, border: '1px solid var(--n-200)', background: 'var(--n-0)', cursor: 'pointer' }}
                     >
                       {(Object.keys(TIPO_COLOR) as CronogramaTipo[]).map(t => (
                         <option key={t} value={t}>{TIPO_COLOR[t].label}</option>
@@ -427,10 +427,10 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
                   </td>
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button onClick={handleSave} style={{ padding: '3px 5px', borderRadius: 5, border: 'none', background: 'var(--green-600)', color: '#fff', cursor: 'pointer', display: 'flex' }}>
+                      <button onClick={handleSave} style={{ padding: '3px 5px', borderRadius: 5, border: 'none', background: 'var(--green-fill)', color: '#fff', cursor: 'pointer', display: 'flex' }}>
                         <Check size={11} />
                       </button>
-                      <button onClick={() => setAdding(false)} style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-500)', cursor: 'pointer', fontSize: 12 }}>
+                      <button onClick={() => setAdding(false)} style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-500)', cursor: 'pointer', fontSize: 12 }}>
                         ×
                       </button>
                     </div>
@@ -444,7 +444,7 @@ export default function CronogramaTab({ cotizacionId, plazoSemanas = 40 }: Props
                     Sin actividades.{' '}
                     <button
                       onClick={() => { setAdding(true); setNewItem(EMPTY_NEW()) }}
-                      style={{ background: 'none', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--brand-700)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}
                     >
                       Agregar primera actividad
                     </button>

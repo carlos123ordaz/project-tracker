@@ -250,7 +250,7 @@ export default function TaskDrawer({ task, projects, onClose, onSave, onDelete }
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={LABEL}>Avance</span>
-              <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: pct >= 100 ? 'var(--green-600)' : pct >= 70 ? 'var(--brand-600)' : pct >= 30 ? 'var(--amber-600)' : 'var(--red-600)' }}>
+              <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: pct >= 100 ? 'var(--green-600)' : pct >= 70 ? 'var(--brand-700)' : pct >= 30 ? 'var(--amber-600)' : 'var(--red-600)' }}>
                 {pct}%
               </span>
             </div>

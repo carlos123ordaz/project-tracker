@@ -135,7 +135,7 @@ export default function AlmacenDashboardPage() {
   }, [selectedYear])
 
   const kpis = [
-    { label: 'Equipos activos', value: stats.totalEquipos, icon: Package, color: 'var(--brand-600)', bg: 'var(--brand-50)', action: () => navigate('/almacen/equipos') },
+    { label: 'Equipos activos', value: stats.totalEquipos, icon: Package, color: 'var(--brand-700)', bg: 'var(--brand-50)', action: () => navigate('/almacen/equipos') },
     { label: 'Bajo stock', value: stats.equiposBajoStock, icon: AlertTriangle, color: 'var(--red-600)', bg: 'var(--red-50)', action: () => navigate('/almacen/equipos') },
     { label: 'Pedidos pendientes', value: stats.pedidosPendientes, icon: ShoppingCart, color: 'var(--amber-600)', bg: 'var(--amber-50)', action: () => navigate('/almacen/pedidos') },
     { label: 'Recepciones hoy', value: stats.recepcionesHoy, icon: ArrowDownToLine, color: 'var(--green-600)', bg: 'var(--green-50)', action: () => navigate('/almacen/recepciones') },

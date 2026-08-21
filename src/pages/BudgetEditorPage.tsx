@@ -436,7 +436,7 @@ function BottomAnalysisPanel({ item, apuLines, resources, onUpsert, onDeleteLine
             <CostBadge key={k} {...c} value={unitBd[k === 'labor' ? 'mo' : k === 'material' ? 'mt' : k === 'equipment' ? 'eq' : 'sc']} />
           ))}
           <div style={{ display: 'inline-flex', alignItems: 'stretch', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--brand-600)', flexShrink: 0 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px', fontSize: 10.5, fontWeight: 800, background: 'var(--brand-700)', color: '#fff' }}>CU</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px', fontSize: 10.5, fontWeight: 800, background: 'var(--brand-600)', color: '#fff' }}>CU</span>
             <span className="mono tnum" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontSize: 12, fontWeight: 700, color: 'var(--n-900)', background: 'var(--brand-50)' }}>{fmtNumber(cu)}</span>
           </div>
         </div>

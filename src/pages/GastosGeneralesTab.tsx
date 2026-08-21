@@ -44,7 +44,7 @@ function GGCell({ value, onChange, decimals = 2, width = 64 }: {
         width: width + 20, padding: '2px 6px',
         border: '1.5px solid var(--brand-500)', borderRadius: 4, outline: 'none',
         textAlign: 'right', fontFamily: 'inherit', fontSize: 12.5,
-        background: '#fff', boxShadow: '0 0 0 3px rgba(79,70,229,.12)',
+        background: 'var(--n-0)', boxShadow: '0 0 0 3px rgba(79,70,229,.12)',
       }}
     />
   )

@@ -387,7 +387,7 @@ export default function SolicitudesDashboardPage() {
       {stats.trend.length > 0 && (
         <div style={{ marginBottom: 20, background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 12, padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <TrendingUp size={14} style={{ color: 'var(--brand-600)' }} />
+            <TrendingUp size={14} style={{ color: 'var(--brand-700)' }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Tendencia mensual
             </span>

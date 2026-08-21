@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -16,13 +17,14 @@ import { Plus, Pencil, Trash2, FileText, ExternalLink, CheckCircle, Users, Dolla
 function StatusBadge({ status }: { status: string }) {
   const m = getStatusMeta(status)
   return (
-    <span style={{
+    <span className="status-chip" style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '3px 9px', borderRadius: 6,
       background: m.bg, color: m.color,
       fontSize: 11.5, fontWeight: 550,
-    }}>
-      <span style={{ width: 6, height: 6, borderRadius: 999, background: m.color }} />
+      ['--chip-accent' as string]: m.color,
+    } as CSSProperties}>
+      <span className="chip-dot" style={{ width: 6, height: 6, borderRadius: 999, background: m.color }} />
       {status}
     </span>
   )

@@ -297,7 +297,7 @@ export default function DespachosPage() {
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button onClick={() => setConfirmDelete(null)} style={{ padding: '8px 16px', border: '1px solid var(--n-200)', borderRadius: 7, background: 'var(--n-0)', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
-              <button onClick={async () => { await deleteDespacho(confirmDelete.id); setConfirmDelete(null) }} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--red-600)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Eliminar</button>
+              <button onClick={async () => { await deleteDespacho(confirmDelete.id); setConfirmDelete(null) }} style={{ padding: '8px 16px', border: 'none', borderRadius: 7, background: 'var(--danger-fill)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Eliminar</button>
             </div>
           </div>
         </div>

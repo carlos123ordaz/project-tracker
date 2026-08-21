@@ -446,7 +446,7 @@ function FormCard({ children }: { children: React.ReactNode }) {
 function ulStyle(error?: string): React.CSSProperties {
   return {
     width: '100%', boxSizing: 'border-box', fontSize: 15, color: T.text,
-    background: '#fff', border: 'none',
+    background: 'var(--n-0)', border: 'none',
     borderBottom: `1px solid ${error ? T.required : 'transparent'}`,
     padding: '10px 12px', outline: 'none',
     fontFamily: "'Open Sans', system-ui, sans-serif",
@@ -474,7 +474,7 @@ function FieldRenderer({
                 <span style={{
                   width: 20, height: 20, flexShrink: 0, borderRadius: '50%',
                   border: `1.5px solid ${on ? T.primary : T.borderSel}`,
-                  background: '#fff',
+                  background: 'var(--n-0)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {on && <span style={{ width: 10, height: 10, borderRadius: '50%', background: T.primary }} />}
@@ -681,7 +681,7 @@ function DatePicker({ value, onChange, error }: { value: string; onChange: (v: s
       {open && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100,
-          background: '#fff', borderRadius: 8,
+          background: 'var(--n-0)', borderRadius: 8,
           boxShadow: '0 4px 20px rgba(0,0,0,.15)',
           padding: '12px', minWidth: 260,
           border: '1px solid #e0e0e0',
@@ -882,7 +882,7 @@ function CitySelector({ value, onChange, placeholder, side }: {
       {focused && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-          background: '#fff', borderRadius: 10,
+          background: 'var(--n-0)', borderRadius: 10,
           boxShadow: '0 8px 30px rgba(0,0,0,.15)',
           border: '1px solid #e0e0e0', overflow: 'hidden',
           minWidth: 220,
@@ -899,7 +899,7 @@ function CitySelector({ value, onChange, placeholder, side }: {
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 14px', cursor: 'pointer',
                 borderTop: i > 0 ? '1px solid #f5f5f5' : 'none',
-                background: '#fff',
+                background: 'var(--n-0)',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
               onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
@@ -924,7 +924,7 @@ function CitySelector({ value, onChange, placeholder, side }: {
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 14px', cursor: 'pointer', background: '#fff',
+                padding: '10px 14px', cursor: 'pointer', background: 'var(--n-0)',
                 borderTop: '1px solid #f0f0f0',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
@@ -950,7 +950,7 @@ function CitySelector({ value, onChange, placeholder, side }: {
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 14px', cursor: 'pointer', background: '#fff',
+                padding: '10px 14px', cursor: 'pointer', background: 'var(--n-0)',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = T.primaryLight }}
               onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
@@ -1022,7 +1022,7 @@ function FlightWidget({
       border: `1.5px solid ${hasErr ? T.required : '#c8deda'}`,
       borderRadius: 14, overflow: 'visible',
       boxShadow: 'none',
-      background: '#fff',
+      background: 'var(--n-0)',
     }}>
       {/* ── Fila ciudades (oculta para Cambio de Fecha) ── */}
       {showCities && (
@@ -1046,7 +1046,7 @@ function FlightWidget({
               style={{
                 position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
                 width: 34, height: 34, borderRadius: '50%',
-                background: '#fff', border: '1.5px solid #c8deda',
+                background: 'var(--n-0)', border: '1.5px solid #c8deda',
                 cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: T.primary, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'transform .2s, box-shadow .2s',
               }}
@@ -1152,7 +1152,7 @@ function PassengerListField({ value, onChange, count, error }: {
   }
 
   const ul = (hasErr?: boolean): React.CSSProperties => ({
-    width: '100%', boxSizing: 'border-box', fontSize: 14, color: T.text, background: '#fff', border: 'none',
+    width: '100%', boxSizing: 'border-box', fontSize: 14, color: T.text, background: 'var(--n-0)', border: 'none',
     borderBottom: `1px solid ${hasErr ? T.required : 'transparent'}`,
     padding: '8px 10px', outline: 'none',
     fontFamily: "'Open Sans', system-ui, sans-serif",

@@ -143,7 +143,7 @@ export default function ComprasGanttPage() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
       {/* Header */}
-      <div style={{ padding: '14px 24px', borderBottom: '1px solid var(--n-150)', background: '#fff', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+      <div style={{ padding: '14px 24px', borderBottom: '1px solid var(--n-150)', background: 'var(--n-0)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--n-900)' }}>
             {groupName || `Grupo ${groupId}`} · Gantt
@@ -175,7 +175,7 @@ export default function ComprasGanttPage() {
         {/* Navegación semanas */}
         <div style={{ display: 'inline-flex', border: '1px solid var(--n-200)', borderRadius: 7, overflow: 'hidden' }}>
           <NavBtn onClick={() => setWeekOffset(w => w - 1)}><ChevronLeft size={13} /></NavBtn>
-          <button onClick={() => setWeekOffset(0)} style={{ padding: '0 10px', fontSize: 12, fontWeight: 600, color: 'var(--n-700)', cursor: 'pointer', borderLeft: '1px solid var(--n-200)', borderRight: '1px solid var(--n-200)', background: '#fff' }}>
+          <button onClick={() => setWeekOffset(0)} style={{ padding: '0 10px', fontSize: 12, fontWeight: 600, color: 'var(--n-700)', cursor: 'pointer', borderLeft: '1px solid var(--n-200)', borderRight: '1px solid var(--n-200)', background: 'var(--n-0)' }}>
             Hoy
           </button>
           <NavBtn onClick={() => setWeekOffset(w => w + 1)}><ChevronRight size={13} /></NavBtn>
@@ -200,7 +200,7 @@ export default function ComprasGanttPage() {
       ) : (
 
         /* ── Gantt grid ── */
-        <div style={{ flex: 1, overflow: 'auto', background: '#fff' }}>
+        <div style={{ flex: 1, overflow: 'auto', background: 'var(--n-0)' }}>
           <div style={{ display: 'flex', minWidth: `calc(260px + ${totalWidth}px)` }}>
 
             {/* Panel izquierdo */}
@@ -209,7 +209,7 @@ export default function ComprasGanttPage() {
               <div style={{ height: 68, borderBottom: '1px solid var(--n-150)', display: 'flex', alignItems: 'flex-end', padding: '0 14px 8px' }}>
                 <span style={{ fontSize: 10.5, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
                   Responsable / Tarea
-                  {totalTasks > 0 && <span style={{ marginLeft: 6, color: 'var(--brand-600)' }}>({totalTasks})</span>}
+                  {totalTasks > 0 && <span style={{ marginLeft: 6, color: 'var(--brand-700)' }}>({totalTasks})</span>}
                 </span>
               </div>
 
@@ -266,7 +266,7 @@ export default function ComprasGanttPage() {
                 {/* Línea de hoy */}
                 {todayLeft >= 0 && todayLeft <= totalWidth && (
                   <div style={{ position: 'absolute', top: 0, bottom: 0, left: todayLeft, width: 2, background: 'var(--red-500)', zIndex: 5, pointerEvents: 'none', boxShadow: '0 0 0 1px rgba(239,68,68,.15)' }}>
-                    <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%) translateY(-6px)', width: 8, height: 8, borderRadius: 999, background: 'var(--red-500)', border: '2px solid #fff' }} />
+                    <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%) translateY(-6px)', width: 8, height: 8, borderRadius: 999, background: 'var(--red-500)', border: '2px solid var(--n-0)' }} />
                   </div>
                 )}
 
@@ -294,7 +294,7 @@ export default function ComprasGanttPage() {
                               /* Diamante (solo deadline, sin created_date) */
                               <div
                                 title={`${t.title} · Vence ${t.deadline}`}
-                                style={{ position: 'absolute', top: '50%', left: geom.left, transform: 'translate(-50%, -50%) rotate(45deg)', width: 10, height: 10, background: isLate ? 'var(--red-500)' : color, border: '2px solid #fff', zIndex: 2, cursor: 'default', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }}
+                                style={{ position: 'absolute', top: '50%', left: geom.left, transform: 'translate(-50%, -50%) rotate(45deg)', width: 10, height: 10, background: isLate ? 'var(--red-500)' : color, border: '2px solid var(--n-0)', zIndex: 2, cursor: 'default', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }}
                               />
                             ) : (
                               /* Barra normal */
@@ -356,7 +356,7 @@ export default function ComprasGanttPage() {
 
 function NavBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', cursor: 'pointer', color: 'var(--n-600)' }}>
+    <button onClick={onClick} style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--n-0)', cursor: 'pointer', color: 'var(--n-600)' }}>
       {children}
     </button>
   )
@@ -364,5 +364,5 @@ function NavBtn({ onClick, children }: { onClick: () => void; children: React.Re
 
 const selStyle: React.CSSProperties = {
   height: 30, padding: '0 8px', borderRadius: 7, border: '1px solid var(--n-200)',
-  background: '#fff', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer',
+  background: 'var(--n-0)', fontSize: 12, color: 'var(--n-700)', cursor: 'pointer',
 }

@@ -153,7 +153,7 @@ function ConnectionSection() {
               <div style={{ fontSize: 11.5, color: 'var(--n-500)' }}>Supabase (PostgreSQL)</div>
             </div>
           </div>
-          <div style={{ background: 'var(--n-900)', borderRadius: 8, padding: '12px 14px', fontSize: 11.5, fontFamily: 'monospace', lineHeight: 2 }}>
+          <div style={{ background: 'var(--inverted-bg)', borderRadius: 8, padding: '12px 14px', fontSize: 11.5, fontFamily: 'monospace', lineHeight: 2 }}>
             <div style={{ color: '#4ADE80' }}># .env</div>
             <div style={{ color: '#D1D5DB' }}>VITE_SUPABASE_URL=<span style={{ color: '#FCD34D' }}>tu-url</span></div>
             <div style={{ color: '#D1D5DB' }}>VITE_SUPABASE_ANON_KEY=<span style={{ color: '#FCD34D' }}>tu-key</span></div>

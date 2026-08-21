@@ -181,7 +181,7 @@ export default function ProveedoresPage() {
                         alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0,
                       }}>
-                        <Building2 size={13} style={{ color: 'var(--brand-600)' }} />
+                        <Building2 size={13} style={{ color: 'var(--brand-700)' }} />
                       </div>
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--n-900)' }}>{s.name}</div>
@@ -388,7 +388,7 @@ export default function ProveedoresPage() {
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
-                style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--red-600)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--danger-fill)', color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
               >
                 Eliminar
               </button>

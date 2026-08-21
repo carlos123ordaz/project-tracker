@@ -181,7 +181,7 @@ function GanttBarDrag({
         <div style={{
           position: 'absolute', bottom: rowH - 2, left: left + width / 2,
           transform: 'translateX(-50%)',
-          background: 'var(--n-900)', color: '#fff',
+          background: 'var(--inverted-bg)', color: '#fff',
           padding: '3px 8px', borderRadius: 5,
           fontSize: 10, fontWeight: 600,
           fontFamily: "'JetBrains Mono', monospace",
@@ -752,7 +752,7 @@ export function EmbeddedGantt({
                     left: w * DAY_W, width: DAY_W,
                     borderRight: '1px solid var(--n-100)',
                     background: w === todayIdx
-                      ? 'rgba(254,226,226,0.25)'
+                      ? 'var(--row-danger)'
                       : isWeekend ? 'rgba(0,0,0,0.025)' : 'transparent',
                     pointerEvents: 'none',
                   }} />

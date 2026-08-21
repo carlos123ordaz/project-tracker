@@ -387,7 +387,7 @@ export default function EquiposAlmacenPage() {
               <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: 'var(--n-0)', border: '1px solid var(--n-200)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.10)', width: 272, padding: '10px 0' }}>
                 <div style={{ padding: '0 12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--n-100)' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--n-500)', letterSpacing: '0.04em' }}>COLUMNAS Y ORDEN</span>
-                  <button onClick={resetCols} style={{ fontSize: 10.5, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>Restaurar</button>
+                  <button onClick={resetCols} style={{ fontSize: 10.5, color: 'var(--brand-700)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>Restaurar</button>
                 </div>
 
                 <div style={{ maxHeight: 300, overflowY: 'auto', padding: '4px 0' }}>
@@ -463,7 +463,7 @@ export default function EquiposAlmacenPage() {
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--n-400)' }}>
           <Package size={40} style={{ opacity: .3, marginBottom: 8 }} />
           <p style={{ fontSize: 13 }}>No hay equipos registrados</p>
-          {canAdd && <button onClick={openNew} style={{ fontSize: 13, color: 'var(--brand-600)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Crear el primero</button>}
+          {canAdd && <button onClick={openNew} style={{ fontSize: 13, color: 'var(--brand-700)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Crear el primero</button>}
         </div>
       ) : (
         <div style={{ background: 'var(--n-0)', border: '1px solid var(--n-150)', borderRadius: 10, overflow: 'hidden' }}>
@@ -550,7 +550,7 @@ export default function EquiposAlmacenPage() {
                           {canEdit && <button onClick={() => openEdit(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--n-500)', borderRadius: 5 }} title="Editar"><Edit2 size={14} /></button>}
                           {canDelete && <button onClick={() => setConfirmDelete(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--red-600)', borderRadius: 5 }} title="Eliminar"><Trash2 size={14} /></button>}
                           <button onClick={() => setPrecioEquipo(e)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--green-600)', borderRadius: 5 }} title="Historial de precios"><TrendingUp size={14} /></button>
-                          <button onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-600)', borderRadius: 5 }} title="Ver kardex"><ChevronRight size={14} /></button>
+                          <button onClick={() => navigate(`/almacen/kardex?equipo=${e.id}`)} style={{ padding: 5, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-700)', borderRadius: 5 }} title="Ver kardex"><ChevronRight size={14} /></button>
                         </div>
                       </td>
                     </tr>

@@ -36,6 +36,12 @@ const DATE_PRESETS = [
 type DatePreset = typeof DATE_PRESETS[number]['key']
 
 const C_NAVY  = '#1e3a5f'
+// C_NAVY is a chart/fill color; as text it is unreadable on a dark surface.
+const C_NAVY_TEXT  = 'var(--brand-700)'
+const C_GREEN_TEXT = 'var(--green-700)'
+const C_RED_TEXT   = 'var(--red-700)'
+const C_AMBER_TEXT = 'var(--amber-700)'
+const C_SKY_TEXT   = 'var(--blue-700)'
 const C_AMBER = '#f59e0b'
 const C_SKY   = '#0ea5e9'
 const C_GREEN = '#16a34a'
@@ -173,8 +179,8 @@ const TD: React.CSSProperties = {
   color: 'var(--n-800)',
 }
 const TD_NUM: React.CSSProperties = { ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }
-const TD_TOTAL: React.CSSProperties = { ...TD, fontWeight: 700, color: C_NAVY, background: 'var(--n-50)' }
-const TD_TOTAL_NUM: React.CSSProperties = { ...TD_NUM, fontWeight: 700, color: C_NAVY, background: 'var(--n-50)' }
+const TD_TOTAL: React.CSSProperties = { ...TD, fontWeight: 700, color: C_NAVY_TEXT, background: 'var(--n-50)' }
+const TD_TOTAL_NUM: React.CSSProperties = { ...TD_NUM, fontWeight: 700, color: C_NAVY_TEXT, background: 'var(--n-50)' }
 
 // ── reusable UI ────────────────────────────────────────────────────────────────
 
@@ -236,6 +242,12 @@ function MultiTooltip({ active, payload, label }: {
   )
 }
 
+const TEXT_OF: Record<string, string> = {
+  '#1e3a5f': C_NAVY_TEXT, '#f59e0b': C_AMBER_TEXT, '#0ea5e9': C_SKY_TEXT,
+  '#16a34a': C_GREEN_TEXT, '#ef4444': C_RED_TEXT,
+}
+const asText = (c: string) => TEXT_OF[c] ?? c
+
 function ProgressBar({ value, max, color = C_NAVY }: { value: number; max: number; color?: string }) {
   const w = max > 0 ? Math.min(100, (value / max) * 100) : 0
   return (
@@ -267,7 +279,7 @@ function MetricCard({ label, value, sub, accent = C_NAVY }: {
       borderLeft: `4px solid ${accent}`,
     }}>
       <div style={{ fontSize: 10, color: 'var(--n-500)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: accent, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: asText(accent), lineHeight: 1.1 }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: 'var(--n-400)' }}>{sub}</div>}
     </div>
   )
@@ -292,8 +304,8 @@ function SemiCircleGauge({ label, value, target, sub }: {
       <svg width="150" height="92" viewBox="0 0 176 102" style={{ overflow: 'visible' }}>
         <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`} fill="none" stroke="var(--n-150)" strokeWidth="13" strokeLinecap="round" />
         <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`} fill="none" stroke={arcColor} strokeWidth="13" strokeLinecap="round" strokeDasharray={`${filled} ${gap}`} />
-        <text x={cx} y={cy - 20} textAnchor="middle" fontSize="21" fontWeight="700" fill={C_NAVY} fontFamily="inherit">{Math.round(ratio * 100)}%</text>
-        <text x={cx} y={cy - 4} textAnchor="middle" fontSize="9.5" fill="#1d4ed8" fontFamily="inherit" fontWeight="600">{fmtMoney(value)}</text>
+        <text x={cx} y={cy - 20} textAnchor="middle" fontSize="21" fontWeight="700" fill={C_NAVY_TEXT} fontFamily="inherit">{Math.round(ratio * 100)}%</text>
+        <text x={cx} y={cy - 4} textAnchor="middle" fontSize="9.5" fill="var(--brand-700)" fontFamily="inherit" fontWeight="600">{fmtMoney(value)}</text>
         <text x={cx - R} y={cy + 14} textAnchor="middle" fontSize="8" fill="var(--n-400)" fontFamily="inherit">$0</text>
         <text x={cx + R} y={cy + 14} textAnchor="middle" fontSize="8" fill="var(--n-400)" fontFamily="inherit">{fmtMoney(target)}</text>
       </svg>
@@ -381,7 +393,7 @@ function SettingsModal({ targets, saving, onSave, onClose }: {
     >
       <div style={{ background: 'var(--n-0)', borderRadius: 12, padding: '20px 16px', width: 'min(95vw, 480px)', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C_NAVY }}>Configurar Metas por Unidad</h3>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C_NAVY_TEXT }}>Configurar Metas por Unidad</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--n-400)', lineHeight: 1 }}>×</button>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -544,7 +556,7 @@ function SearchableSelect({ value, options, onChange }: {
                   style={{
                     padding: '7px 12px', fontSize: 12.5, cursor: 'pointer',
                     background: o === value ? C_NAVY + '12' : undefined,
-                    color: o === value ? C_NAVY : 'var(--n-800)',
+                    color: o === value ? C_NAVY_TEXT : 'var(--n-800)',
                     fontWeight: o === value ? 700 : 400,
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--n-50)' }}
@@ -1143,16 +1155,16 @@ export default function DealsDashboardPage() {
                         <td style={TD_NUM}>{r.total}</td>
                         <td style={{ ...TD_NUM, color: r.sinCompany  > 0 ? C_RED   : 'var(--n-400)' }}>{r.sinCompany}</td>
                         <td style={{ ...TD_NUM, color: r.sinDeadline > 0 ? C_RED   : 'var(--n-400)' }}>{r.sinDeadline}</td>
-                        <td style={{ ...TD_NUM, color: r.probErrada  > 0 ? C_AMBER : 'var(--n-400)' }}>{r.probErrada}</td>
+                        <td style={{ ...TD_NUM, color: r.probErrada  > 0 ? C_AMBER_TEXT : 'var(--n-400)' }}>{r.probErrada}</td>
                       </tr>
                     ))
                   }
                   <tr>
                     <td style={TD_TOTAL}>Total</td>
                     <td style={TD_TOTAL_NUM}>{fallasTotals.total}</td>
-                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.sinCompany > 0 ? C_RED : C_NAVY }}>{fallasTotals.sinCompany}</td>
-                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.sinDeadline > 0 ? C_RED : C_NAVY }}>{fallasTotals.sinDeadline}</td>
-                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.probErrada > 0 ? C_AMBER : C_NAVY }}>{fallasTotals.probErrada}</td>
+                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.sinCompany > 0 ? C_RED_TEXT : C_NAVY_TEXT }}>{fallasTotals.sinCompany}</td>
+                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.sinDeadline > 0 ? C_RED_TEXT : C_NAVY_TEXT }}>{fallasTotals.sinDeadline}</td>
+                    <td style={{ ...TD_TOTAL_NUM, color: fallasTotals.probErrada > 0 ? C_AMBER_TEXT : C_NAVY_TEXT }}>{fallasTotals.probErrada}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1268,7 +1280,7 @@ export default function DealsDashboardPage() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid #7c3aed` }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--n-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Forecast ponderado</div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: '#7c3aed', lineHeight: 1.1, marginTop: 2 }}>{fmtMoney(forecastData.ponderado)}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--purple-600)', lineHeight: 1.1, marginTop: 2 }}>{fmtMoney(forecastData.ponderado)}</div>
                 <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 2 }}>{forecastData.deals} deal{forecastData.deals !== 1 ? 's' : ''} · pipeline bruto {fmtMoney(forecastData.sinPonderar)}</div>
               </div>
               <div style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--n-50)', borderRadius: 8, padding: '12px 14px', borderLeft: `4px solid ${C_SKY}` }}>
@@ -1296,7 +1308,7 @@ export default function DealsDashboardPage() {
                       <tr key={r.name} style={{ background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)' }}>
                         <td style={TD}>{r.name}</td>
                         <td style={TD_NUM}>{fmtMoney(r.total)}</td>
-                        <td style={{ ...TD_NUM, color: '#7c3aed', fontWeight: 700 }}>{fmtMoney(r.ponderado)}</td>
+                        <td style={{ ...TD_NUM, color: 'var(--purple-600)', fontWeight: 700 }}>{fmtMoney(r.ponderado)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1323,8 +1335,8 @@ export default function DealsDashboardPage() {
                     {winRateData.map((r, i) => (
                       <tr key={r.name} style={{ background: i % 2 === 0 ? 'var(--n-0)' : 'var(--n-50)' }}>
                         <td style={TD}>{r.name}</td>
-                        <td style={{ ...TD_NUM, color: C_GREEN, fontWeight: 600 }}>{r.won}</td>
-                        <td style={{ ...TD_NUM, color: C_RED }}>{r.lost}</td>
+                        <td style={{ ...TD_NUM, color: C_GREEN_TEXT, fontWeight: 600 }}>{r.won}</td>
+                        <td style={{ ...TD_NUM, color: C_RED_TEXT }}>{r.lost}</td>
                         <td style={TD_NUM}>{r.won + r.lost}</td>
                         <td style={{ ...TD, minWidth: 120 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1341,8 +1353,8 @@ export default function DealsDashboardPage() {
                       return (
                         <tr>
                           <td style={TD_TOTAL}>Total</td>
-                          <td style={{ ...TD_TOTAL_NUM, color: C_GREEN }}>{totWon}</td>
-                          <td style={{ ...TD_TOTAL_NUM, color: C_RED }}>{totLost}</td>
+                          <td style={{ ...TD_TOTAL_NUM, color: C_GREEN_TEXT }}>{totWon}</td>
+                          <td style={{ ...TD_TOTAL_NUM, color: C_RED_TEXT }}>{totLost}</td>
                           <td style={TD_TOTAL_NUM}>{totWon + totLost}</td>
                           <td style={TD_TOTAL}>
                             <span style={{ fontWeight: 700, color: pctColor(totRate) }}>{totRate}%</span>
@@ -1424,12 +1436,12 @@ export default function DealsDashboardPage() {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ background: C_AMBER, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#3d2a05', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Deals estancados — sin movimiento ≥ 14 días
               </span>
-              <Info size={12} style={{ color: 'rgba(255,255,255,0.7)' }} />
+              <Info size={12} style={{ color: 'rgba(61,42,5,0.75)' }} />
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#3d2a05' }}>
               {dealsEstancados.length} deal{dealsEstancados.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -1463,7 +1475,7 @@ export default function DealsDashboardPage() {
                           <td style={{ ...TD_NUM, fontWeight: 600 }}>{fmtMoney(parseAmt(d))}</td>
                           <td style={TD_NUM}>{d.probability}%</td>
                           <td style={{ ...TD, fontSize: 11 }}>{fmtDate(d.closedate)}</td>
-                          <td style={{ ...TD_NUM, fontWeight: 700, color: urgente ? C_RED : C_AMBER }}>
+                          <td style={{ ...TD_NUM, fontWeight: 700, color: urgente ? C_RED_TEXT : C_AMBER_TEXT }}>
                             {d.diasSinMov}d
                           </td>
                         </tr>
@@ -1507,7 +1519,7 @@ export default function DealsDashboardPage() {
                       </td>
                       <td style={{ ...TD, fontSize: 11 }}>{shortName(d.assigned_by_name)}</td>
                       <td style={{ ...TD, fontSize: 11 }}>{d.stage_name}</td>
-                      <td style={{ ...TD_NUM, color: parseInt(d.probability) >= 70 ? C_GREEN : parseInt(d.probability) >= 40 ? C_AMBER : 'var(--n-800)', fontWeight: 700 }}>
+                      <td style={{ ...TD_NUM, color: parseInt(d.probability) >= 70 ? C_GREEN_TEXT : parseInt(d.probability) >= 40 ? C_AMBER_TEXT : 'var(--n-800)', fontWeight: 700 }}>
                         {d.probability}%
                       </td>
                       <td style={{ ...TD_NUM, fontWeight: 600 }}>{fmtMoney(parseAmt(d))}</td>

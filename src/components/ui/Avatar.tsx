@@ -1,4 +1,5 @@
 import type { MemberObj } from '../../hooks/useConfigData'
+import { readableTextOn } from '../../lib/helpers'
 
 export function Avatar({ member, size = 22, ring = false }: {
   member?: MemberObj | null; size?: number; ring?: boolean
@@ -15,7 +16,7 @@ export function Avatar({ member, size = 22, ring = false }: {
   return (
     <span title={member.name} style={{
       width: size, height: size, borderRadius: 999,
-      background: member.color, color: '#fff',
+      background: member.color, color: readableTextOn(member.color),
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       fontSize: Math.round(size * 0.42), fontWeight: 600,
       letterSpacing: '-0.02em',

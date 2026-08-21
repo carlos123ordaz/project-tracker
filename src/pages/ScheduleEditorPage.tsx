@@ -173,7 +173,7 @@ function GanttTab({
                           onClick={() => setExpanded(prev => { const n = new Set(prev); isOpen ? n.delete(row.item.id) : n.add(row.item.id); return n })}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                         >
-                          <ChevronRight size={13} style={{ color: 'var(--brand-600)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }} />
+                          <ChevronRight size={13} style={{ color: 'var(--brand-700)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }} />
                           <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--brand-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             {row.item.code && <span className="mono" style={{ color: 'var(--brand-500)', marginRight: 5, fontSize: 10.5 }}>{row.item.code}</span>}
                             {row.item.name}
@@ -608,7 +608,7 @@ function SCurveTab({
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Presupuesto total', value: fmtCurrency(totalPlanned, currency), sub: 'costo directo planificado', color: 'var(--brand-600)' },
+          { label: 'Presupuesto total', value: fmtCurrency(totalPlanned, currency), sub: 'costo directo planificado', color: 'var(--brand-700)' },
           { label: '% de avance', value: `${Math.round(advancePct * 100)}%`, sub: 'ejecutado acumulado', color: '#10B981' },
           { label: 'Planificado a hoy', value: fmtCurrency(lastPlanned, currency), sub: 'según cronograma', color: '#F59E0B' },
           { label: 'Variación', value: (variance >= 0 ? '+' : '') + fmtCurrency(Math.abs(variance), currency), sub: variance >= 0 ? 'adelantado' : 'atrasado', color: variance >= 0 ? '#10B981' : '#EF4444' },

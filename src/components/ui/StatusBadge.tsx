@@ -1,3 +1,4 @@
+import type { CSSProperties as _CSS } from 'react'
 import { useConfigData, type StatusObj, type PriorityObj } from '../../hooks/useConfigData'
 
 export function StatusBadge({ status, obj, size = 'md', bgColor, dotColor }: {
@@ -11,14 +12,15 @@ export function StatusBadge({ status, obj, size = 'md', bgColor, dotColor }: {
   const pad   = size === 'sm' ? '2px 7px' : '3px 9px'
   const fs    = size === 'sm' ? 11 : 11.5
   return (
-    <span style={{
+    <span className="status-chip" style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: pad, borderRadius: 6,
       background: bg, color: dot,
       fontSize: fs, fontWeight: 550, lineHeight: 1.2,
       letterSpacing: '-0.005em', whiteSpace: 'nowrap',
-    }}>
-      <span style={{ width: 6, height: 6, borderRadius: 999, background: dot, flex: '0 0 auto' }} />
+      ['--chip-accent' as string]: dot,
+    } as _CSS}>
+      <span className="chip-dot" style={{ width: 6, height: 6, borderRadius: 999, background: dot, flex: '0 0 auto' }} />
       {label}
     </span>
   )
@@ -35,13 +37,14 @@ export function PriorityBadge({ priority, obj, size = 'md' }: {
   const pad   = size === 'sm' ? '1px 6px' : '2px 8px'
   const fs    = size === 'sm' ? 10.5 : 11
   return (
-    <span style={{
+    <span className="status-chip" style={{
       display: 'inline-flex', alignItems: 'center',
       padding: pad, borderRadius: 4,
       background: bg, color: fg,
       fontSize: fs, fontWeight: 600,
       letterSpacing: '0.01em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-    }}>
+      ['--chip-accent' as string]: fg,
+    } as _CSS}>
       {label}
     </span>
   )

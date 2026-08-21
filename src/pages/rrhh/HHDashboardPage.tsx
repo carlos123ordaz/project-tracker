@@ -62,9 +62,9 @@ type KPIColor = 'green' | 'red' | 'blue' | 'amber' | 'brand' | 'teal' | 'default
 const KPI_PALETTE: Record<KPIColor, { bg: string; accent: string; val: string; border: string }> = {
   green:   { bg: 'var(--green-50)',  accent: 'var(--green-700)', val: 'var(--green-700)',  border: 'var(--green-100)'  },
   red:     { bg: 'var(--red-50)',    accent: 'var(--red-600)',   val: 'var(--red-700)',    border: 'var(--red-100)'    },
-  blue:    { bg: 'var(--blue-50)',   accent: 'var(--blue-600)',  val: 'var(--blue-600)',   border: 'var(--blue-100)'   },
+  blue:    { bg: 'var(--blue-50)',   accent: 'var(--blue-600)',  val: 'var(--blue-700)',   border: 'var(--blue-100)'   },
   amber:   { bg: 'var(--amber-50)',  accent: 'var(--amber-600)', val: 'var(--amber-700)',  border: 'var(--amber-100)'  },
-  brand:   { bg: 'var(--brand-50)',  accent: 'var(--brand-600)', val: 'var(--brand-700)',  border: 'var(--brand-100)'  },
+  brand:   { bg: 'var(--brand-50)',  accent: 'var(--brand-700)', val: 'var(--brand-700)',  border: 'var(--brand-100)'  },
   teal:    { bg: 'var(--green-50)',  accent: 'var(--green-600)', val: 'var(--green-700)',  border: 'var(--green-100)'  },
   default: { bg: 'var(--n-0)',       accent: 'var(--n-500)',     val: 'var(--n-900)',      border: 'var(--n-150)'      },
 }

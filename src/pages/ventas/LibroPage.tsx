@@ -162,7 +162,7 @@ function LibroSelector({ libros, value, onChange, onNew }: {
           <button
             onClick={confirm}
             disabled={!draft.trim() || saving}
-            style={{ ...iconBtn, borderColor: 'var(--brand-300)', background: 'var(--brand-50)', color: draft.trim() && !saving ? 'var(--brand-600)' : 'var(--n-300)' }}
+            style={{ ...iconBtn, borderColor: 'var(--brand-300)', background: 'var(--brand-50)', color: draft.trim() && !saving ? 'var(--brand-700)' : 'var(--n-300)' }}
             title="Guardar libro"
           >
             {saving
@@ -198,7 +198,7 @@ function LibroSelector({ libros, value, onChange, onNew }: {
       <button
         onClick={() => setAdding(true)}
         title="Nuevo libro"
-        style={{ ...iconBtn, borderColor: 'var(--brand-300)', background: 'var(--brand-50)', color: 'var(--brand-600)' }}
+        style={{ ...iconBtn, borderColor: 'var(--brand-300)', background: 'var(--brand-50)', color: 'var(--brand-700)' }}
       >
         <Plus size={14} />
       </button>
@@ -368,7 +368,7 @@ function UploadModal({ open, onClose, onDone, libros, onNewLibro }: {
           />
           {file ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <FileText size={20} style={{ color: 'var(--brand-600)', flexShrink: 0 }} />
+              <FileText size={20} style={{ color: 'var(--brand-700)', flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--n-500)', marginTop: 2 }}>{(file.size / 1024).toFixed(0)} KB · Haz clic para cambiar</div>
@@ -510,7 +510,7 @@ function PartidasPanel({
       <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid var(--n-150)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
           <div style={{ width: 26, height: 26, borderRadius: 7, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Layers size={13} style={{ color: 'var(--brand-600)' }} />
+            <Layers size={13} style={{ color: 'var(--brand-700)' }} />
           </div>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--n-900)' }}>Partidas</span>
           <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-700)', background: 'var(--brand-50)', padding: '2px 8px', borderRadius: 10 }}>
@@ -799,7 +799,7 @@ export default function LibroPage() {
   )
 
   const TABS = [
-    { key: 'partidas' as const, label: 'Partidas', count: partidasTotal, icon: Layers,  activeColor: 'var(--brand-600)', activeBg: 'var(--brand-50)' },
+    { key: 'partidas' as const, label: 'Partidas', count: partidasTotal, icon: Layers,  activeColor: 'var(--brand-700)', activeBg: 'var(--brand-50)' },
     { key: 'insumos'  as const, label: 'Insumos',  count: insumosTotal,  icon: Package, activeColor: '#16a34a',          activeBg: '#f0fdf4'        },
   ]
 
@@ -822,7 +822,7 @@ export default function LibroPage() {
         {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <BookOpen size={18} style={{ color: 'var(--brand-600)' }} />
+            <BookOpen size={18} style={{ color: 'var(--brand-700)' }} />
           </div>
           <div>
             <h1 style={{ fontSize: 17, fontWeight: 700, color: 'var(--n-900)', margin: 0, letterSpacing: '-0.01em' }}>Libro de Precios</h1>

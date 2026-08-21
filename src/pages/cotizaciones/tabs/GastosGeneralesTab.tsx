@@ -52,7 +52,7 @@ function NumCell({
         fontSize: 12,
         color: 'var(--n-800)',
         textAlign: 'right',
-        background: '#fff',
+        background: 'var(--n-0)',
       }}
     />
   )
@@ -191,7 +191,7 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
           border: `1px solid ${cat === 'Variables' ? 'var(--brand-100)' : 'var(--amber-200)'}`,
           borderRadius: '0 0 8px 8px',
           overflow: 'hidden',
-          background: '#fff',
+          background: 'var(--n-0)',
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
@@ -300,7 +300,7 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
                         border: '1px solid var(--n-200)',
                         fontSize: 12.5,
                         color: 'var(--n-800)',
-                        background: '#fff',
+                        background: 'var(--n-0)',
                       }}
                       onKeyDown={e => { if (e.key === 'Enter') handleSaveNew(cat); if (e.key === 'Escape') setAddingCat(null) }}
                     />
@@ -309,7 +309,7 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
                     <input
                       value={newGasto.unidad}
                       onChange={e => setNewGasto(p => ({ ...p, unidad: e.target.value }))}
-                      style={{ width: 70, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-200)', fontSize: 12, textAlign: 'center', background: '#fff' }}
+                      style={{ width: 70, height: 26, padding: '0 6px', borderRadius: 5, border: '1px solid var(--n-200)', fontSize: 12, textAlign: 'center', background: 'var(--n-0)' }}
                     />
                   </td>
                   <td style={{ ...td, textAlign: 'right' }}>
@@ -326,13 +326,13 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button
                         onClick={() => handleSaveNew(cat)}
-                        style={{ padding: '3px 5px', borderRadius: 5, border: 'none', background: 'var(--green-600)', color: '#fff', cursor: 'pointer', display: 'flex' }}
+                        style={{ padding: '3px 5px', borderRadius: 5, border: 'none', background: 'var(--green-fill)', color: '#fff', cursor: 'pointer', display: 'flex' }}
                       >
                         <Check size={11} />
                       </button>
                       <button
                         onClick={() => setAddingCat(null)}
-                        style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: '#fff', color: 'var(--n-500)', cursor: 'pointer', fontSize: 12 }}
+                        style={{ padding: '3px 5px', borderRadius: 5, border: '1px solid var(--n-200)', background: 'var(--n-0)', color: 'var(--n-500)', cursor: 'pointer', fontSize: 12 }}
                       >
                         ×
                       </button>
@@ -347,7 +347,7 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
                     Sin ítems.{' '}
                     <button
                       onClick={() => { setAddingCat(cat); setNewGasto(EMPTY_NEW()) }}
-                      style={{ background: 'none', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--brand-700)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}
                     >
                       Agregar primero
                     </button>
@@ -381,7 +381,7 @@ export default function GastosGeneralesTab({ cotizacionId, imprevistosPct = 2, o
 
         {/* Totals block */}
         <div style={{
-          background: '#fff',
+          background: 'var(--n-0)',
           border: '1px solid var(--n-150)',
           borderRadius: 10,
           padding: '16px 18px',

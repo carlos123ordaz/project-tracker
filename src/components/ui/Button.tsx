@@ -51,7 +51,7 @@ export function Button({ variant = 'secondary', size = 'md', icon: Icon, iconRig
       }}
       onMouseEnter={e => {
         if (disabled) return
-        if (variant === 'primary')   e.currentTarget.style.background = 'var(--brand-700)'
+        if (variant === 'primary')   e.currentTarget.style.background = 'var(--brand-fill-hover)'
         else if (variant === 'ghost') e.currentTarget.style.background = 'var(--n-100)'
         else if (variant === 'danger') { e.currentTarget.style.background = 'var(--red-50)'; e.currentTarget.style.borderColor = 'var(--red-100)' }
         else if (variant === 'subtle') e.currentTarget.style.background = 'var(--n-150)'
