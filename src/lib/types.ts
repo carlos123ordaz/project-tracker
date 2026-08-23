@@ -630,6 +630,7 @@ export interface FormField {
 }
 
 export type SubmissionStatus = 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado'
+export const SUBMISSION_STATUSES: SubmissionStatus[] = ['Pendiente', 'En proceso', 'Completado', 'Cancelado']
 
 // ── Almacén ───────────────────────────────────────────────────────────────────
 
